@@ -11,9 +11,9 @@ return new class extends Migration {
             $table->string('name');
             $table->string('image')->nullable();
             $table->text('desc')->nullable();
-            $table->string('kategori')->nullable();
-            $table->string('berkas')->nullable();
-            $table->string('kegiatan')->nullable();
+            $table->text('kategori')->nullable();
+            $table->text('berkas')->nullable();
+            $table->text('kegiatan')->nullable();
             $table->string('type')->nullable();
             $table->timestamps();
         });

@@ -2,6 +2,9 @@
 
 @section('content')
     {{-- navbar --}}
+
+    {{ $data }}
+
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid bg-light">
             <a class="navbar-brand" href="/home"><img src="{{ asset('assets') }}/img/icon/logo-jawi2.png" alt="kocak"

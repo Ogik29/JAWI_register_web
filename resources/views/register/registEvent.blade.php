@@ -65,7 +65,7 @@
         <div class="row mb-5">
             <div class="row mt-5">
                 <div class="img col-5">
-                <img class="w-75" src="{{ asset('assets') }}/img/poster/poster-kejurcab-pagarnusa.jpg" alt="lah" style="margin-left: 100px">
+                <img class="w-75" src="{{ asset('assets') }}/img/poster/{{ $event->image }}" alt="lah" style="margin-left: 100px">
             </div>
             <div class="col-6 mt-5">
                 <h3>Deskripsi</h3>

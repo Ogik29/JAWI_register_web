@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EventController;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
@@ -25,9 +26,7 @@ Route::get('/registMain', function () {
     return view('register.registMain');
 });
 
-Route::get('/event/1', function () {
-    return view('register.registEvent');
-});
+Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
 Route::get('/peserta', function () {
     return view('register.registPeserta');

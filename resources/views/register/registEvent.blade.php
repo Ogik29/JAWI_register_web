@@ -47,14 +47,21 @@
         </div>
     </nav>
     {{-- end of navbar --}}
+    
     <div class="container-fluid mt-5">
         <div class="row bg-dark">
         <div class="col-6 mt-5">
-            <p class="playfair-font text-light" style="font-size: 100px;margin-left:100px ">Kejuaraan Pencak Silat</p>
+            <p class="playfair-font text-light" style="font-size: 100px;margin-left:100px ">{{ $event->name }}</p>
          </div>
     </div>  
     </div>
+
+
     <div class="container-fluid">
+
+    {{-- {{ $event }} --}}
+
+
         <div class="row mb-5">
             <div class="row mt-5">
                 <div class="img col-5">
@@ -62,19 +69,7 @@
             </div>
             <div class="col-6 mt-5">
                 <h3>Deskripsi</h3>
-                <p class="playfair-font">Pencak silat merupakan seni beladiri tradisional yang memiliki
-                                        berbagai ketentuan, keselarasan, keseimbangan, keserasian
-                                        antara wirama, wirasa, dan wiraga. Juga menanamkan sikap
-                                        berbudi pekerti yang luhur serta pengamalan falsafah Silat.
-                                        Pagar Nusa ialah sebuah organisasi yang mempunyai tujuan
-                                        untuk membentuk suatu wadah dibawah naungan Nahdlatul
-                                        Ulama yang khusus mengembangkan seni bela diri pencak
-                                        silat. Di sisi lain tumbuh berbagai perguruan pencak silat
-                                        dengan segala keanekaragamannya berdasarkan segi agama,
-                                        aqidah, kepercayaan dan jurus – jurus lainnya. Dalam organisasi
-                                        ini diharuskan mengajarkan materi jurus baku dari PSNU Pagar
-                                        Nusa sebagai bukti bahwa perguruan tradisional tersebut
-                                        tergabung dalam PSNU Pagar Nusa.
+                <p class="playfair-font">{!! $event->desc !!}
 
                 </p>
                 
@@ -108,40 +103,25 @@
                     <div class="card-body text-start p-4">
                         <!-- Kategori Content -->
                         <div id="kategori-content" class="tab-content">
-                            <h2 class="h4 fw-bold mb-3">Kategori :</h2>
-                            <p class="text-dark mb-2">Ketentuan Kategori Tanding: <a href="{{ url('/tanding-pdf') }}">Kelas Tanding PDF</a></p>
-                            <p class="text-dark mb-2">Ketentuan Kategori Seni dan Jurus Paket: <a href="{{ url('/seni-juruspaket-pdf') }}">Kelas Seni dan Jurus Paket PDF</a></p>
-                            <p class="text-dark mb-2">Ketentuan Kelas: <a href="{{ url('/ketentuankelas-pdf') }}">Ketentuan Kelas</a></p>
+                            <h2 class="h4 fw-bold mb-3">Kategori : </h2>
+
+                            {!! $event->kategori !!}
                         </div>
 
                         <!-- Berkas Content -->
                         <div id="berkas-content" class="tab-content d-none">
-                            <h2 class="h4 fw-bold mb-3">Berkas yang harus disiapkan</h2>
-                            <ul>
-                                <li>Fotokopi Kartu Keluarga</li>
-                                <li>Kartu Tanda Anggota Pagar Nusa</li>
-                                <li>Biodata Atlet</li>
-                                <li>Formulir Kontingen</li>
-                            </ul>
+                            <h2 class="h4 fw-bold mb-3">Berkas : </h2>
+
+                            {!! $event->berkas !!}
                             {{-- <p class="text-muted">Ini adalah konten untuk berkas. Di sini Anda dapat mengelola file dan dokumen.</p> --}}
                         </div>
 
                         <!-- Kegiatan Content -->
                         <div id="kegiatan-content" class="tab-content d-none">
                             <h2 class="h4 fw-bold mb-3">Kegiatan : </h2>
-                            <p class="text-dark m-0">Pendaftaran</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Online</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>7 Agustus 2025 - 23 September 2025</p>
-                            <p class="text-dark m-0">Technical Meeting (Gedung PCNU Sidoarjo)</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Erlangga, Kapasan, Sidokare, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61214.</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>23 September 2025</p>
-                            <p class="text-dark m-0">Pelaksaan (Gedung Olahraga Sidoarjo)</p>
-                            <p class="text-muted mb-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Pahlawan, Wismasarinadi, Magersari, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61213.
-</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>
-                            
+
+                            {!! $event->kegiatan !!}
+
                         </div>
                     </div>
                 </div>
@@ -150,10 +130,13 @@ Kabupaten Sidoarjo, Jawa Timur 61213.
                         <div class="card border-light mt-5 w-75 shadow p-3 mb-5 bg-body ">
                             <h1 class="playfair-font text-center">Pendaftaran Peserta</h1>
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item"><i class="bi bi-person text-danger me-1"></i>CP : Mas Hoiri <a href="tel:0877-0242-6911">
-                                    (0877-0242-6911)</a></li>
-                                <li class="list-group-item"><i class="bi bi-person text-danger me-1"></i>CP : Mas Feris <a href="tel:0897-6464-461">
-                                    (0897-6464-461)</a></li>
+
+                                @foreach($event->eventRoles->where('type', 'CP') as $userEvent)
+
+                                <li class="list-group-item"><i class="bi bi-person text-danger me-1"></i>CP : {{ $userEvent->user->nama_lengkap }} <a href="tel:0877-0242-6911">
+                                    ({{ $userEvent->user->no_telp }})</a></li>
+
+                                @endforeach
                 
                                 {{-- <li class="list-group-item"><i class="bi bi-person text-danger me-1"></i>CP : Mas Feris(0897-6464-461)</li> --}}
                                 {{-- <li class="list-group-item"><i class="bi bi-person text-danger"></i>CP</li> --}}

@@ -5,10 +5,13 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug');
+            $table->string('penyelenggara');
             $table->string('image')->nullable();
             $table->text('desc')->nullable();
             $table->text('kategori')->nullable();
@@ -19,7 +22,8 @@ return new class extends Migration {
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('events');
     }
 };

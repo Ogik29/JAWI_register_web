@@ -9,10 +9,18 @@ class Event extends Model
 {
     use HasFactory;
 
-     protected $table = 'events';
+    protected $table = 'events';
 
     protected $fillable = [
-        'name', 'image', 'desc', 'kategori', 'berkas', 'kegiatan', 'type'
+        'name',
+        'slug',
+        'penyelenggara',
+        'image',
+        'desc',
+        'kategori',
+        'berkas',
+        'kegiatan',
+        'type'
     ];
 
     public function classCategories()

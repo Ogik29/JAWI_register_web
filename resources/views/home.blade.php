@@ -3,7 +3,7 @@
 @section('content')
     {{-- navbar --}}
 
-    {{ $data }}
+    {{-- {{ $data }} --}}
 
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid bg-light">
@@ -134,14 +134,16 @@
                 
                 <h2>Daftar Event</h2>
                 <div class="row mb-5">
+                    @foreach ($data as $d)
                     <div class="col-4 mt-5">
                         <div class="img">
-                            <a href="{{ url('/event/1') }}"><img class="w-75 hover-shadow hover-mencungul" src="{{ asset('assets') }}/img/poster/poster-kejurcab-pagarnusa.jpg" alt=""></a>
-                            <p class="mb-0 mt-4" >By: SMKN 1 SURABAYA</p>
-                            <h3 class="mt-1 text-center">Lorem ipsum dolor sit amet, consectetur adipisicing elit.</h3>
+                            <a href="{{ url('/event/'. $d['slug']) }}"><img class="w-75 hover-shadow hover-mencungul" src="{{ asset('assets') }}/img/poster/{{ $d['image'] }}" alt=""></a>
+                            <p class="mb-0 mt-4" >By: {{ $d['penyelenggara'] }}</p>
+                            <h3 class="mt-1 text-center">{{ $d['name'] }}</h3>
                             <a href="{{ url('/event/1') }}" class="text-decoration-none">Pendaftaran</a>
                         </div>
                     </div>
+                    @endforeach
                 </div>
             </div>
         </div>

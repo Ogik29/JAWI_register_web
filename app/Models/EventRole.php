@@ -12,7 +12,9 @@ class EventRole extends Model
     protected $table = 'roles_event';
 
     protected $fillable = [
-        'user_id', 'event_id'
+        'user_id',
+        'event_id',
+        'type'
     ];
 
     public function user()

@@ -12,7 +12,7 @@ class RoleSeeder extends Seeder
         Role::insert([
             ['name' => 'Admin'],
             ['name' => 'Manager'],
-            ['name' => 'Player'],
+            ['name' => 'PIC event'],
         ]);
     }
 }

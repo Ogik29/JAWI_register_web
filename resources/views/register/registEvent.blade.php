@@ -141,7 +141,6 @@ Kabupaten Sidoarjo, Jawa Timur 61214.</p>
 Kabupaten Sidoarjo, Jawa Timur 61213.
 </p>
                             <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>
-                            
                         </div>
                     </div>
                 </div>

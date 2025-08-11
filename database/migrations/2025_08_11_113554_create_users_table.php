@@ -5,18 +5,26 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('username')->unique();
+            $table->string('nama_lengkap');
+            $table->string('email');
             $table->string('password');
+            $table->string('alamat');
+            $table->string('jenis_kelamin');
+            $table->string('tempat_lahir');
+            $table->date('tanggal_lahir');
+            $table->string('negara');
+            $table->string('no_telp');
             $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
-            $table->string('name');
             $table->timestamps();
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('users');
     }
 };

@@ -1,0 +1,8 @@
+.hover-underline:after {
+    text-decoration-color: black;
+}
+
+.hover-underline:hover:after{
+    text-decoration-color: rgb(224, 15, 15) !important;
+    /* background-color: red; */
+}

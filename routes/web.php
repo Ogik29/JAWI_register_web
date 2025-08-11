@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,7 +16,9 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    return view('home');
+    return view('home', [
+        'data' => Event::all()
+    ]);
 });
 
 Route::get('/registMain', function () {

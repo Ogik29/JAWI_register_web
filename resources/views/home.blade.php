@@ -7,7 +7,7 @@
 
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid bg-light">
-            <a class="navbar-brand" href="/home"><img src="{{ asset('assets') }}/img/icon/logo-jawi2.png" alt="kocak"
+            <a class="navbar-brand" href="/"><img src="{{ asset('assets') }}/img/icon/logo-jawi2.png" alt="kocak"
                     style="width: 100px; height: 80px"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -16,7 +16,7 @@
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item mx-5">
-                        <a class=" hover-underline nav-link " aria-current="page" href="{{ url('/home') }}">Home</a>
+                        <a class=" hover-underline nav-link " aria-current="page" href="{{ url('/') }}">Home</a>
                     </li>
                     <li class="nav-item mx-5">
                         <a class="nav-link hover-underline" href="#about">About</a>

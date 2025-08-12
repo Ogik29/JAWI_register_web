@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->string('email')->nullable();
             $table->string('no_telp')->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->timestamps();
         });
     }

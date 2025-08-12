@@ -28,13 +28,13 @@ Route::get('/registMain', function () {
 
 Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
+Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
+Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
+
 Route::get('/peserta', function () {
     return view('register.registPeserta');
 });
 
-Route::get('/kontingen', function () {
-    return view('register.registKontingen');
-});
 
 Route::get('/datapeserta', function () {
     return view('register.dataPeserta');

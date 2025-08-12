@@ -12,12 +12,17 @@ class Contingent extends Model
     protected $table = 'contingent';
 
     protected $fillable = [
-        'name', 'manajer_name', 'email', 'no_telp', 'user_id'
+        'name', 'manajer_name', 'email', 'no_telp', 'user_id', 'event_id'
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id', 'id');
     }
 
     public function transactions()

@@ -14,7 +14,8 @@ class ContingentSeeder extends Seeder
             'manajer_name' => 'Manager A',
             'email' => 'manager@sma1.sch.id',
             'no_telp' => '08123456789',
-            'user_id' => 2
+            'user_id' => 2,
+            'event_id' => 1
         ]);
     }
 }

@@ -182,8 +182,11 @@
                     </div>
                     
                     <!-- Registration Form -->
-                    <form id="registrationForm">
+                    <form id="registrationForm" method="POST">
+                        @csrf
                         <!-- Nama Kontingen -->
+                        <input type="hidden" name="user_id" value="1">
+                        <input type="hidden" name="event_id" value="{{ $event->id }}">
                         <div class="mb-3">
                             <label for="namaKontingen" class="form-label fw-semibold">
                                 <i class="bi bi-people-fill text-danger me-1"></i>
@@ -268,11 +271,26 @@
                 namaKontingen: formData.get('namaKontingen'),
                 namaManajer: formData.get('namaManajer'),
                 noTelepon: formData.get('noTelepon'),
-                email: formData.get('email')
+                email: formData.get('email'),
+                user_id: formData.get('user_id'),
+                event_id: formData.get('event_id')
             };
-            
-            // Log data (in real app, send to server)
-            console.log('Data pendaftaran:', data);
+
+            // Kirim data ke endpoint /kontingen/event_id via POST
+            fetch(`/kontingen/${data.event_id}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(result => {
+                console.log('Pendaftaran berhasil:', result);
+            })
+            .catch(error => {
+                console.error('Terjadi kesalahan:', error);
+            });
             
             // Show success message
             const successMessage = document.getElementById('successMessage');

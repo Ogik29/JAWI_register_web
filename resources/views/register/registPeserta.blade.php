@@ -6,6 +6,10 @@
     <title>Pendaftaran Kejuaraan Pencak Silat</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+
     <style>
         body {
             background: linear-gradient(135deg, #ffffffff 0%, #dfdfdfff 100%);
@@ -158,6 +162,7 @@
                         </div>
                     </div>
                     
+
                     <!-- Container untuk Atlet -->
                     <div id="athletesContainer">
                         <!-- Atlet pertama akan ditambahkan di sini -->
@@ -258,7 +263,7 @@
             athleteCount++;
             athleteIdCounter++;
             const uniqueId = athleteIdCounter;
-            
+
             const athleteHtml = `
                 <div class="athlete-card" id="athlete-${uniqueId}" data-athlete-id="${uniqueId}">
                     <div class="athlete-header">
@@ -487,6 +492,8 @@
             }
         }
         
+            const contingent_id = {{ $contingent->id }};
+
         // Form submission
         document.getElementById('registrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -498,11 +505,13 @@
                 athletes: []
             };
             
+            
             // Collect athlete data
             const athleteCards = document.querySelectorAll('.athlete-card');
             athleteCards.forEach((card) => {
                 const athleteId = card.getAttribute('data-athlete-id');
                 const athlete = {
+                    contingent_id: contingent_id,
                     namaLengkap: formData.get(`namaLengkap_${athleteId}`),
                     nik: formData.get(`nik_${athleteId}`),
                     noTelepon: formData.get(`noTelepon_${athleteId}`),
@@ -517,9 +526,35 @@
                 };
                 registrationData.athletes.push(athlete);
             });
+
+
+            fetch('/player_store', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    athletes: registrationData.athletes
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Gagal menyimpan data');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Sukses:', data);
+                // Arahkan ke halaman lain kalau mau redirect
+                // window.location.href = '/halaman-sukses';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
             
             // Show success message
-            alert(`Pendaftaran berhasil!\n\nKontingen: ${registrationData.namaKontingen}\nJumlah Atlet: ${registrationData.athletes.length}\n\nData telah tersimpan dan siap untuk diproses.`);
+            alert(`Pendaftaran berhasil!\n\nKontingen: ${contingent_id}\nJumlah Atlet: ${registrationData.athletes.length}\n\nData telah tersimpan dan siap untuk diproses.`);
             
             console.log('Data Pendaftaran:', registrationData);
         });

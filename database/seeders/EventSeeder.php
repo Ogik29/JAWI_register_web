@@ -34,7 +34,9 @@ Kabupaten Sidoarjo, Jawa Timur 61214.</p>
 Kabupaten Sidoarjo, Jawa Timur 61213.
 </p>
                             <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>',
-            'type' => 'kerjasama'
+            'type' => 'kerjasama',
+            'harga_contingent' => 0,
+            'harga_peserta' => 200000
         ]);
 
         Event::create([
@@ -62,7 +64,9 @@ Kabupaten Sidoarjo, Jawa Timur 61214.</p>
 Kabupaten Sidoarjo, Jawa Timur 61213.
 </p>
                             <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>',
-            'type' => 'official'
+            'type' => 'official',
+            'harga_contingent' => 250000,
+            'harga_peserta' => 200000
         ]);
     }
 }

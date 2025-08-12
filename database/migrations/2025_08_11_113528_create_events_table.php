@@ -5,8 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void
-    {
+    public function up(): void {
         Schema::create('events', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -18,12 +17,14 @@ return new class extends Migration {
             $table->text('berkas')->nullable();
             $table->text('kegiatan')->nullable();
             $table->string('type')->nullable();
+            $table->integer('harga_contingent');
+            $table->integer('harga_peserta');
             $table->timestamps();
         });
     }
 
-    public function down(): void
-    {
+    public function down(): void {
         Schema::dropIfExists('events');
     }
+    
 };

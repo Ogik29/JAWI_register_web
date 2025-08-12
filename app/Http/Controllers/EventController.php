@@ -47,4 +47,17 @@ class EventController extends Controller
             'data' => $data
         ]);
     }
+
+
+    public function pesertaEvent($contingent_id)
+    {
+        $contingent = Contingent::findOrFail($contingent_id);
+        return view('register.registPeserta', compact('contingent'));
+    }
+
+    public function storePeserta(Request $request)
+    {
+        // Validasi dan simpan data peserta
+        return $request->all();
+    }
 }

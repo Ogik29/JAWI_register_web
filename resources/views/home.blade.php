@@ -96,7 +96,7 @@
                             </form>
                         </div>
                         <div class="text-center">Belum memiliki akun? <a href="{{ url('/registMain') }}" class="text-danger">Daftar</a>Atau</div>
-                        <div class="text-center mb-3">Lupa password? <a href="#" class="text-danger">Lupa password</a></div>
+                        <div class="text-center mb-3">Lupa password? <a href="{{ route('password.request') }}" class="text-danger">Lupa password</a></div>
                     </div>
                 </div>
                 </div>

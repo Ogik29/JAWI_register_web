@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator; // Jika menggunakan Validator::make()
 use App\Notifications\VerifyEmailWithStatus; // <-- 1. Tambahkan Notifikasi kustom kita
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Password;
+use DB;
+use Carbon\Carbon;
+use Mail;
 
 use function Laravel\Prompts\alert;
 
@@ -21,18 +25,18 @@ class AuthController extends Controller
 
 
     public function login(Request $request)
-{
-    $credentials = $request->only('email', 'password');
-    $credentials['status'] = 1; // hanya user dengan status 1 yang bisa login
+    {
+        $credentials = $request->only('email', 'password');
+        $credentials['status'] = 1; // hanya user dengan status 1 yang bisa login
 
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->intended('/')
-            ->with('success', 'Login berhasil, selamat datang!');
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('/')
+                ->with('success', 'Login berhasil, selamat datang!');
+        }
+
+        return back()->with('error', 'Email, password salah, atau akun Anda belum aktif.');
     }
-
-    return back()->with('error', 'Email, password salah, atau akun Anda belum aktif.');
-}
 
     public function logout(Request $request)
     {
@@ -42,8 +46,6 @@ class AuthController extends Controller
 
         return redirect('/')->with('success', 'Anda telah berhasil logout.');
     }
-
-
 
     public function register(Request $request)
     {
@@ -77,7 +79,7 @@ class AuthController extends Controller
         $user->notify(new VerifyEmailWithStatus());
 
         // Ganti redirect ke halaman login atau halaman pemberitahuan
-        return redirect('/registMain')->with('status', 'Registrasi berhasil! Link verifikasi telah dikirim ke email Anda. (Jika verifikasi email tidak muncul, coba cek pada folder spam)');
+        return redirect('/registMain')->with('status', 'Registrasi berhasil! Link verifikasi telah dikirim ke email Anda. (Jika pesan verifikasi email tidak muncul, coba cek pada folder spam anda)');
     }
 
     /**
@@ -102,5 +104,54 @@ class AuthController extends Controller
         $user->save();
 
         return redirect('/registMain')->with('status', 'Email berhasil diverifikasi! Anda sekarang bisa login.');
+    }
+
+    // menampilkan view untuk mengirim link reset password
+    public function showLinkRequestForm()
+    {
+        return view('forgotPassword.email');
+    }
+
+    // mengirim link reset password ke email user
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        // menggunakan broker 'users' bawaan Laravel
+        $status = Password::sendResetLink($request->only('email'));
+
+        return $status == Password::RESET_LINK_SENT ? back()->with(['status' => __($status)]) : back()->withErrors(['email' => __($status)]);
+    }
+
+    // Menampilkan halaman form untuk mereset password.
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('forgotPassword.reset')->with(
+            ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    // memproses reset password
+    public function reset(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+        ]);
+
+        // Menggunakan broker 'users' bawaan Laravel untuk mereset password
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->save();
+            }
+        );
+
+        return $status == Password::PASSWORD_RESET
+            ? redirect('/registMain')->with('status', __($status))
+            : back()->withErrors(['email' => __($status)]);
     }
 }

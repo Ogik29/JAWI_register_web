@@ -9,7 +9,11 @@
     <script>
         alert("{{ session('success') }}");
     </script>
-@endif
+    @elseif(session('error'))
+    <script>
+        alert("{{ session('error') }}");
+    </script>
+    @endif
 
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid bg-light">

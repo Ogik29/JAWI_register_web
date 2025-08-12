@@ -17,7 +17,7 @@ class CheckRole
     {
         // Pastikan user sudah login
         if (!auth()->check()) {
-            return redirect('/login');
+            return redirect('/')->with('error', 'Anda harus login terlebih dahulu.');
         }
 
         // Cek apakah role user sesuai

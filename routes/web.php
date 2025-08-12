@@ -27,6 +27,7 @@ Route::get('/registMain', [AuthController::class, 'index']);
 Route::post('/registMain', [AuthController::class, 'register']);
 Route::get('/email/verify/{id}', [AuthController::class, 'verifyEmail'])->name('verification.verify-custom'); // Nama harus sama dengan yang di Notifikasi
 Route::post('/login', [AuthController::class, 'login'])->name('login');
+Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 

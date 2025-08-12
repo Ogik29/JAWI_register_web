@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
@@ -22,9 +23,9 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/registMain', function () {
-    return view('register.registMain');
-});
+Route::get('/registMain', [AuthController::class, 'index']);
+Route::post('/registMain', [AuthController::class, 'register']);
+Route::get('/email/verify/{id}', [AuthController::class, 'verifyEmail'])->name('verification.verify-custom'); // Nama harus sama dengan yang di Notifikasi
 
 Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
@@ -56,10 +57,3 @@ Route::get('/ketentuankelas-pdf', function () {
     $filePath = storage_path('app/public/ketentuan-kelas.pdf');
     return response()->download($filePath, 'Ketentuan-kelas.pdf');
 });
-
-
-
-
-
-
-

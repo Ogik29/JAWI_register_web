@@ -18,9 +18,10 @@ class User extends Authenticatable
         'jenis_kelamin',
         'alamat',
         'tempat_lahir',
-        'tgl_lahir',
+        'tanggal_lahir',
         'negara',
         'no_telp',
+        'status',
         'password',
         'role_id',
     ];

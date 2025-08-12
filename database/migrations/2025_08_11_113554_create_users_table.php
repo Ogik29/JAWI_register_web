@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->date('tanggal_lahir');
             $table->string('negara');
             $table->string('no_telp');
+            $table->boolean('status');
             $table->foreignId('role_id')->constrained('roles')->cascadeOnDelete();
             $table->timestamps();
         });

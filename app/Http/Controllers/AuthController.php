@@ -50,8 +50,7 @@ class AuthController extends Controller
         $user->notify(new VerifyEmailWithStatus());
 
         // Ganti redirect ke halaman login atau halaman pemberitahuan
-        // return redirect('/registMain')->with('status', 'Registrasi berhasil! Link verifikasi telah dikirim ke email Anda.');
-        return redirect('/registMain')->alert('Registrasi berhasil! Link verifikasi telah dikirim ke email Anda.');
+        return redirect('/registMain')->with('status', 'Registrasi berhasil! Link verifikasi telah dikirim ke email Anda. (Jika verifikasi email tidak muncul, coba cek pada folder spam)');
     }
 
     /**
@@ -68,14 +67,13 @@ class AuthController extends Controller
 
         // Cek jika user sudah terverifikasi sebelumnya
         if ($user->status == 1) {
-            // return redirect()->route('login')->with('status', 'Akun Anda sudah terverifikasi. Silakan login.');
-            return redirect('/registMain')->alert('Akun Anda sudah terverifikasi. Silakan login.');
+            return redirect('/registMain')->with('status', 'Akun Anda sudah terverifikasi. Silakan login.');
         }
 
         // Ubah status menjadi 1 (terverifikasi) dan simpan
         $user->status = 1;
         $user->save();
 
-        return redirect('/registMain')->alert('Email berhasil diverifikasi! Anda sekarang bisa login.');
+        return redirect('/registMain')->with('status', 'Email berhasil diverifikasi! Anda sekarang bisa login.');
     }
 }

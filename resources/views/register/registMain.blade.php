@@ -67,6 +67,19 @@
                         <div class="text-center mb-8">
                             <h1 class="text-3xl font-bold text-gray-900 mb-2">Daftar Akun Baru</h1>
                         </div>
+
+                        @if(session('status'))
+                            <div class="mb-4 rounded-lg bg-green-100 border border-green-400 text-green-800 px-4 py-3 relative" role="alert">
+                                <span class="block sm:inline">{{ session('status') }}</span>
+                                <button type="button" class="absolute top-0 bottom-0 right-0 px-4 py-3" onclick="this.parentElement.remove()">
+                                    <svg class="fill-current h-6 w-6 text-green-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <title>Tutup</title>
+                                        <path d="M14.348 5.652a.5.5 0 0 0-.707 0L10 9.293 6.36 5.652a.5.5 0 1 0-.707.707L9.293 10l-3.64 3.64a.5.5 0 0 0 .707.707L10 10.707l3.64 3.64a.5.5 0 0 0 .707-.707L10.707 10l3.64-3.64a.5.5 0 0 0 0-.708z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        @endif
+                        
                         
                         {{-- Form mengarah ke route 'register' dengan method POST --}}
                         <form class="space-y-4" method="POST" action="/registMain">

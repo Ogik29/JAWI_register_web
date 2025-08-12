@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator; // Jika menggunakan Validator::make()
 use App\Notifications\VerifyEmailWithStatus; // <-- 1. Tambahkan Notifikasi kustom kita
+use Illuminate\Support\Facades\Auth;
 
 use function Laravel\Prompts\alert;
 
@@ -17,6 +18,23 @@ class AuthController extends Controller
     {
         return view('register.registMain');
     }
+
+
+    public function login(Request $request){
+
+       $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('/')
+                ->with('success', 'Login berhasil, selamat datang!');
+        }
+
+        return back()->with('error', 'Email atau password salah.');
+    }
+    
+
+
 
     public function register(Request $request)
     {

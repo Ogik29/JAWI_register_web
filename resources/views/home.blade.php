@@ -5,6 +5,12 @@
 
     {{-- {{ $data }} --}}
 
+    @if(session('success'))
+    <script>
+        alert("{{ session('success') }}");
+    </script>
+@endif
+
     <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container-fluid bg-light">
             <a class="navbar-brand" href="/"><img src="{{ asset('assets') }}/img/icon/logo-jawi2.png" alt="kocak"
@@ -69,18 +75,21 @@
                             <h5 class="modal-title" id="staticBackdropLabel">LOGIN</h5>
                         </div>
                         <div class="modal-body">
-                            <div class="mb-3 d-flex justify-content-center">
-                                <input type="email" class="form-control mt-3" id="exampleFormControlInput1" placeholder="EMAIL" style="height: 50px">
+                            <form action="{{ route('login') }}" method="post">
+                                @csrf
+                                <div class="mb-3 d-flex justify-content-center">
+                                    <input type="email" class="form-control mt-3" id="exampleFormControlInput1" name="email" placeholder="EMAIL" style="height: 50px">
+                                </div>
+                                <div class="mb-3 d-flex justify-content-center">
+                                    <input type="password" class="form-control" id="exampleFormControlInput1" name="password" placeholder="PASSWORD" style="height: 50px">
                             </div>
                             <div class="mb-3 d-flex justify-content-center">
-                                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="PASSWORD" style="height: 50px">
-                            </div>
-                            <div class="mb-3 d-flex justify-content-center">
-                                <button type="button" class="btn btn-danger w-100" style="height: 50px;">MASUK</button>
+                                <button type="submit" class="btn btn-danger w-100" style="height: 50px;">MASUK</button>
                             </div>
                             <div class="mb-3 d-flex justify-content-center">
                                 <button type="button" class="btn btn-secondary w-100" style="height: 50px;" data-bs-dismiss="modal">CLOSE</button>
                             </div>
+                            </form>
                         </div>
                         <div class="text-center">Belum memiliki akun? <a href="{{ url('/registMain') }}" class="text-danger">Daftar</a>Atau</div>
                         <div class="text-center mb-3">Lupa password? <a href="#" class="text-danger">Lupa password</a></div>

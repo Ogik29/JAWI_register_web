@@ -26,11 +26,14 @@ Route::get('/', function () {
 Route::get('/registMain', [AuthController::class, 'index']);
 Route::post('/registMain', [AuthController::class, 'register']);
 Route::get('/email/verify/{id}', [AuthController::class, 'verifyEmail'])->name('verification.verify-custom'); // Nama harus sama dengan yang di Notifikasi
+Route::post('/login', [AuthController::class, 'login'])->name('login');
 
 Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
-Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
-Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
+Route::middleware('checkRole:2')->group(function () {
+    Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
+    Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
+});
 
 Route::get('/peserta', function () {
     return view('register.registPeserta');

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Event;
 use App\Models\Contingent;
 
@@ -9,12 +10,18 @@ use Illuminate\Http\Request;
 class EventController extends Controller
 {
     //
-    public function registEvent($slug){
-        $event = Event::where('slug', $slug)->firstOrFail();
-        return view('register.registEvent', compact('event'));
+    public function index()
+    {
+        return view('register.registEvent');
     }
 
-    public function registKontingen($event_id){
+    // public function registEvent($slug){
+    //     $event = Event::where('slug', $slug)->firstOrFail();
+    //     return view('register.registEvent', compact('event'));
+    // }
+
+    public function registKontingen($event_id)
+    {
         return view('register.registKontingen', [
             'event' => Event::findOrFail($event_id)
         ]);

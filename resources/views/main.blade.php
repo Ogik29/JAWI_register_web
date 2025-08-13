@@ -14,13 +14,21 @@
     @yield('content')
 </body>
 <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
         .hover-shadow:hover {
-            box-shadow: 0 0.9rem 3rem rgba(0, 0, 0, .25) !important;
+            box-shadow: 0 0 0.3rem rgba(0, 0, 0, .25) !important;
             transition: box-shadow 0.3s ease;
             transform: scale(1.05)
         }
         .hover-mencungul:hover {
             transition: all 0.3s ease;
+        }
+        .bg-gradient {
+            background: linear-gradient(135deg, #000000 0%, #1f1f1f 50%, #dc2626 100%);
         }
     </style>
 

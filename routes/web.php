@@ -34,7 +34,8 @@ Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
 Route::post('/reset-password', [AuthController::class, 'reset'])->name('password.update');
 
-Route::get('/event/{slug}', [EventController::class, 'registEvent']);
+Route::get('/event', [EventController::class, 'index']);
+// Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
 Route::middleware('checkRole:2')->group(function () {
     Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
@@ -47,6 +48,14 @@ Route::post('/player_store', [EventController::class, 'storePeserta']);
 
 Route::get('/datapeserta', function () {
     return view('register.dataPeserta');
+});
+
+Route::get('/superadmin', function () {
+    return view('superadmin.index');
+});
+
+Route::get('/admin', function () {
+    return view('admin.index');
 });
 
 Route::get('/invoice', function () {

@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('players', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -18,12 +19,14 @@ return new class extends Migration {
             $table->foreignId('player_category_id')->constrained('player_categories')->cascadeOnDelete();
             $table->string('foto_ktp')->nullable();
             $table->string('foto_diri')->nullable();
+            $table->string('foto_persetujuan_ortu')->nullable();
             $table->string('status')->nullable();
             $table->timestamps();
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('players');
     }
 };

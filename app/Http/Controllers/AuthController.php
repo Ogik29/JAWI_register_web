@@ -96,14 +96,14 @@ class AuthController extends Controller
 
         // Cek jika user sudah terverifikasi sebelumnya
         if ($user->status == 1) {
-            return redirect('/registMain')->with('status', 'Akun Anda sudah terverifikasi. Silakan login.');
+            return redirect('/')->with('status', 'Akun Anda sudah terverifikasi. Silakan login.');
         }
 
         // Ubah status menjadi 1 (terverifikasi) dan simpan
         $user->status = 1;
         $user->save();
 
-        return redirect('/registMain')->with('status', 'Email berhasil diverifikasi! Anda sekarang bisa login.');
+        return redirect('/')->with('status', 'Email berhasil diverifikasi! Anda sekarang bisa login.');
     }
 
     // menampilkan view untuk mengirim link reset password
@@ -151,7 +151,7 @@ class AuthController extends Controller
         );
 
         return $status == Password::PASSWORD_RESET
-            ? redirect('/registMain')->with('status', __($status))
+            ? redirect('/')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
     }
 }

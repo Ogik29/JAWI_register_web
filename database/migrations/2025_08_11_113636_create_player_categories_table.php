@@ -5,18 +5,21 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('player_categories', function (Blueprint $table) {
             $table->id();
             $table->string('filter')->nullable();
             $table->string('category');
             $table->string('range')->nullable();
+            $table->string('type')->nullable();
             $table->foreignId('class_category_id')->constrained('class_categories')->cascadeOnDelete();
             $table->timestamps();
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('player_categories');
     }
 };

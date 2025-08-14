@@ -335,7 +335,7 @@
                             </div>
                             
                             <!-- Upload Files -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Upload KK/KTP</label>
                                 <div class="upload-area">
                                     <i class="fas fa-cloud-upload-alt fa-2x text-danger mb-2"></i>
@@ -344,8 +344,17 @@
                                 </div>
                                 <div id="ktpInfo_${uniqueId}"></div>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Upload Foto Diri</label>
+                                <div class="upload-area">
+                                    <i class="fas fa-camera fa-2x text-danger mb-2"></i>
+                                    <p class="mb-2">Klik untuk upload Foto</p>
+                                    <input type="file" class="form-control" name="uploadFoto_${uniqueId}" accept=".jpg,.jpeg,.png" onchange="showFileInfo(this, 'fotoInfo_${uniqueId}')" required>
+                                </div>
+                                <div id="fotoInfo_${uniqueId}"></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Upload Persetujuan Orang tua</label>
                                 <div class="upload-area">
                                     <i class="fas fa-camera fa-2x text-danger mb-2"></i>
                                     <p class="mb-2">Klik untuk upload Foto</p>

@@ -14,13 +14,22 @@ class Event extends Model
     protected $fillable = [
         'name',
         'slug',
-        'penyelenggara',
+        // 'penyelenggara',
         'image',
         'desc',
-        'kategori',
-        'berkas',
-        'kegiatan',
-        'type'
+        // 'berkas',
+        // 'kegiatan',
+        'type',
+        'month',
+        'harga_contingent',
+        'harga_peserta',
+        'kotaOrKabupaten',
+        'lokasi',
+        'tgl_mulai_tanding',
+        'tgl_selesai_tanding',
+        'tgl_batas_pendaftaran',
+        'status',
+        'cp'
     ];
 
     public function classCategories()

@@ -270,7 +270,7 @@
         <option value="">Pilih Kelas</option>
         @foreach ($event->classCategories as $kategori)
             @foreach ($kategori->playerCategories as $kelas)
-                <option value="{{ $kelas->id }}">{{ $kelas->category }} {{ $kelas->range }} ({{ $kategori->name }})</option>
+                <option value="{{ $kelas->id }}">{{ $kelas->category }} {{ $kelas->range }} ({{ $kategori->name }}) => {{ $kategori->jenis_pertandingan }}</option>
             @endforeach
         @endforeach
     `;
@@ -322,20 +322,12 @@
                             </div>
                             
                             <!-- Kategori dan Pertandingan -->
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold">Kategori</label>
                                 <select class="form-select" name="kategori_${uniqueId}" onchange="updateCompetitionOptions(${uniqueId})" required>
                                     ${kelasOptionHtml}
                                 </select>
                                 <div id="ageWarning_${uniqueId}"></div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Jenis Pertandingan</label>
-                                <select class="form-select" name="jenisPertandingan_${uniqueId}" onchange="updateClassOptions(${uniqueId})" required>
-                                    <option value="">Pilih Jenis Pertandingan</option>
-                                    <option value="tanding">Tanding</option>
-                                    <option value="seni">Seni</option>
-                                </select>
                             </div>
                             
                             <!-- Upload Files -->
@@ -519,54 +511,52 @@
                 athletes: []
             };
             
-            
-            // Collect athlete data
-            const athleteCards = document.querySelectorAll('.athlete-card');
-            athleteCards.forEach((card) => {
-                const athleteId = card.getAttribute('data-athlete-id');
-                const athlete = {
-                    contingent_id: contingent_id,
-                    namaLengkap: formData.get(`namaLengkap_${athleteId}`),
-                    nik: formData.get(`nik_${athleteId}`),
-                    noTelepon: formData.get(`noTelepon_${athleteId}`),
-                    email: formData.get(`email_${athleteId}`),
-                    jenisKelamin: formData.get(`jenisKelamin_${athleteId}`),
-                    tanggalLahir: formData.get(`tanggalLahir_${athleteId}`),
-                    kategori: formData.get(`kategori_${athleteId}`),
-                    jenisPertandingan_id: formData.get(`jenisPertandingan_${athleteId}`),
-                    player_category_id: formData.get(`kelas_${athleteId}`),
-                    uploadKTP: formData.get(`uploadKTP_${athleteId}`)?.name || '',
-                    uploadFoto: formData.get(`uploadFoto_${athleteId}`)?.name || '',
-                    uploadPersetujuan: formData.get(`upload_Persetujuan${athleteId}`)?.name || ''
-                };
-                registrationData.athletes.push(athlete);
-            });
+
+            const formElement = document.getElementById('registrationForm');
+const formDataToSend = new FormData(formElement);
+
+const athleteCards = document.querySelectorAll('.athlete-card');
+athleteCards.forEach((card, index) => {
+    const athleteId = card.getAttribute('data-athlete-id');
+
+    // Append data text
+    formDataToSend.append(`athletes[${index}][contingent_id]`, contingent_id);
+    formDataToSend.append(`athletes[${index}][namaLengkap]`, formDataToSend.get(`namaLengkap_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][nik]`, formDataToSend.get(`nik_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][noTelepon]`, formDataToSend.get(`noTelepon_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][email]`, formDataToSend.get(`email_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][jenisKelamin]`, formDataToSend.get(`jenisKelamin_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][tanggalLahir]`, formDataToSend.get(`tanggalLahir_${athleteId}`));
+    formDataToSend.append(`athletes[${index}][player_category_id]`, formDataToSend.get(`kategori_${athleteId}`));
+
+    // Append file (bukan cuma nama file)
+    formDataToSend.append(`athletes[${index}][uploadKTP]`, document.querySelector(`[name="uploadKTP_${athleteId}"]`).files[0]);
+    formDataToSend.append(`athletes[${index}][uploadFoto]`, document.querySelector(`[name="uploadFoto_${athleteId}"]`).files[0]);
+    formDataToSend.append(`athletes[${index}][uploadPersetujuan]`, document.querySelector(`[name="upload_Persetujuan${athleteId}"]`).files[0]);
+});
 
 
-            fetch('/player_store', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    athletes: registrationData.athletes
-                })
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Gagal menyimpan data');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Sukses:', data);
-                // Arahkan ke halaman lain kalau mau redirect
-                // window.location.href = '/halaman-sukses';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            });
+            // Kirim ke Laravel
+fetch('/player_store', {
+    method: 'POST',
+    headers: {
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        // ❌ Jangan set Content-Type manual, biar FormData handle
+    },
+    body: formDataToSend
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error('Gagal menyimpan data');
+    }
+    return response.json();
+})
+.then(data => {
+    console.log('Sukses:', data);
+})
+.catch(error => {
+    console.error('Error:', error);
+}); 
             
             // Show success message
             alert(`Pendaftaran berhasil!\n\nKontingen: ${contingent_id}\nJumlah Atlet: ${registrationData.athletes.length}\n\nData telah tersimpan dan siap untuk diproses.`);

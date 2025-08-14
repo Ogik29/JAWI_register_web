@@ -12,8 +12,18 @@ class Player extends Model
     protected $table = 'players';
 
     protected $fillable = [
-        'name', 'contingent_id', 'nik', 'gender', 'no_telp', 'email',
-        'jenis_pertandingan', 'player_category_id', 'foto_ktp', 'foto_diri', 'status'
+        'name',
+        'contingent_id',
+        'nik',
+        'gender',
+        'no_telp',
+        'email',
+        'jenis_pertandingan',
+        'player_category_id',
+        'foto_ktp',
+        'foto_diri',
+        'foto_persetujuan_ortu',
+        'status'
     ];
 
     public function contingent()

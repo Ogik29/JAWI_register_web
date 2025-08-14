@@ -12,7 +12,8 @@ class EventController extends Controller
     //
     public function index()
     {
-        return view('register.registEvent');
+        $events = Event::all();
+        return view('register.registEvent', compact('events'));
     }
 
     // public function registEvent($slug){

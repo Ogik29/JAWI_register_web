@@ -13,6 +13,7 @@ class PlayerCategorySeeder extends Seeder
             'filter' => 'Umur',
             'category' => 'Junior',
             'range' => '15-18',
+            'type' => 'Tanding',
             'class_category_id' => 1
         ]);
     }

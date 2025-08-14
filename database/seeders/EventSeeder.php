@@ -3,70 +3,61 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Event;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str; // Import class Str untuk membuat slug
+use Carbon\Carbon; // Import class Carbon untuk manajemen tanggal
 
 class EventSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
     public function run(): void
     {
-        Event::create([
-            'name' => 'Kejuaraan Pencak Silat',
-            'slug' => 'kejuaraan-pencak-silat',
-            'penyelenggara' => 'Baim Gendang',
-            'image' => 'poster-kejurcab-pagarnusa.jpg',
-            'desc' => 'Pencak silat merupakan seni beladiri tradisional yang memiliki berbagai ketentuan, keselarasan, keseimbangan, keserasian antara wirama, wirasa, dan wiraga. Juga menanamkan sikap berbudi pekerti yang luhur serta pengamalan falsafah Silat. Pagar Nusa ialah sebuah organisasi yang mempunyai tujuan untuk membentuk suatu wadah dibawah naungan Nahdlatul Ulama yang khusus mengembangkan seni bela diri pencak silat. Di sisi lain tumbuh berbagai perguruan pencak silat dengan segala keanekaragamannya berdasarkan segi agama, aqidah, kepercayaan dan jurus – jurus lainnya. Dalam organisasi ini diharuskan mengajarkan materi jurus baku dari PSNU Pagar Nusa sebagai bukti bahwa perguruan tradisional tersebut tergabung dalam PSNU Pagar Nusa.',
-            'kategori' => '<p class="text-dark mb-2">Ketentuan Kategori Tanding: <a href="https: //drive.google.com/drive/folders/1q-vAkN3uUt6wMcYnMBY5y3kCS28_yezF">Link Drive Ketentuan</a>',
-            'berkas' => '<ul>
-                            <li>Fotokopi Kartu Keluarga</li>
-                            <li>Kartu Tanda Anggota Pagar Nusa</li>
-                            <li>Biodata Atlet</li>
-                            <li>Formulir Kontingen</li>
-                        </ul>',
-            'kegiatan' => '<p class="text-dark m-0">Pendaftaran</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Online</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>7 Agustus 2025 - 23 September 2025</p>
-                            <p class="text-dark m-0">Technical Meeting (Gedung PCNU Sidoarjo)</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Erlangga, Kapasan, Sidokare, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61214.</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>23 September 2025</p>
-                            <p class="text-dark m-0">Pelaksaan (Gedung Olahraga Sidoarjo)</p>
-                            <p class="text-muted mb-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Pahlawan, Wismasarinadi, Magersari, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61213.
-</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>',
-            'type' => 'kerjasama',
-            'harga_contingent' => 0,
-            'harga_peserta' => 200000
-        ]);
+        // Hapus data lama untuk menghindari duplikasi saat seeding ulang
+        // DB::table('events')->truncate();
 
-        Event::create([
-            'name' => 'Kejuaraan Pencak Silat Polri',
-            'slug' => 'kejuaraan-pencak-silat-polri',
-            'penyelenggara' => 'Faiz Kentrung',
-            'image' => 'event-1.jpg',
-            'desc' => 'Pencak silat merupakan seni beladiri tradisional yang memiliki berbagai ketentuan, keselarasan, keseimbangan, keserasian antara wirama, wirasa, dan wiraga. Juga menanamkan sikap berbudi pekerti yang luhur serta pengamalan falsafah Silat. Pagar Nusa ialah sebuah organisasi yang mempunyai tujuan untuk membentuk suatu wadah dibawah naungan Nahdlatul Ulama yang khusus mengembangkan seni bela diri pencak silat. Di sisi lain tumbuh berbagai perguruan pencak silat dengan segala keanekaragamannya berdasarkan segi agama, aqidah, kepercayaan dan jurus – jurus lainnya. Dalam organisasi ini diharuskan mengajarkan materi jurus baku dari PSNU Pagar Nusa sebagai bukti bahwa perguruan tradisional tersebut tergabung dalam PSNU Pagar Nusa.',
-            'kategori' => '<p class="text-dark mb-2">Ketentuan Kategori Tanding: <a href="https: //drive.google.com/drive/folders/1q-vAkN3uUt6wMcYnMBY5y3kCS28_yezF">Link Drive Ketentuan</a>',
-            'berkas' => '<ul>
-                            <li>Fotokopi Kartu Keluarga</li>
-                            <li>Kartu Tanda Anggota Pagar Nusa</li>
-                            <li>Biodata Atlet</li>
-                            <li>Formulir Kontingen</li>
-                        </ul>',
-            'kegiatan' => '<p class="text-dark m-0">Pendaftaran</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Online</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>7 Agustus 2025 - 23 September 2025</p>
-                            <p class="text-dark m-0">Technical Meeting (Gedung PCNU Sidoarjo)</p>
-                            <p class="text-muted m-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Erlangga, Kapasan, Sidokare, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61214.</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>23 September 2025</p>
-                            <p class="text-dark m-0">Pelaksaan (Gedung Olahraga Sidoarjo)</p>
-                            <p class="text-muted mb-0"><i class="bi bi-geo-alt text-danger pe-2"></i>Jl. Pahlawan, Wismasarinadi, Magersari, Kec. Sidoarjo,
-Kabupaten Sidoarjo, Jawa Timur 61213.
-</p>
-                            <p class="text-muted "><i class="bi bi-calendar3 text-danger pe-2"></i>3 - 5 Oktober 2025</p>',
-            'type' => 'official',
-            'harga_contingent' => 250000,
-            'harga_peserta' => 200000
+        DB::table('events')->insert([
+            [
+                'name' => 'Kejuaraan Pencak Silat Jakarta Open 2025',
+                'slug' => Str::slug('Kejuaraan Pencak Silat Jakarta Open 2025'),
+                'image' => 'poster-kejurcab-pagarnusa.jpg', // Contoh path gambar
+                'desc' => 'Sebuah kejuaraan pencak silat tingkat nasional yang diselenggarakan di ibu kota. Ajang ini menjadi tolak ukur bagi para pesilat muda untuk unjuk gigi dan meraih prestasi di tingkat yang lebih tinggi.',
+                'type' => 'kerjasama',
+                'month' => 'Oktober',
+                'harga_contingent' => 250000,
+                'harga_peserta' => 150000,
+                'kotaOrKabupaten' => 'DKI Jakarta',
+                'lokasi' => 'GOR Ciracas, Jakarta Timur',
+                'tgl_mulai_tanding' => Carbon::create(2025, 10, 20),
+                'tgl_selesai_tanding' => Carbon::create(2025, 10, 23),
+                'tgl_batas_pendaftaran' => Carbon::create(2025, 10, 1),
+                'status' => 'Pendaftaran Dibuka',
+                'cp' => '08282828339 AN.Budi <br> 08737372819 AN.Gopal',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Festival Silat Tradisional Yogyakarta 2025',
+                'slug' => Str::slug('Festival Silat Tradisional Yogyakarta 2025'),
+                'image' => 'event-1.jpg', // Contoh path gambar
+                'desc' => 'Festival ini bertujuan untuk melestarikan dan memperkenalkan kekayaan aliran pencak silat tradisional dari seluruh nusantara. Tidak hanya kompetisi, acara ini juga diisi dengan workshop dan pertunjukan budaya.',
+                'type' => 'official',
+                'month' => 'November',
+                'harga_contingent' => 100000,
+                'harga_peserta' => 75000,
+                'kotaOrKabupaten' => 'Yogyakarta',
+                'lokasi' => 'Alun-Alun Kidul, Yogyakarta',
+                'tgl_mulai_tanding' => Carbon::create(2025, 11, 15),
+                'tgl_selesai_tanding' => Carbon::create(2025, 11, 16),
+                'tgl_batas_pendaftaran' => Carbon::create(2025, 11, 1),
+                'status' => 'Segera Hadir',
+                'cp' => '08282828339 AN.Budi <br> 08737372819 AN.Gopal',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

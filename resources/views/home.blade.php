@@ -41,6 +41,7 @@
                         </ul>
                     </li> --}}
                 </ul>
+
                 <form class="d-flex">
                     <a class="nav-link" href="{{ url('/') }}" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png"
                             alt="lah" style="width: 25px"></a>
@@ -54,6 +55,12 @@
     {{-- content --}}
     <div class="container-fluid pb-5" style="background: linear-gradient(135deg, #000000 0%, #1f1f1f 50%, #dc2626 100%);">
         <div class="layout">
+            @if(session('status'))
+                <div class="alert alert-success alert-dismissible fade show mb-4 rounded-lg" role="alert">
+                    <span>{{ session('status') }}</span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Tutup"></button>
+                </div>
+            @endif
                 <div class="row mb-5">
                 <div class="container col-sm-6" style="margin-top: 100px">
                     <p class=" title-1 text-light m-0" style="font-size: 100px; "><b>JAWARA</b><p class="m-0" style="color: #dc2626; font-size: 100px;"><b>INDONESIA</b></p></p>

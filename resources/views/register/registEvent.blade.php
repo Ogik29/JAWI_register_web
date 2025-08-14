@@ -304,9 +304,7 @@
         }
 
         function registerEvent(eventId) {
-            const event = events.find(e => e.id === eventId);
-            alert(`Terima kasih! Anda berhasil mendaftar untuk event "${event.title}". Tim kami akan menghubungi Anda segera untuk konfirmasi pembayaran.`);
-            closeModal();
+            window.location.href = `/kontingen/${eventId}`;
         }
 
         function applyFilters() {

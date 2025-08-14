@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('gender');
             $table->string('no_telp')->nullable();
             $table->string('email')->nullable();
-            $table->string('jenis_pertandingan')->nullable();
+            // $table->string('jenis_pertandingan')->nullable();
             $table->foreignId('player_category_id')->constrained('player_categories')->cascadeOnDelete();
             $table->string('foto_ktp')->nullable();
             $table->string('foto_diri')->nullable();

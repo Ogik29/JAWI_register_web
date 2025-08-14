@@ -18,7 +18,6 @@ class Player extends Model
         'gender',
         'no_telp',
         'email',
-        'jenis_pertandingan',
         'player_category_id',
         'foto_ktp',
         'foto_diri',

@@ -12,7 +12,10 @@ class ClassCategory extends Model
     protected $table = 'class_categories';
 
     protected $fillable = [
-        'name', 'gender', 'event_id'
+        'name',
+        'gender',
+        'event_id',
+        'jenis_pertandingan'
     ];
 
     public function event()

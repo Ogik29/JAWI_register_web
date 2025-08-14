@@ -12,7 +12,8 @@ class ClassCategorySeeder extends Seeder
         ClassCategory::create([
             'name' => 'U-18',
             'gender' => 'Male',
-            'event_id' => 1
+            'event_id' => 1,
+            'jenis_pertandingan' => 'tanding'
         ]);
     }
 }

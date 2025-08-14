@@ -16,7 +16,6 @@ class PlayerSeeder extends Seeder
             'gender' => 'Male',
             'no_telp' => '08123456789',
             'email' => 'budi@example.com',
-            'jenis_pertandingan' => 'Sepak Bola',
             'player_category_id' => 1,
             'foto_ktp' => 'ktp_budi.jpg',
             'foto_diri' => 'budi.jpg',

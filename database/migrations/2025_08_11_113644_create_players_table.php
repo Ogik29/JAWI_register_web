@@ -20,7 +20,9 @@ return new class extends Migration {
             $table->string('foto_ktp')->nullable();
             $table->string('foto_diri')->nullable();
             $table->string('foto_persetujuan_ortu')->nullable();
-            $table->string('status')->nullable();
+            $table->boolean('status')->default(false);
+
+            $table->date('tgl_lahir')->nullable();
             $table->timestamps();
         });
     }

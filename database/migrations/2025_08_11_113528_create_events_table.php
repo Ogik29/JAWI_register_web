@@ -28,6 +28,7 @@ return new class extends Migration {
             $table->date('tgl_batas_pendaftaran');
             $table->string('status');
             $table->text('cp');
+            $table->string('juknis');
             $table->timestamps();
         });
     }

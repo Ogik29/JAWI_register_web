@@ -29,7 +29,8 @@ class Event extends Model
         'tgl_selesai_tanding',
         'tgl_batas_pendaftaran',
         'status',
-        'cp'
+        'cp',
+        'juknis'
     ];
 
     public function classCategories()

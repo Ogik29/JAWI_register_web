@@ -149,7 +149,8 @@
                 'classes' => ["Tanding", "Tunggal", "Ganda", "Regu"], // Data sample sesuai instruksi
                 'registrationStatus' => $registrationStatus,
                 'poster' => asset('assets/img/poster/' . $event->image), // Menggunakan helper asset()
-                'cp' => $event->cp
+                'cp' => $event->cp,
+                'juknis' => $event->juknis
             ];
         }
     @endphp
@@ -254,12 +255,16 @@
                                 <p><strong>Tanggal:</strong> ${event.date}</p>
                                 <p><strong>Lokasi:</strong> ${event.location}</p>
                                 <p><strong>Kota/Kabupaten:</strong> ${event.kotaOrKabupaten}</p>
+                                <p><strong>Petunjuk Teknis:</strong><a href="${event.juknis}" style="color: blue; text-decoration: underline;"> Link Drive</a></p>
                                 <p><strong>Status:</strong> ${event.status}</p>
                             </div>
                         </div>
                         
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h4 class="font-semibold text-gray-800 mb-2">💰 Biaya Pendaftaran</h4>
+                            <p class="text-2xl font-bold text-red-600">${event.harga_contingent}</p>
+                            <p class="text-sm text-gray-600 mt-1">Per kontingen</p>
+                            <br>
                             <p class="text-2xl font-bold text-red-600">${event.harga_peserta}</p>
                             <p class="text-sm text-gray-600 mt-1">Per peserta</p>
                         </div>

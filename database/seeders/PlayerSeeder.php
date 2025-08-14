@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use Carbon\Carbon;
 use App\Models\Player;
+use Illuminate\Database\Seeder;
 
 class PlayerSeeder extends Seeder
 {
@@ -19,7 +20,8 @@ class PlayerSeeder extends Seeder
             'player_category_id' => 1,
             'foto_ktp' => 'ktp_budi.jpg',
             'foto_diri' => 'budi.jpg',
-            'status' => 'Aktif'
+            // 'status' => 'Aktif',
+            'tgl_lahir' => Carbon::create(2004, 11, 15)
         ]);
     }
 }

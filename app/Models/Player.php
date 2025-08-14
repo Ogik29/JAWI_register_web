@@ -22,7 +22,8 @@ class Player extends Model
         'foto_ktp',
         'foto_diri',
         'foto_persetujuan_ortu',
-        'status'
+        'status',
+        'tgl_lahir'
     ];
 
     public function contingent()

@@ -59,12 +59,25 @@ class EventController extends Controller
     public function pesertaEvent($contingent_id)
     {
         $contingent = Contingent::findOrFail($contingent_id);
-        return view('register.registPeserta', compact('contingent'));
+        $event = $contingent->event;
+        return view('register.registPeserta', compact('contingent', 'event'));
     }
 
     public function storePeserta(Request $request)
     {
         // Validasi dan simpan data peserta
+        $data = $request->validate([
+            'contingent_id' => 'required|integer|exists:contingents,id',
+            'email' => 'required|email|max:255',
+            'jenisKelamin' => 'required|string|max:10',
+            'nama' => 'required|string|max:255',
+            'tanggalLahir' => 'required|date',
+            'kelas' => 'required|string|max:50',
+            'uploadKTP' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'uploadFoto' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'upload_Persetujuan' => 'required|file|mimes:jpg,jpeg,png|max:2048'
+        ]);
+
         return $request->all();
     }
 }

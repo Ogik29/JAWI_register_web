@@ -149,7 +149,9 @@
                 <h1><i class="fas fa-fist-raised me-3"></i>Pendaftaran Kejuaraan Pencak Silat</h1>
                 <p class="mb-0">Sistem Pendaftaran Atlet Pencak Silat Indonesia</p>
             </div>
-            
+
+            {{ $event->classCategories[0]->playerCategories }}
+
             <div class="p-4">
                 <form id="registrationForm">
                     <!-- Informasi Kontingen -->
@@ -259,6 +261,21 @@
             { value: 'solo-kreatif', text: 'Solo Kreatif' }
         ];
         
+
+        // Data kategori + kelas dalam bentuk JSON dari Blade
+    const categoriesData = @json($event->classCategories);
+
+
+    const kelasOptionHtml = `
+        <option value="">Pilih Kelas</option>
+        @foreach ($event->classCategories as $kategori)
+            @foreach ($kategori->playerCategories as $kelas)
+                <option value="{{ $kelas->id }}">{{ $kelas->category }} {{ $kelas->range }} ({{ $kategori->name }})</option>
+            @endforeach
+        @endforeach
+    `;
+
+
         function addAthlete() {
             athleteCount++;
             athleteIdCounter++;
@@ -308,13 +325,7 @@
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Kategori</label>
                                 <select class="form-select" name="kategori_${uniqueId}" onchange="updateCompetitionOptions(${uniqueId})" required>
-                                    <option value="">Pilih Kategori</option>
-                                    <option value="pra-usia-dini">Pra Usia Dini</option>
-                                    <option value="usia-dini-1">Usia Dini 1</option>
-                                    <option value="usia-dini-2">Usia Dini 2</option>
-                                    <option value="pra-remaja">Pra Remaja</option>
-                                    <option value="remaja">Remaja</option>
-                                    <option value="dewasa">Dewasa</option>
+                                    ${kelasOptionHtml}
                                 </select>
                                 <div id="ageWarning_${uniqueId}"></div>
                             </div>
@@ -325,13 +336,6 @@
                                     <option value="tanding">Tanding</option>
                                     <option value="seni">Seni</option>
                                 </select>
-                            </div>
-                            <div class="col-12 mb-3">
-                                <label class="form-label fw-bold">Kelas</label>
-                                <select class="form-select" name="kelas_${uniqueId}" required>
-                                    <option value="">Pilih Kelas</option>
-                                </select>
-                                <div id="classRestriction_${uniqueId}"></div>
                             </div>
                             
                             <!-- Upload Files -->
@@ -358,7 +362,7 @@
                                 <div class="upload-area">
                                     <i class="fas fa-camera fa-2x text-danger mb-2"></i>
                                     <p class="mb-2">Klik untuk upload Foto</p>
-                                    <input type="file" class="form-control" name="uploadFoto_${uniqueId}" accept=".jpg,.jpeg,.png" onchange="showFileInfo(this, 'fotoInfo_${uniqueId}')" required>
+                                    <input type="file" class="form-control" name="upload_Persetujuan${uniqueId}" accept=".jpg,.jpeg,.png" onchange="showFileInfo(this, 'fotoInfo_${uniqueId}')" required>
                                 </div>
                                 <div id="fotoInfo_${uniqueId}"></div>
                             </div>
@@ -369,7 +373,8 @@
             
             document.getElementById('athletesContainer').insertAdjacentHTML('beforeend', athleteHtml);
         }
-        
+
+
         function removeAthlete(athleteId) {
             if (athleteCount > 1) {
                 document.getElementById(`athlete-${athleteId}`).remove();
@@ -397,7 +402,7 @@
             if (birthDate && category) {
                 const today = new Date();
                 const birth = new Date(birthDate);
-                const age = today.getFullYear() - birth.getFullYear();
+                let age = today.getFullYear() - birth.getFullYear();
                 const monthDiff = today.getMonth() - birth.getMonth();
                 
                 if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
@@ -528,10 +533,11 @@
                     jenisKelamin: formData.get(`jenisKelamin_${athleteId}`),
                     tanggalLahir: formData.get(`tanggalLahir_${athleteId}`),
                     kategori: formData.get(`kategori_${athleteId}`),
-                    jenisPertandingan: formData.get(`jenisPertandingan_${athleteId}`),
-                    kelas: formData.get(`kelas_${athleteId}`),
+                    jenisPertandingan_id: formData.get(`jenisPertandingan_${athleteId}`),
+                    player_category_id: formData.get(`kelas_${athleteId}`),
                     uploadKTP: formData.get(`uploadKTP_${athleteId}`)?.name || '',
-                    uploadFoto: formData.get(`uploadFoto_${athleteId}`)?.name || ''
+                    uploadFoto: formData.get(`uploadFoto_${athleteId}`)?.name || '',
+                    uploadPersetujuan: formData.get(`upload_Persetujuan${athleteId}`)?.name || ''
                 };
                 registrationData.athletes.push(athlete);
             });

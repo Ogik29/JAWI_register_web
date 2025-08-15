@@ -44,10 +44,9 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::get('/history', [historyController::class, 'index'])->name('history');
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
-    Route::get('/invoice', function () {
-        return view('invoice.invoice');
-    });
+    Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');
 });
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/datapeserta', function () {

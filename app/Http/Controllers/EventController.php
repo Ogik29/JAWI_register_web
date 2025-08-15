@@ -99,6 +99,15 @@ return response()->json([
     public function storePeserta(Request $request)
     {
 
+        $totalHarga = 0;
+        $contingent = Contingent::findOrFail($request->athletes[0]['contingent_id']);
+        $hargaPlayer = $contingent->event->harga_peserta;
+
+        // return response()->json([
+        //     'status' => 'success',
+        //     'message' => 'Kontingen berhasil disimpan',
+        //     'contingent_id' => $hargaPlayer
+        // ]);
 
         foreach ($request->athletes as $athleteData) {
         $player = new Player();
@@ -110,6 +119,8 @@ return response()->json([
         $player->gender = $athleteData['jenisKelamin'];
         $player->tgl_lahir = $athleteData['tanggalLahir'];
         $player->player_category_id = $athleteData['player_category_id'];
+
+        
 
         // Upload file dengan uniqid
         if (isset($athleteData['uploadKTP']) && $athleteData['uploadKTP'] instanceof \Illuminate\Http\UploadedFile) {
@@ -142,43 +153,6 @@ return response()->json([
     return response()->json([
         'status' => 'success',
         'message' => 'Semua atlet berhasil disimpan'
-    ]);
-
-    // sadsdasdsadada ==================================
-
-
-        $athletes = $request->input('athletes', []);
-
-    $pesertaList = [];
-
-    foreach ($athletes as $index => $athlete) {
-        $fotoKtp  = $this->uploadImage($request->file("athletes.$index.foto_ktp"), 'uploads/foto_ktp');
-        $fotoDiri = $this->uploadImage($request->file("athletes.$index.foto_diri"), 'uploads/foto_diri');
-        $fotoPersetujuanOrtu = $this->uploadImage($request->file("athletes.$index.foto_persetujuan_ortu"), 'uploads/foto_ortu');
-
-        $peserta = Player::create([
-            'name'                  => $athlete['namaLengkap'] ?? null,
-            'contingent_id'         => $athlete['contingent_id'] ?? null,
-            'nik'                   => $athlete['nik'] ?? null,
-            'player_category_id'    => $athlete['player_category_id'] ?? null,
-            'gender'                => $athlete['jenisKelamin'] ?? null,
-            'no_telp'               => $athlete['noTelepon'] ?? null,
-            'email'                 => $athlete['email'] ?? null,
-            'tgl_lahir'             => $athlete['tanggalLahir'] ?? null,
-            'foto_ktp'              => $fotoKtp,
-            'foto_diri'             => $fotoDiri,
-            'foto_persetujuan_ortu' => $fotoPersetujuanOrtu,
-        ]);
-
-        $pesertaList[] = $peserta;
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Data peserta berhasil disimpan.',
-        'data'    => [
-            'athletes' => $pesertaList
-        ]
     ]);
 
     }

@@ -37,7 +37,7 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     public function contingent()
     {
-        return $this->hasOne(Contingent::class, 'user_id', 'id');
+        return $this->hasMany(Contingent::class, 'user_id', 'id');
     }
 
     public function eventRoles()

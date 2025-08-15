@@ -3,7 +3,6 @@
 @section('content')
 
 
-
 @if(session('success'))
     <script>
         alert("{{ session('success') }}");
@@ -55,10 +54,11 @@
                     {{-- PERUBAHAN: Sebaiknya ini bukan form, tapi dropdown menu untuk profil dan logout --}}
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="{{ Auth::user()->name }}" style="width: 25px">
+                            <img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="" style="width: 25px">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                            <li><a class="dropdown-item" href="#">History</a></li>
+                            <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
+                            <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="/logout"> Logout</a>
@@ -102,8 +102,10 @@
                         Jawara Indonesia atau di Sebut JAWI adalah platform digital yang dirancang khusus untuk mendukung penyelenggaraan turnamen Pencak Silat secara modern, efisien, dan profesional.
                     </p>
                     
-                    {{-- PERUBAHAN: Lebar tombol dibuat lebih fleksibel, misal w-50 di mobile dan w-auto/w-25 di desktop --}}
-                    <button type="button" class="text-white align-middle text-decoration-none btn btn-danger w-50 w-lg-25 btn-start mb-5" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="height: 50px;">Get Started</button>
+                    @guest
+                        {{-- PERUBAHAN: Lebar tombol dibuat lebih fleksibel, misal w-50 di mobile dan w-auto/w-25 di desktop --}}
+                        <button type="button" class="text-white align-middle text-decoration-none btn btn-danger w-50 w-lg-25 btn-start mb-5" data-bs-toggle="modal" data-bs-target="#staticBackdrop" style="height: 50px;">Get Started</button>  
+                    @endguest
                     
                     {{-- Modal Login --}}
                     @guest

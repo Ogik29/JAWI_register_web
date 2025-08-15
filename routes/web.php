@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\historyController;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
@@ -37,30 +38,39 @@ Route::post('/reset-password', [AuthController::class, 'reset'])->name('password
 Route::get('/event', [EventController::class, 'index']);
 // Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
-Route::middleware('checkRole:3')->group(function () {
+Route::middleware('checkRole:1,3')->group(function () {
     Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
     Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
+    Route::get('/history', [historyController::class, 'index'])->name('history');
+    Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
+    Route::post('/player_store', [EventController::class, 'storePeserta']);
+    Route::get('/invoice', function () {
+        return view('invoice.invoice');
+    });
 });
 
-Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
-Route::post('/player_store', [EventController::class, 'storePeserta']);
-
-
-Route::get('/datapeserta', function () {
-    return view('register.dataPeserta');
+Route::middleware('auth')->group(function () {
+    Route::get('/datapeserta', function () {
+        return view('register.dataPeserta');
+    });
 });
 
-Route::get('/superadmin', function () {
-    return view('superadmin.index');
+Route::middleware('checkRole:1')->group(function () {
+    Route::get('/superadmin', function () {
+        return view('superadmin.index');
+    });
+    Route::get('/admin', function () {
+        return view('admin.index');
+    });
 });
 
-Route::get('/admin', function () {
-    return view('admin.index');
+Route::middleware('checkRole:2')->group(function () {
+    Route::get('/admin', function () {
+        return view('admin.index');
+    });
+    Route::get('/history', [historyController::class, 'index'])->name('history');
 });
 
-Route::get('/invoice', function () {
-    return view('invoice.invoice');
-});
 
 Route::get('/tanding-pdf', function () {
     $filePath = storage_path('app/public/tanding.pdf');

@@ -13,16 +13,22 @@ class CheckRole
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $role): Response
+    // Menggunakan ...$roles untuk menerima satu atau lebih parameter role
+    public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // Pastikan user sudah login
+        // Cek apakah user sudah login.
         if (!auth()->check()) {
-            return redirect('/')->with('error', 'Anda harus login terlebih dahulu.');
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
-        // Cek apakah role user sesuai
-        if (auth()->user()->role_id !== $role && auth()->user()->status !== 1) {
+        // Cek apakah role_id user TIDAK ADA DI DALAM array $roles yang diizinkan.
+        if (!in_array(auth()->user()->role_id, $roles)) {
             abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        // Cek apakah status user tidak aktif.
+        if (auth()->user()->status !== 1) {
+            abort(403, 'Akun Anda tidak aktif. Akses ditolak.');
         }
 
         return $next($request);

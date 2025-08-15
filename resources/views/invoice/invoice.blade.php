@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - PT Maju Bersama</title>
+    {{-- Judul dinamis berdasarkan nama kontingen --}}
+    <title>Invoice - {{ $contingent->nama_kontingen }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -32,16 +33,19 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h1 class="text-3xl font-bold mb-2">INVOICE</h1>
-                        <p class="text-neutral-100">PT Maju Bersama</p>
-                        <p class="text-neutral-100 text-sm">Jl. Sudirman No. 123, Jakarta</p>
-                        <p class="text-neutral-100 text-sm">Telp: (021) 1234-5678</p>
+                        {{-- Data statis perusahaan Anda bisa ditaruh di sini --}}
+                        <p class="text-neutral-100">Nama Penyelenggara Acara</p>
+                        <p class="text-neutral-100 text-sm">Alamat Penyelenggara</p>
+                        <p class="text-neutral-100 text-sm">Telp: (021) XXXX-XXXX</p>
                     </div>
                     <div class="text-right">
                         <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">
-                            #INV-2024-001
+                            {{-- Nomor Invoice dinamis --}}
+                            #INV-{{ $contingent->id }}-{{ now()->format('Ymd') }}
                         </div>
-                        <p class="text-neutral-100 text-sm mt-2">Tanggal: 15 Januari 2024</p>
-                        <p class="text-neutral-100 text-sm">Jatuh Tempo: 30 Januari 2024</p>
+                        {{-- Tanggal dibuat menggunakan helper Carbon Laravel dengan format Indonesia --}}
+                        <p class="text-neutral-100 text-sm mt-2">Tanggal: {{ now()->translatedFormat('d F Y') }}</p>
+                        <p class="text-neutral-100 text-sm">Jatuh Tempo: {{ now()->addDays(14)->translatedFormat('d F Y') }}</p>
                     </div>
                 </div>
             </div>
@@ -52,18 +56,19 @@
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Tagihan Kepada:</h3>
                         <div class="text-gray-600">
-                            <p class="font-medium text-gray-800">CV Berkah Jaya</p>
-                            <p>Jl. Gatot Subroto No. 456</p>
-                            <p>Bandung, Jawa Barat 40123</p>
-                            <p>Email: info@berkahjaya.com</p>
+                            {{-- Data kontingen dari controller --}}
+                            <p class="font-medium text-gray-800">{{ $contingent->nama_kontingen }}</p>
+                            <p>{{ $contingent->alamat ?? 'Alamat tidak tersedia' }}</p>
+                            <p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p>
                         </div>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Detail Pembayaran:</h3>
                         <div class="text-gray-600">
+                            {{-- Data statis bank Anda --}}
                             <p><span class="font-medium">Bank:</span> BCA</p>
                             <p><span class="font-medium">No. Rekening:</span> 1234567890</p>
-                            <p><span class="font-medium">Atas Nama:</span> PT Maju Bersama</p>
+                            <p><span class="font-medium">Atas Nama:</span> Nama Penyelenggara Acara</p>
                         </div>
                     </div>
                 </div>
@@ -82,33 +87,23 @@
                             </tr>
                         </thead>
                         <tbody>
+                            {{-- Loop melalui data atlet yang dikirim dari controller --}}
+                            @forelse ($data as $item)
                             <tr class="border-b border-gray-100">
                                 <td class="py-4 px-2">
-                                    <div class="font-medium text-gray-800">Jasa Konsultasi IT</div>
-                                    <div class="text-sm text-gray-500">Konsultasi sistem informasi dan database</div>
+                                    <div class="font-medium text-gray-800">{{ $item['name'] }}</div>
+                                    <div class="text-sm text-gray-500">Pendaftaran Kelas: {{ $item['kelas'] }}</div>
                                 </td>
-                                <td class="text-center py-4 px-2 text-gray-600">20 jam</td>
-                                <td class="text-right py-4 px-2 text-gray-600">Rp 500.000</td>
-                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp 10.000.000</td>
+                                <td class="text-center py-4 px-2 text-gray-600">1</td>
+                                <td class="text-right py-4 px-2 text-gray-600">Rp {{ number_format($item['harga'], 0, ',', '.') }}</td>
+                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp {{ number_format($item['harga'], 0, ',', '.') }}</td>
                             </tr>
-                            <tr class="border-b border-gray-100">
-                                <td class="py-4 px-2">
-                                    <div class="font-medium text-gray-800">Pembuatan Website</div>
-                                    <div class="text-sm text-gray-500">Website company profile responsive</div>
-                                </td>
-                                <td class="text-center py-4 px-2 text-gray-600">1 paket</td>
-                                <td class="text-right py-4 px-2 text-gray-600">Rp 15.000.000</td>
-                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp 15.000.000</td>
+                            @empty
+                            {{-- Tampilan jika tidak ada atlet terdaftar --}}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data atlet yang terdaftar.</td>
                             </tr>
-                            <tr class="border-b border-gray-100">
-                                <td class="py-4 px-2">
-                                    <div class="font-medium text-gray-800">Maintenance & Support</div>
-                                    <div class="text-sm text-gray-500">Support teknis selama 6 bulan</div>
-                                </td>
-                                <td class="text-center py-4 px-2 text-gray-600">6 bulan</td>
-                                <td class="text-right py-4 px-2 text-gray-600">Rp 1.000.000</td>
-                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp 6.000.000</td>
-                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -116,27 +111,34 @@
                 <!-- Totals -->
                 <div class="mt-8 flex justify-end">
                     <div class="w-full max-w-sm">
+                        {{-- Kalkulasi PPN dan Grand Total --}}
+                        @php
+                            $ppn = $totalHarga * 0.11;
+                            $grandTotal = $totalHarga + $ppn;
+                        @endphp
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
-                            <span class="font-medium">Rp 31.000.000</span>
+                            <span class="font-medium">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
                         </div>
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">PPN (11%):</span>
-                            <span class="font-medium">Rp 3.410.000</span>
+                            <span class="font-medium">Rp {{ number_format($ppn, 0, ',', '.') }}</span>
                         </div>
                         <div class="flex justify-between py-3 border-b-2 border-gray-300">
                             <span class="text-lg font-semibold text-gray-800">Total:</span>
-                            <span class="text-lg font-bold text-neutral-600">Rp 34.410.000</span>
+                            <span class="text-lg font-bold text-neutral-600">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Payment Proof Upload Section -->
+            <!-- Payment Proof Upload Section (Fungsionalitas JS tetap sama) -->
             <div class="bg-gray-50 p-8 border-t border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
                 
-                <div class="max-w-2xl mx-auto">
+                {{-- Form untuk upload, Anda perlu menambahkan action dan csrf token --}}
+                <form action="{{-- route('nama.route.upload.bukti', $contingent->id) --}}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
+                    @csrf
                     <!-- Upload Area -->
                     <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
                         <div id="uploadContent">
@@ -145,7 +147,7 @@
                             </svg>
                             <p class="text-lg font-medium text-gray-700 mb-2">Klik untuk upload atau drag & drop</p>
                             <p class="text-sm text-gray-500 mb-4">Format: JPG, PNG, PDF (Max 5MB)</p>
-                            <button class="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
+                            <button type="button" class="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
                                 Pilih File
                             </button>
                         </div>
@@ -155,17 +157,17 @@
                             <img id="imagePreview" class="mx-auto max-w-full max-h-64 rounded-lg shadow-md mb-4" />
                             <p id="fileName" class="text-sm font-medium text-gray-700 mb-2"></p>
                             <p id="fileSize" class="text-xs text-gray-500 mb-4"></p>
-                            <button id="removeFile" class="text-red-600 hover:text-red-700 text-sm font-medium">
+                            <button id="removeFile" type="button" class="text-red-600 hover:text-red-700 text-sm font-medium">
                                 Hapus File
                             </button>
                         </div>
                     </div>
 
-                    <input type="file" id="fileInput" class="hidden" accept="image/*,.pdf" />
+                    <input type="file" name="bukti_transfer" id="fileInput" class="hidden" accept="image/*,.pdf" required />
 
                     <!-- Submit Button -->
                     <div class="mt-6 text-center">
-                        <button id="submitProof" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
                             Kirim Bukti Transfer
                         </button>
                     </div>
@@ -177,17 +179,18 @@
                         </svg>
                         Bukti transfer berhasil dikirim! Kami akan memverifikasi pembayaran Anda dalam 1x24 jam.
                     </div>
-                </div>
+                </form>
             </div>
 
             <!-- Footer -->
             <div class="bg-gray-800 text-white p-6 text-center">
-                <p class="text-sm">Terima kasih atas kepercayaan Anda kepada PT Maju Bersama</p>
+                <p class="text-sm">Terima kasih atas kepercayaan Anda</p>
                 <p class="text-xs text-gray-400 mt-1">Invoice ini dibuat secara otomatis dan sah tanpa tanda tangan</p>
             </div>
         </div>
     </div>
 
+    {{-- Script JS tetap sama, tidak perlu diubah karena hanya menangani interaksi UI --}}
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -199,6 +202,7 @@
         const removeFile = document.getElementById('removeFile');
         const submitProof = document.getElementById('submitProof');
         const successMessage = document.getElementById('successMessage');
+        const form = submitProof.closest('form');
 
         // Click to upload
         uploadArea.addEventListener('click', () => {
@@ -206,47 +210,35 @@
         });
 
         // Drag and drop functionality
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
+        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
         });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
+        uploadArea.addEventListener('dragover', () => uploadArea.classList.add('dragover'));
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
         uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
             uploadArea.classList.remove('dragover');
             const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
-            }
+            if (files.length > 0) handleFile(files[0]);
         });
 
         // File input change
         fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFile(e.target.files[0]);
-            }
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
         });
 
-        // Handle file upload
         function handleFile(file) {
-            // Check file size (5MB limit)
             if (file.size > 5 * 1024 * 1024) {
                 alert('File terlalu besar! Maksimal 5MB.');
                 return;
             }
-
-            // Check file type
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
             if (!allowedTypes.includes(file.type)) {
                 alert('Format file tidak didukung! Gunakan JPG, PNG, atau PDF.');
                 return;
             }
-
-            // Show preview for images
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -255,7 +247,6 @@
                 };
                 reader.readAsDataURL(file);
             } else {
-                // For PDF, show file icon
                 imagePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQwIDhIMTJDOS43OTA4NiA4IDggOS43OTA4NiA4IDEyVjUyQzggNTQuMjA5MSA5Ljc5MDg2IDU2IDEyIDU2SDUyQzU0LjIwOTEgNTYgNTYgNTQuMjA5MSA1NiA1MlYyMEw0MCA4WiIgZmlsbD0iI0Y1NjU2NSIvPgo8cGF0aCBkPSJNNDAgOFYyMEg1NiIgZmlsbD0iI0ZCQkZCRiIvPgo8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBERjwvdGV4dD4KPC9zdmc+';
                 showPreview(file);
             }
@@ -264,13 +255,11 @@
         function showPreview(file) {
             fileName.textContent = file.name;
             fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
-            
             uploadContent.classList.add('hidden');
             previewArea.classList.remove('hidden');
             submitProof.disabled = false;
         }
 
-        // Remove file
         removeFile.addEventListener('click', (e) => {
             e.stopPropagation();
             fileInput.value = '';
@@ -280,22 +269,26 @@
             successMessage.classList.add('hidden');
         });
 
-        // Submit proof
-        submitProof.addEventListener('click', () => {
-            // Simulate upload process
+        // Menggunakan event submit pada form, bukan click pada button
+        // Ini adalah praktik yang lebih baik
+        form.addEventListener('submit', function(e) {
+            // Hentikan submit default jika Anda ingin handle dengan AJAX
+            // e.preventDefault(); 
+            
             submitProof.disabled = true;
             submitProof.textContent = 'Mengirim...';
             
+            // Hapus setTimeout jika form disubmit secara normal
+            // Jika Anda menggunakan AJAX, taruh logika success di sini
+            /*
             setTimeout(() => {
                 successMessage.classList.remove('hidden');
                 submitProof.textContent = 'Terkirim ✓';
-                submitProof.classList.remove('bg-green-600', 'hover:bg-green-700');
                 submitProof.classList.add('bg-gray-400');
-                
-                // Scroll to success message
                 successMessage.scrollIntoView({ behavior: 'smooth' });
             }, 2000);
+            */
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96c8f142324c16ec',t:'MTc1NDc2MDIxOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

@@ -150,7 +150,6 @@
                 <p class="mb-0">Sistem Pendaftaran Atlet Pencak Silat Indonesia</p>
             </div>
 
-            {{ $event->classCategories[0]->playerCategories }}
 
             <div class="p-4">
                 <form id="registrationForm">
@@ -189,6 +188,47 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    {{-- Di bagian atas file blade Anda, sebelum tag <script> --}}
+
+@php
+    // Membuat HTML untuk Radio Button Kategori Pertandingan
+    $kategoriRadioHtml = '<div class="row">';
+    foreach ($kategoriPertandingan as $kategori) {
+        $kategoriRadioHtml .= '<div class="col-auto"><div class="form-check form-check-inline">';
+        $kategoriRadioHtml .= '<input class="form-check-input" type="radio" name="filter_kategori_{{uniqueId}}" id="kategori_' . $kategori->id . '_{{uniqueId}}" value="' . $kategori->id . '" onchange="filterKelas({{uniqueId}})">';
+        $kategoriRadioHtml .= '<label class="form-check-label" for="kategori_' . $kategori->id . '_{{uniqueId}}">' . e($kategori->nama_kategori) . '</label>';
+        $kategoriRadioHtml .= '</div></div>';
+    }
+    $kategoriRadioHtml .= '</div>';
+
+    // Membuat HTML untuk Radio Button Jenis Pertandingan
+    $jenisRadioHtml = '<div class="row">';
+    foreach ($jenisPertandingan as $jenis) {
+        $jenisRadioHtml .= '<div class="col-auto"><div class="form-check form-check-inline">';
+        $jenisRadioHtml .= '<input class="form-check-input" type="radio" name="filter_jenis_{{uniqueId}}" id="jenis_' . $jenis->id . '_{{uniqueId}}" value="' . $jenis->id . '" onchange="filterKelas({{uniqueId}})">';
+        $jenisRadioHtml .= '<label class="form-check-label" for="jenis_' . $jenis->id . '_{{uniqueId}}">' . e($jenis->nama_jenis) . '</label>';
+        $jenisRadioHtml .= '</div></div>';
+    }
+    $jenisRadioHtml .= '</div>';
+
+    // Modifikasi kelasOptionHtml untuk menyertakan data-attributes untuk filtering
+    $kelasOptionHtml = '<option value="">Pilih Kelas Pertandingan</option>';
+    // Gunakan $kelasPertandingan yang sudah di-pass dari controller
+    foreach ($kelasPertandingan as $kelas) {
+        $kelasOptionHtml .= '<option value="' . $kelas->id . '" ';
+        $kelasOptionHtml .= 'data-kategori-id="' . $kelas->kategori_pertandingan_id . '" ';
+        $kelasOptionHtml .= 'data-jenis-id="' . $kelas->jenis_pertandingan_id . '" ';
+        $kelasOptionHtml .= 'style="display: block;">'; // Tampilkan semua secara default
+        $kelasOptionHtml .= e($kelas->nama_kelas) . ' (' . e($kelas->rentang_usia) . ' - ' . e($kelas->gender) . ')';
+        $kelasOptionHtml .= '</option>';
+    }
+@endphp
+
+
+
     <script>
         let athleteCount = 0;
         let athleteIdCounter = 0; // Counter untuk ID unik
@@ -266,20 +306,30 @@
     const categoriesData = @json($event->classCategories);
 
 
-    const kelasOptionHtml = `
-        <option value="">Pilih Kelas</option>
-        @foreach ($event->classCategories as $kategori)
-            @foreach ($kategori->playerCategories as $kelas)
-                <option value="{{ $kelas->id }}">{{ $kelas->category }} {{ $kelas->range }} ({{ $kategori->name }}) => {{ $kategori->jenis_pertandingan }}</option>
-            @endforeach
-        @endforeach
-    `;
+    // const kelasOptionHtml = `
+    //     <option value="">Pilih Kelas</option>
+    //     @foreach ($event->classCategories as $kategori)
+    //         @foreach ($kategori->playerCategories as $kelas)
+    //             <option value="{{ $kelas->id }}">{{ $kelas->category }} {{ $kelas->range }} ({{ $kategori->name }}) => {{ $kategori->jenis_pertandingan }}</option>
+    //         @endforeach
+    //     @endforeach
+    // `;
+
+
+    const kategoriRadioHtml = `{!! addslashes(str_replace("\n", "", $kategoriRadioHtml)) !!}`;
+    const jenisRadioHtml = `{!! addslashes(str_replace("\n", "", $jenisRadioHtml)) !!}`;
+    const kelasOptionHtml = `{!! addslashes(str_replace("\n", "", $kelasOptionHtml)) !!}`;
+
 
 
         function addAthlete() {
             athleteCount++;
             athleteIdCounter++;
             const uniqueId = athleteIdCounter;
+
+
+           const finalKategoriRadioHtml = kategoriRadioHtml.replace(/@{{uniqueId}}/g, uniqueId);
+            const finalJenisRadioHtml = jenisRadioHtml.replace(/@{{uniqueId}}/g, uniqueId);
 
             const athleteHtml = `
                 <div class="athlete-card" id="athlete-${uniqueId}" data-athlete-id="${uniqueId}">
@@ -320,15 +370,26 @@
                                 <label class="form-label fw-bold">Tanggal Lahir</label>
                                 <input type="date" class="form-control" name="tanggalLahir_${uniqueId}" onchange="calculateAge(${uniqueId})" required>
                             </div>
-                            
+                
+
                             <!-- Kategori dan Pertandingan -->
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label fw-bold">Kategori</label>
-                                <select class="form-select" name="kategori_${uniqueId}" onchange="updateCompetitionOptions(${uniqueId})" required>
-                                    ${kelasOptionHtml}
-                                </select>
-                                <div id="ageWarning_${uniqueId}"></div>
-                            </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Filter Kategori Pertandingan</label>
+                        ${finalKategoriRadioHtml}
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Filter Jenis Pertandingan</label>
+                        ${finalJenisRadioHtml}
+                    </div>
+                    
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold">Kelas Pertandingan</label>
+                        <select class="form-select" name="kelas_pertandingan_${uniqueId}" id="kelas_pertandingan_${uniqueId}" required>
+                            ${kelasOptionHtml}
+                        </select>
+                        <div id="ageWarning_${uniqueId}"></div>
+                    </div>
+
                             
                             <!-- Upload Files -->
                             <div class="col-md-4 mb-3">
@@ -365,6 +426,46 @@
             
             document.getElementById('athletesContainer').insertAdjacentHTML('beforeend', athleteHtml);
         }
+
+
+
+        function filterKelas(athleteId) {
+    // Dapatkan nilai radio button yang dipilih
+    const selectedKategori = document.querySelector(`input[name="filter_kategori_${athleteId}"]:checked`);
+    const kategoriId = selectedKategori ? selectedKategori.value : null;
+
+    const selectedJenis = document.querySelector(`input[name="filter_jenis_${athleteId}"]:checked`);
+    const jenisId = selectedJenis ? selectedJenis.value : null;
+    
+    // Dapatkan elemen select
+    const selectKelas = document.getElementById(`kelas_pertandingan_${athleteId}`);
+    const options = selectKelas.getElementsByTagName('option');
+    
+    // Reset pilihan
+    selectKelas.value = "";
+
+    // Iterasi melalui semua opsi dan tampilkan/sembunyikan berdasarkan filter
+    for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        if (option.value === "") { // Selalu tampilkan opsi "Pilih Kelas"
+            option.style.display = 'block';
+            continue;
+        }
+
+        const optionKategoriId = option.getAttribute('data-kategori-id');
+        const optionJenisId = option.getAttribute('data-jenis-id');
+
+        // Logika untuk menampilkan opsi
+        const showByKategori = !kategoriId || (kategoriId === optionKategoriId);
+        const showByJenis = !jenisId || (jenisId === optionJenisId);
+
+        if (showByKategori && showByJenis) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    }
+}
 
 
         function removeAthlete(athleteId) {
@@ -527,7 +628,9 @@ athleteCards.forEach((card, index) => {
     formDataToSend.append(`athletes[${index}][email]`, formDataToSend.get(`email_${athleteId}`));
     formDataToSend.append(`athletes[${index}][jenisKelamin]`, formDataToSend.get(`jenisKelamin_${athleteId}`));
     formDataToSend.append(`athletes[${index}][tanggalLahir]`, formDataToSend.get(`tanggalLahir_${athleteId}`));
-    formDataToSend.append(`athletes[${index}][player_category_id]`, formDataToSend.get(`kategori_${athleteId}`));
+    
+
+      formDataToSend.append(`athletes[${index}][kelas_pertandingan_id]`, formDataToSend.get(`kelas_pertandingan_${athleteId}`));
 
     // Append file (bukan cuma nama file)
     formDataToSend.append(`athletes[${index}][uploadKTP]`, document.querySelector(`[name="uploadKTP_${athleteId}"]`).files[0]);
@@ -553,6 +656,7 @@ fetch('/player_store', {
 })
 .then(data => {
     console.log('Sukses:', data);
+    window.location.href = `/invoice/${data.contingent}`;
 })
 .catch(error => {
     console.error('Error:', error);

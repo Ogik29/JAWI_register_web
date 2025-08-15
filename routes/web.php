@@ -58,9 +58,7 @@ Route::get('/admin', function () {
     return view('admin.index');
 });
 
-Route::get('/invoice', function () {
-    return view('invoice.invoice');
-});
+Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice']);
 
 Route::get('/tanding-pdf', function () {
     $filePath = storage_path('app/public/tanding.pdf');

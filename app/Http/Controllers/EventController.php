@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use App\Models\Contingent;
+use App\Models\JenisPertandingan;
+use App\Models\KategoriPertandingan;
 use App\Models\Player;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
@@ -93,21 +95,22 @@ return response()->json([
     {
         $contingent = Contingent::findOrFail($contingent_id);
         $event = $contingent->event;
-        return view('register.registPeserta', compact('contingent', 'event'));
+        $kategoriPertandingan = KategoriPertandingan::all();
+        $jenisPertandingan = JenisPertandingan::all();
+       $kelasPertandingan = $event->kelasPertandingan()
+    ->with('kategoriPertandingan', 'jenisPertandingan')
+    ->get();
+        return view('register.registPeserta', compact('contingent', 'event', 'kategoriPertandingan', 'jenisPertandingan', 'kelasPertandingan'));
     }
 
     public function storePeserta(Request $request)
     {
 
-        $totalHarga = 0;
-        $contingent = Contingent::findOrFail($request->athletes[0]['contingent_id']);
-        $hargaPlayer = $contingent->event->harga_peserta;
+        // return $request->all();
 
-        // return response()->json([
-        //     'status' => 'success',
-        //     'message' => 'Kontingen berhasil disimpan',
-        //     'contingent_id' => $hargaPlayer
-        // ]);
+         // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
+        $processedAthletesDetails = [];
+        $totalHarga = 0;
 
         foreach ($request->athletes as $athleteData) {
         $player = new Player();
@@ -118,9 +121,10 @@ return response()->json([
         $player->email = $athleteData['email'];
         $player->gender = $athleteData['jenisKelamin'];
         $player->tgl_lahir = $athleteData['tanggalLahir'];
-        $player->player_category_id = $athleteData['player_category_id'];
 
-        
+        $player->kelas_pertandingan_id = $athleteData['kelas_pertandingan_id'];
+
+        $contingent_id = $athleteData['contingent_id'];
 
         // Upload file dengan uniqid
         if (isset($athleteData['uploadKTP']) && $athleteData['uploadKTP'] instanceof \Illuminate\Http\UploadedFile) {
@@ -152,7 +156,8 @@ return response()->json([
 
     return response()->json([
         'status' => 'success',
-        'message' => 'Semua atlet berhasil disimpan'
+        'message' => 'Semua atlet berhasil disimpan',
+        'contingent' => $contingent_id
     ]);
 
     }
@@ -169,4 +174,28 @@ return response()->json([
 
     return $path . '/' . $fileName; // simpan path relatif
 }
+
+
+    public function show_invoice($contingent_id)
+    {
+        $contingent = Contingent::findOrFail($contingent_id);
+        $players = $contingent->players;
+        $totalHarga = 0;
+        
+        foreach ($players as $player) {
+            $data[] = [
+                'name' => $player->name,
+                'nik' => $player->nik,
+                'kelas' => $player->kelasPertandingan->nama_kelas ?? '-',
+                'harga' => $player->kelasPertandingan->harga ?? 0
+            ];
+
+            $totalHarga += $player->kelasPertandingan->harga ?? 0;
+        }
+
+
+        return view('invoice.invoice', compact('contingent', 'players', 'data', 'totalHarga'));
+    }
+
+
 }

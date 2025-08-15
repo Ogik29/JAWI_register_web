@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Event;
 use App\Models\Contingent;
 use App\Models\Player;
+use App\Models\Transaction;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,30 +34,58 @@ class EventController extends Controller
 
     public function storeKontingen(Request $request, $event_id)
     {
-        // Validasi dan simpan data kontingen
-        $data = $request->validate([
-            'namaKontingen' => 'required|string|max:255',
-            'namaManajer' => 'required|string|max:255',
-            'noTelepon' => 'required|string|max:15',
-            'email' => 'required|email|max:255',
-            'user_id' => 'required|integer|exists:users,id',
-            'event_id' => 'required|integer|exists:events,id'
-        ]);
+        $event = Event::findOrFail($event_id);
 
-        // Simpan data kontingen ke database
-        Contingent::create([
-            'name' => $data['namaKontingen'],
-            'manajer_name' => $data['namaManajer'],
-            'email' => $data['email'],
-            'no_telp' => $data['noTelepon'],
-            'user_id' => $data['user_id'],
-            'event_id' => $data['event_id']
-        ]);
+// Validasi dasar
+$rules = [
+    'namaKontingen' => 'required|string|max:255',
+    'namaManajer'   => 'required|string|max:255',
+    'noTelepon'     => 'required|string|max:15',
+    'email'         => 'required|email|max:255',
+    'user_id'       => 'required|integer|exists:users,id',
+    'event_id'      => 'required|integer|exists:events,id',
+];
 
-        return response()->json([
-            'success' => true,
-            'data' => $data
-        ]);
+// Kalau harga > 0, wajib upload foto invoice
+if ($event->harga > 0) {
+    $rules['fotoInvoice'] = 'required|image|mimes:jpg,jpeg,png|max:2048';
+}
+
+$data = $request->validate($rules);
+
+// Simpan data kontingen
+$contingent = Contingent::create([
+    'name'          => $data['namaKontingen'],
+    'manajer_name'  => $data['namaManajer'],
+    'email'         => $data['email'],
+    'no_telp'       => $data['noTelepon'],
+    'user_id'       => $data['user_id'],
+    'event_id'      => $data['event_id'],
+]);
+
+// Simpan foto invoice jika harga > 0
+$fotoInvoicePath = null;
+if ($event->harga_contingent > 0 && $request->hasFile('fotoInvoice')) {
+    $file     = $request->file('fotoInvoice');
+    $ext      = $file->getClientOriginalExtension();
+    $fileName = uniqid('invoice_') . '.' . $ext;
+    $fotoInvoicePath = $file->storeAs('invoices', $fileName, 'public');
+}
+
+// Buat transaksi
+$transaction = Transaction::create([
+    'contingent_id' => $contingent->id,
+    'total'         => 0, // bisa diupdate nanti
+    'date'          => now(),
+    'foto_invoice'  => $fotoInvoicePath,
+]);
+
+return response()->json([
+    'success'     => true,
+    'contingent'  => $contingent,
+    'transaction' => $transaction
+]);
+
     }
 
 

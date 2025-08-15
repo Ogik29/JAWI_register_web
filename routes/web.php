@@ -37,7 +37,7 @@ Route::post('/reset-password', [AuthController::class, 'reset'])->name('password
 Route::get('/event', [EventController::class, 'index']);
 // Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
-Route::middleware('checkRole:2')->group(function () {
+Route::middleware('checkRole:3')->group(function () {
     Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
     Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
 });

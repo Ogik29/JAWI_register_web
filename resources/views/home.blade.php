@@ -1,6 +1,22 @@
 @extends('main')
 
 @section('content')
+
+
+
+@if(session('success'))
+    <script>
+        alert("{{ session('success') }}");
+    </script>
+@endif
+
+@if(session('error'))
+    <script>
+        alert("{{ session('error') }}");
+    </script>
+@endif
+
+
     {{-- navbar --}}
     <nav class="navbar navbar-expand-lg navbar-dark p-0">
         <div class="container-fluid bg-dark">

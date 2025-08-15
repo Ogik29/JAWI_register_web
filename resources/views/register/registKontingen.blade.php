@@ -182,7 +182,7 @@
                     </div>
                     
                     <!-- Registration Form -->
-                    <form id="registrationForm" method="POST">
+                    <form id="registrationForm" method="POST" enctype="multipart/form-data">
                         @csrf
                         <!-- Nama Kontingen -->
                         <input type="hidden" name="user_id" value="1">
@@ -225,6 +225,16 @@
                             <input type="email" class="form-control" id="email" name="email" 
                                    placeholder="contoh@email.com" required>
                         </div>
+
+                        <!-- Upload Foto Invoice -->
+<div class="mb-4">
+    <label for="fotoInvoice" class="form-label fw-semibold">
+        <i class="bi bi-file-earmark-image-fill text-danger me-1"></i>
+        Kirim Bukti Pembayaran
+    </label>
+    <input type="file" class="form-control" id="fotoInvoice" name="fotoInvoice" 
+           accept="image/*" required>
+</div>
                         
                         <!-- Submit Button -->
                         <div class="d-grid">
@@ -266,31 +276,33 @@
             e.preventDefault();
             
             // Get form data
-            const formData = new FormData(this);
-            const data = {
-                namaKontingen: formData.get('namaKontingen'),
-                namaManajer: formData.get('namaManajer'),
-                noTelepon: formData.get('noTelepon'),
-                email: formData.get('email'),
-                user_id: formData.get('user_id'),
-                event_id: formData.get('event_id')
-            };
+            document.getElementById('registrationForm').addEventListener('submit', function(e) {
+    e.preventDefault();
 
-            // Kirim data ke endpoint /kontingen/event_id via POST
-            fetch(`/kontingen/${data.event_id}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(result => {
-                console.log('Pendaftaran berhasil:', result);
-            })
-            .catch(error => {
-                console.error('Terjadi kesalahan:', error);
-            });
+    const formData = new FormData(this); // langsung ambil semua field + file
+
+    fetch(`/kontingen/${formData.get('event_id')}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+        },
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Gagal mendaftar');
+        }
+        return response.json();
+    })
+    .then(result => {
+        console.log('Pendaftaran berhasil:', result);
+        alert('Pendaftaran berhasil!');
+    })
+    .catch(error => {
+        console.error('Terjadi kesalahan:', error);
+        alert('Terjadi kesalahan, silakan coba lagi.');
+    });
+});
             
             // Show success message
             const successMessage = document.getElementById('successMessage');

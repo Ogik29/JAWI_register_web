@@ -45,9 +45,6 @@ Route::middleware('checkRole:3')->group(function () {
 Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
 Route::post('/player_store', [EventController::class, 'storePeserta']);
 
-Route::get('/tumbal', function () {
-    return view('tumbal');
-});
 
 Route::get('/datapeserta', function () {
     return view('register.dataPeserta');

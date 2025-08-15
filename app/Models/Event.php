@@ -42,4 +42,9 @@ class Event extends Model
     {
         return $this->hasMany(EventRole::class, 'event_id', 'id');
     }
+
+    public function kelasPertandingan()
+    {
+        return $this->hasMany(KelasPertandingan::class, 'event_id', 'id');
+    }
 }

@@ -10,11 +10,29 @@ class ContingentSeeder extends Seeder
     public function run(): void
     {
         Contingent::create([
-            'name' => 'Tim SMA Negeri 1',
-            'manajer_name' => 'Manager A',
-            'email' => 'manager@sma1.sch.id',
-            'no_telp' => '08123456789',
-            'user_id' => 2,
+            'name' => 'Perguruan Pencak Silat Nusantara',
+            'manajer_name' => 'Manager1',
+            'email' => 'manager1@example.com',
+            'no_telp' => '081234567891',
+            'user_id' => 7,
+            'event_id' => 1
+        ]);
+
+        Contingent::create([
+            'name' => 'Merah Putih One for All',
+            'manajer_name' => 'Manager1',
+            'email' => 'manager1@example.com',
+            'no_telp' => '081234567891',
+            'user_id' => 7,
+            'event_id' => 2
+        ]);
+
+        Contingent::create([
+            'name' => 'Horeg Moker',
+            'manajer_name' => 'Manager2',
+            'email' => 'manager2@example.com',
+            'no_telp' => '081234567892',
+            'user_id' => 8,
             'event_id' => 1
         ]);
     }

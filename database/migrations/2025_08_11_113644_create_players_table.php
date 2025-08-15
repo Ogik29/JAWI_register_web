@@ -16,13 +16,14 @@ return new class extends Migration {
             $table->string('no_telp')->nullable();
             $table->string('email')->nullable();
             // $table->string('jenis_pertandingan')->nullable();
-            $table->foreignId('player_category_id')->constrained('player_categories')->cascadeOnDelete();
+            $table->foreignId('player_category_id')->nullable()->constrained('player_categories')->cascadeOnDelete();
             $table->string('foto_ktp')->nullable();
             $table->string('foto_diri')->nullable();
             $table->string('foto_persetujuan_ortu')->nullable();
             $table->boolean('status')->default(false);
 
             $table->date('tgl_lahir')->nullable();
+            $table->foreignId('kelas_pertandingan_id')->constrained('kelas_pertandingan')->cascadeOnDelete();
             $table->timestamps();
         });
     }

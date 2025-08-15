@@ -21,7 +21,8 @@ class PlayerSeeder extends Seeder
             'foto_ktp' => 'ktp_budi.jpg',
             'foto_diri' => 'budi.jpg',
             // 'status' => 'Aktif',
-            'tgl_lahir' => Carbon::create(2004, 11, 15)
+            'tgl_lahir' => Carbon::create(2004, 11, 15),
+            'kelas_pertandingan_id' => 1
         ]);
     }
 }

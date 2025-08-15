@@ -47,7 +47,7 @@
                 @guest
                     <form class="d-flex">
                         <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png"
-                                alt="Login" style="width: 25px"></a>
+                        alt="Login" style="width: 25px"></a>
                     </form>
                 @endguest
 
@@ -58,7 +58,7 @@
                             <img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="{{ Auth::user()->name }}" style="width: 25px">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                            {{-- <li><a class="dropdown-item" href="#">Profil Saya</a></li> --}}
+                            <li><a class="dropdown-item" href="#">History</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <a class="dropdown-item" href="/logout"> Logout</a>

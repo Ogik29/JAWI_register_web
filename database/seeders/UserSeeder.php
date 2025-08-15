@@ -92,22 +92,6 @@ class UserSeeder extends Seeder
             ],
 
             [
-                'nama_lengkap' => 'Faiz',
-                'email' => 'faiz@example.com',
-                'password' => Hash::make('password123'), // Ganti dengan password yang aman
-                'alamat' => 'Jl. Merdeka No. 1, Jakarta',
-                'jenis_kelamin' => 'Laki-laki',
-                'tempat_lahir' => 'Jakarta',
-                'tanggal_lahir' => '1990-01-15',
-                'negara' => 'Indonesia',
-                'no_telp' => '081234567890',
-                'status' => 1,
-                'role_id' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-
-            [
                 'nama_lengkap' => 'atmint Jakarta',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password123'), // Ganti dengan password yang aman

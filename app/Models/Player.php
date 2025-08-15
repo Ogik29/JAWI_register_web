@@ -12,7 +12,7 @@ class Player extends Model
     protected $table = 'players';
 
     protected $fillable = [
-          'name',
+        'name',
         'contingent_id',
         'nik',
         'gender',
@@ -23,7 +23,8 @@ class Player extends Model
         'foto_diri',
         'foto_persetujuan_ortu',
         'status',
-        'tgl_lahir'
+        'tgl_lahir',
+        'kelas_pertandingan_id'
 
     ];
 
@@ -40,5 +41,10 @@ class Player extends Model
     public function transactionDetails()
     {
         return $this->hasMany(TransactionDetail::class, 'player_id', 'id');
+    }
+
+    public function kelasPertandingan()
+    {
+        return $this->belongsTo(KelasPertandingan::class, 'kelas_pertandingan_id', 'id');
     }
 }

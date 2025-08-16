@@ -10,6 +10,9 @@ use App\Models\Player;
 use App\Models\Transaction;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Http\Request;
 
@@ -38,9 +41,20 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($event_id);
 
-        // Validasi dasar
+        // Mengambil data dari user yang login untuk validasi
+        $request->merge([
+            'namaManajer' => Auth::user()->nama_lengkap,
+            'noTelepon'   => Auth::user()->no_telp,
+            'email'       => Auth::user()->email,
+        ]);
+
         $rules = [
-            'namaKontingen' => 'required|string|max:255',
+            'namaKontingen' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('contingent', 'name')->where('event_id', $event_id),
+            ],
             'namaManajer'   => 'required|string|max:255',
             'noTelepon'     => 'required|string|max:15',
             'email'         => 'required|email|max:255',
@@ -48,14 +62,22 @@ class EventController extends Controller
             'event_id'      => 'required|integer|exists:events,id',
         ];
 
-        // Kalau harga > 0, wajib upload foto invoice
-        if ($event->harga > 0) {
+        $messages = [
+            'namaKontingen.unique' => 'Nama kontingen ini sudah terdaftar di event ini. Silakan gunakan nama lain.',
+        ];
+
+        if ($event->harga_contingent > 0) {
             $rules['fotoInvoice'] = 'required|image|mimes:jpg,jpeg,png|max:2048';
         }
 
-        $data = $request->validate($rules);
+        $validator = Validator::make($request->all(), $rules, $messages);
 
-        // Simpan data kontingen
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $data = $validator->validated();
+
         $contingent = Contingent::create([
             'name'          => $data['namaKontingen'],
             'manajer_name'  => $data['namaManajer'],
@@ -65,27 +87,25 @@ class EventController extends Controller
             'event_id'      => $data['event_id'],
         ]);
 
-        // Simpan foto invoice jika harga > 0
         $fotoInvoicePath = null;
         if ($event->harga_contingent > 0 && $request->hasFile('fotoInvoice')) {
-            $file     = $request->file('fotoInvoice');
-            $ext      = $file->getClientOriginalExtension();
+            $file = $request->file('fotoInvoice');
+            $ext = $file->getClientOriginalExtension();
             $fileName = uniqid('invoice_') . '.' . $ext;
             $fotoInvoicePath = $file->storeAs('invoices', $fileName, 'public');
         }
 
-        // Buat transaksi
-        $transaction = Transaction::create([
+        Transaction::create([
             'contingent_id' => $contingent->id,
-            'total'         => 0, // bisa diupdate nanti
+            'total'         => 0,
             'date'          => now(),
             'foto_invoice'  => $fotoInvoicePath,
         ]);
 
         return response()->json([
-            'success'     => true,
-            'contingent'  => $contingent,
-            'transaction' => $transaction
+            'success'      => true,
+            'message'      => 'Pendaftaran berhasil! Anda akan dialihkan...',
+            'redirect_url' => route('peserta.event', ['contingent_id' => $contingent->id])
         ]);
     }
 

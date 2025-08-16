@@ -224,6 +224,7 @@ class EventController extends Controller
             $detail->price = $pemainData['price'];
             $detail->player_invoice_id = $invoice->id;
             $detail->save();
+            Player::find($pemainData['player_id'])->update(['status' => 1]);
         }
 
         // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
@@ -234,9 +235,12 @@ class EventController extends Controller
     public function show_invoice($contingent_id)
     {
         $contingent = Contingent::findOrFail($contingent_id);
-        $players = $contingent->players;
+        $players = $contingent->players()->where('status', 0)->get();
         $totalHarga = 0;
 
+        if ($players->isEmpty()) {
+            return redirect($contingent_id . '/peserta')->with('error', 'Tidak ada pemain yang terdaftar untuk kontingen ini.');
+        }
         foreach ($players as $player) {
             $data[] = [
                 'player_id' => $player->id,

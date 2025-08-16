@@ -145,6 +145,10 @@
 <body>
     <div class="container-fluid">
         <div class="main-container">
+
+        
+    
+
             <div class="header">
                 <h1><i class="fas fa-fist-raised me-3"></i>Pendaftaran Kejuaraan Pencak Silat</h1>
                 <p class="mb-0">Sistem Pendaftaran Atlet Pencak Silat Indonesia</p>
@@ -152,6 +156,12 @@
 
 
             <div class="p-4">
+                @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Error!</strong> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
                 <form id="registrationForm">
                     <!-- Informasi Kontingen -->
                     <div class="row mb-4">

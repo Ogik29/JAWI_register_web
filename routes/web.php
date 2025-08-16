@@ -45,6 +45,7 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
     Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');
+    Route::post('/invoice', [EventController::class, 'store_invoice'])->name('invoice.store');
 });
 
 
@@ -67,7 +68,6 @@ Route::middleware('checkRole:2')->group(function () {
     Route::get('/admin', function () {
         return view('admin.index');
     });
-    Route::get('/history', [historyController::class, 'index'])->name('history');
 });
 
 

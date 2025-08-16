@@ -26,6 +26,27 @@
 </head>
 <body class="bg-gray-50 min-h-screen py-8">
     <div class="max-w-4xl mx-auto px-4">
+
+
+          {{-- Pesan untuk Notifikasi SUKSES --}}
+    @if (session('success'))
+        <div id="alert-success" class="flex items-center p-4 mb-4 text-green-800 rounded-lg bg-green-100 border border-green-400" role="alert">
+            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+            </svg>
+            <span class="sr-only">Info</span>
+            <div class="ms-3 text-sm font-medium">
+                {{ session('success') }}
+            </div>
+            <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-green-100 text-green-500 rounded-lg focus:ring-2 focus:ring-green-400 p-1.5 hover:bg-green-200 inline-flex items-center justify-center h-8 w-8" data-dismiss-target="#alert-success" aria-label="Close">
+                <span class="sr-only">Close</span>
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                </svg>
+            </button>
+        </div>
+    @endif
+
         <!-- Invoice Container -->
         <div class="bg-white rounded-lg invoice-shadow overflow-hidden">
             <!-- Header -->
@@ -136,50 +157,72 @@
             <div class="bg-gray-50 p-8 border-t border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
                 
-                {{-- Form untuk upload, Anda perlu menambahkan action dan csrf token --}}
-                <form action="{{-- route('nama.route.upload.bukti', $contingent->id) --}}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
-                    @csrf
-                    <!-- Upload Area -->
-                    <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
-                        <div id="uploadContent">
-                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                            <p class="text-lg font-medium text-gray-700 mb-2">Klik untuk upload atau drag & drop</p>
-                            <p class="text-sm text-gray-500 mb-4">Format: JPG, PNG, PDF (Max 5MB)</p>
-                            <button type="button" class="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
-                                Pilih File
-                            </button>
-                        </div>
-                        
-                        <!-- Preview Area (hidden by default) -->
-                        <div id="previewArea" class="hidden">
-                            <img id="imagePreview" class="mx-auto max-w-full max-h-64 rounded-lg shadow-md mb-4" />
-                            <p id="fileName" class="text-sm font-medium text-gray-700 mb-2"></p>
-                            <p id="fileSize" class="text-xs text-gray-500 mb-4"></p>
-                            <button id="removeFile" type="button" class="text-red-600 hover:text-red-700 text-sm font-medium">
-                                Hapus File
-                            </button>
-                        </div>
-                    </div>
+               <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
+    @csrf
 
-                    <input type="file" name="bukti_transfer" id="fileInput" class="hidden" accept="image/*,.pdf" required />
+    {{-- 
+      Hidden Inputs untuk data invoice utama dan detail transaksi.
+      Data ini akan dikirim bersamaan dengan file bukti transfer.
+    --}}
 
-                    <!-- Submit Button -->
-                    <div class="mt-6 text-center">
-                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                            Kirim Bukti Transfer
-                        </button>
-                    </div>
+    {{-- 1. Hidden input untuk total harga (untuk tabel invoice_player) --}}
+    {{-- Asumsi variabel $grandTotal sudah dihitung sebelumnya --}}
+    @php
+        $ppn = $totalHarga * 0.11;
+        $grandTotal = $totalHarga + $ppn;
+    @endphp
+    <input type="hidden" name="total_price" value="{{ $grandTotal }}">
 
-                    <!-- Success Message (hidden by default) -->
-                    <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
-                        <svg class="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                        </svg>
-                        Bukti transfer berhasil dikirim! Kami akan memverifikasi pembayaran Anda dalam 1x24 jam.
-                    </div>
-                </form>
+    {{-- 2. Foreach loop untuk membuat hidden inputs bagi setiap pemain (untuk tabel transaction_detail) --}}
+    @foreach ($data as $item)
+        {{-- Laravel akan mengubah ini menjadi array 'pemain' di sisi controller --}}
+        <input type="hidden" name="pemain[{{ $loop->index }}][player_id]" value="{{ $item['player_id'] }}">
+        <input type="hidden" name="pemain[{{ $loop->index }}][price]" value="{{ $item['harga'] }}">
+    @endforeach
+
+
+    <!-- Upload Area (Visual) -->
+    <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
+        <div id="uploadContent">
+            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <p class="text-lg font-medium text-gray-700 mb-2">Klik untuk upload atau drag & drop</p>
+            <p class="text-sm text-gray-500 mb-4">Format: JPG, PNG, PDF (Max 5MB)</p>
+            <button type="button" class="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 transition-colors">
+                Pilih File
+            </button>
+        </div>
+        
+        <!-- Preview Area (hidden by default) -->
+        <div id="previewArea" class="hidden">
+            <img id="imagePreview" class="mx-auto max-w-full max-h-64 rounded-lg shadow-md mb-4" />
+            <p id="fileName" class="text-sm font-medium text-gray-700 mb-2"></p>
+            <p id="fileSize" class="text-xs text-gray-500 mb-4"></p>
+            <button id="removeFile" type="button" class="text-red-600 hover:text-red-700 text-sm font-medium">
+                Hapus File
+            </button>
+        </div>
+    </div>
+
+    {{-- Input file yang sebenarnya, disembunyikan. Namanya diubah sesuai kolom DB --}}
+    <input type="file" name="foto_invoice" id="fileInput" class="hidden" accept="image/*,.pdf" required />
+
+    <!-- Submit Button -->
+    <div class="mt-6 text-center">
+        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+            Kirim Bukti Transfer
+        </button>
+    </div>
+
+    <!-- Success Message (hidden by default) -->
+    <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
+        <svg class="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+        </svg>
+        Bukti transfer berhasil dikirim! Kami akan memverifikasi pembayaran Anda dalam 1x24 jam.
+    </div>
+</form>
             </div>
 
             <!-- Footer -->

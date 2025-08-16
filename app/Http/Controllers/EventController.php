@@ -8,6 +8,8 @@ use App\Models\JenisPertandingan;
 use App\Models\KategoriPertandingan;
 use App\Models\Player;
 use App\Models\Transaction;
+use App\Models\PlayerInvoice;
+use App\Models\TransactionDetail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -176,6 +178,41 @@ return response()->json([
 }
 
 
+    public function store_invoice(Request $request){
+          // 1. Validasi input dari form
+        $request->validate([
+            'total_price'    => 'required|numeric',
+            'foto_invoice'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // Max 5MB
+            'pemain'         => 'required|array',
+            'pemain.*.player_id' => 'required|integer|exists:players,id',
+            'pemain.*.price' => 'required|numeric',
+        ]);
+
+        // 2. Panggil fungsi uploadImage untuk memproses dan menyimpan file
+        // Fungsi ini akan mengembalikan path relatif file yang disimpan (cth: 'invoices/namafile.jpg')
+        $dbPath = $this->uploadImage($request->file('foto_invoice'), 'invoices');
+
+        // 3. Simpan data ke Model InvoicePlayer
+        $invoice = new PlayerInvoice();
+        $invoice->foto_invoice = $dbPath; // Gunakan path yang dikembalikan dari fungsi upload
+        $invoice->total_price = $request->total_price;
+        $invoice->date = now();
+        $invoice->save(); // Menyimpan ke database
+
+        // 4. Loop dan simpan data ke Model TransactionDetail
+        foreach ($request->pemain as $pemainData) {
+            $detail = new TransactionDetail();
+            $detail->player_id = $pemainData['player_id'];
+            $detail->price = $pemainData['price'];
+            $detail->invoice_player_id = $invoice->id;
+            $detail->save();
+        }
+
+        // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
+        return redirect()->back()->with('success', 'Bukti transfer dan data invoice berhasil disimpan!');
+    }
+
+
     public function show_invoice($contingent_id)
     {
         $contingent = Contingent::findOrFail($contingent_id);
@@ -184,6 +221,7 @@ return response()->json([
         
         foreach ($players as $player) {
             $data[] = [
+                'player_id' => $player->id,
                 'name' => $player->name,
                 'nik' => $player->nik,
                 'kelas' => $player->kelasPertandingan->nama_kelas ?? '-',

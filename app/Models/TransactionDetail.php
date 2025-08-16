@@ -12,12 +12,12 @@ class TransactionDetail extends Model
     protected $table = 'transaction_detail';
 
     protected $fillable = [
-        'transaction_id', 'player_id', 'price'
+        'player_invoice_id', 'player_id', 'price'
     ];
 
-    public function transaction()
+    public function playerInvoice()
     {
-        return $this->belongsTo(Transaction::class, 'transaction_id', 'id');
+        return $this->belongsTo(PlayerInvoice::class, 'player_invoice_id', 'id');
     }
 
     public function player()

@@ -138,7 +138,7 @@
                                         <h5 class="mb-0">Daftar Peserta Terdaftar</h5>
                                         {{-- Tombol Add Player, hanya muncul jika status kontingen bukan ditolak --}}
                                         @if ($contingent->status != 2)
-                                            <a href="#" class="btn btn-success">
+                                            <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-success">
                                                 <i class="bi bi-plus-circle"></i> Tambah Peserta
                                             </a>
                                         @endif
@@ -175,7 +175,7 @@
                                                         <td>
                                                             {{-- Tombol Edit, hanya muncul jika status player masih pending (0) --}}
                                                             @if ($player->status == 0)
-                                                                <a href="" class="btn btn-success btn-sm">
+                                                                <a href="" class="btn btn-info btn-sm">
                                                                     <i class="bi bi-pencil-square"></i> Edit
                                                                 </a>
                                                             @endif

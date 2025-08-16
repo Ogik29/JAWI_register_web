@@ -35,7 +35,7 @@ class PlayerSeeder extends Seeder
             'player_category_id' => 1,
             'foto_ktp' => 'ktp_budi.jpg',
             'foto_diri' => 'budi.jpg',
-            // 'status' => 'Aktif',
+            'status' => 1,
             'tgl_lahir' => Carbon::create(1987, 11, 15),
             'kelas_pertandingan_id' => 1
         ]);

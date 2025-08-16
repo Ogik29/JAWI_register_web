@@ -192,7 +192,7 @@ return response()->json([
         // Fungsi ini akan mengembalikan path relatif file yang disimpan (cth: 'invoices/namafile.jpg')
         $dbPath = $this->uploadImage($request->file('foto_invoice'), 'invoices');
 
-        // 3. Simpan data ke Model InvoicePlayer
+        // 3. Simpan data ke Model PlayerInvoice
         $invoice = new PlayerInvoice();
         $invoice->foto_invoice = $dbPath; // Gunakan path yang dikembalikan dari fungsi upload
         $invoice->total_price = $request->total_price;
@@ -204,7 +204,7 @@ return response()->json([
             $detail = new TransactionDetail();
             $detail->player_id = $pemainData['player_id'];
             $detail->price = $pemainData['price'];
-            $detail->invoice_player_id = $invoice->id;
+            $detail->player_invoice_id = $invoice->id;
             $detail->save();
         }
 

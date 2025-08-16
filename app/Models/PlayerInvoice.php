@@ -10,7 +10,7 @@ class PlayerInvoice extends Model
     use HasFactory;
 
     // Nama tabel (opsional, Laravel otomatis deteksi "invoice_players" biasanya)
-    protected $table = 'invoice_player';
+    protected $table = 'players_invoice';
 
     // Kolom yang bisa diisi (mass assignment)
     protected $fillable = [

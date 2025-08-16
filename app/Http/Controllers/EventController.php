@@ -12,6 +12,9 @@ use App\Models\PlayerInvoice;
 use App\Models\TransactionDetail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Http\Request;
 
@@ -40,56 +43,72 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($event_id);
 
-// Validasi dasar
-$rules = [
-    'namaKontingen' => 'required|string|max:255',
-    'namaManajer'   => 'required|string|max:255',
-    'noTelepon'     => 'required|string|max:15',
-    'email'         => 'required|email|max:255',
-    'user_id'       => 'required|integer|exists:users,id',
-    'event_id'      => 'required|integer|exists:events,id',
-];
+        // Mengambil data dari user yang login untuk validasi
+        $request->merge([
+            'namaManajer' => Auth::user()->nama_lengkap,
+            'noTelepon'   => Auth::user()->no_telp,
+            'email'       => Auth::user()->email,
+        ]);
 
-// Kalau harga > 0, wajib upload foto invoice
-if ($event->harga > 0) {
-    $rules['fotoInvoice'] = 'required|image|mimes:jpg,jpeg,png|max:2048';
-}
+        $rules = [
+            'namaKontingen' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('contingent', 'name')->where('event_id', $event_id),
+            ],
+            'namaManajer'   => 'required|string|max:255',
+            'noTelepon'     => 'required|string|max:15',
+            'email'         => 'required|email|max:255',
+            'user_id'       => 'required|integer|exists:users,id',
+            'event_id'      => 'required|integer|exists:events,id',
+        ];
 
-$data = $request->validate($rules);
+        $messages = [
+            'namaKontingen.unique' => 'Nama kontingen ini sudah terdaftar di event ini. Silakan gunakan nama lain.',
+        ];
 
-// Simpan data kontingen
-$contingent = Contingent::create([
-    'name'          => $data['namaKontingen'],
-    'manajer_name'  => $data['namaManajer'],
-    'email'         => $data['email'],
-    'no_telp'       => $data['noTelepon'],
-    'user_id'       => $data['user_id'],
-    'event_id'      => $data['event_id'],
-]);
+        if ($event->harga_contingent > 0) {
+            $rules['fotoInvoice'] = 'required|image|mimes:jpg,jpeg,png|max:2048';
+        }
 
-// Simpan foto invoice jika harga > 0
-$fotoInvoicePath = null;
-if ($event->harga_contingent > 0 && $request->hasFile('fotoInvoice')) {
-    $file     = $request->file('fotoInvoice');
-    $ext      = $file->getClientOriginalExtension();
-    $fileName = uniqid('invoice_') . '.' . $ext;
-    $fotoInvoicePath = $file->storeAs('invoices', $fileName, 'public');
-}
+        $validator = Validator::make($request->all(), $rules, $messages);
 
-// Buat transaksi
-$transaction = Transaction::create([
-    'contingent_id' => $contingent->id,
-    'total'         => 0, // bisa diupdate nanti
-    'date'          => now(),
-    'foto_invoice'  => $fotoInvoicePath,
-]);
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
 
-return response()->json([
-    'success'     => true,
-    'contingent'  => $contingent,
-    'transaction' => $transaction
-]);
+        $data = $validator->validated();
 
+        $contingent = Contingent::create([
+            'name'          => $data['namaKontingen'],
+            'manajer_name'  => $data['namaManajer'],
+            'email'         => $data['email'],
+            'no_telp'       => $data['noTelepon'],
+            'user_id'       => $data['user_id'],
+            'event_id'      => $data['event_id'],
+        ]);
+
+        $fotoInvoicePath = null;
+        if ($event->harga_contingent > 0 && $request->hasFile('fotoInvoice')) {
+            $file = $request->file('fotoInvoice');
+            $ext = $file->getClientOriginalExtension();
+            $fileName = uniqid('invoice_') . '.' . $ext;
+            $fotoInvoicePath = $file->storeAs('invoices', $fileName, 'public');
+        }
+
+        Transaction::create([
+            'contingent_id' => $contingent->id,
+            'total'         => 0,
+            'date'          => now(),
+            'foto_invoice'  => $fotoInvoicePath,
+        ]);
+
+        return response()->json([
+            'success'      => true,
+            'message'      => 'Pendaftaran berhasil! Anda akan dialihkan...',
+            'redirect_url' => route('peserta.event', ['contingent_id' => $contingent->id])
+        ]);
     }
 
 
@@ -99,9 +118,9 @@ return response()->json([
         $event = $contingent->event;
         $kategoriPertandingan = KategoriPertandingan::all();
         $jenisPertandingan = JenisPertandingan::all();
-       $kelasPertandingan = $event->kelasPertandingan()
-    ->with('kategoriPertandingan', 'jenisPertandingan')
-    ->get();
+        $kelasPertandingan = $event->kelasPertandingan()
+            ->with('kategoriPertandingan', 'jenisPertandingan')
+            ->get();
         return view('register.registPeserta', compact('contingent', 'event', 'kategoriPertandingan', 'jenisPertandingan', 'kelasPertandingan'));
     }
 
@@ -110,72 +129,71 @@ return response()->json([
 
         // return $request->all();
 
-         // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
+        // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
         $processedAthletesDetails = [];
         $totalHarga = 0;
 
         foreach ($request->athletes as $athleteData) {
-        $player = new Player();
-        $player->name = $athleteData['namaLengkap'];
-        $player->contingent_id = $athleteData['contingent_id'];
-        $player->nik = $athleteData['nik'];
-        $player->no_telp = $athleteData['noTelepon'];
-        $player->email = $athleteData['email'];
-        $player->gender = $athleteData['jenisKelamin'];
-        $player->tgl_lahir = $athleteData['tanggalLahir'];
+            $player = new Player();
+            $player->name = $athleteData['namaLengkap'];
+            $player->contingent_id = $athleteData['contingent_id'];
+            $player->nik = $athleteData['nik'];
+            $player->no_telp = $athleteData['noTelepon'];
+            $player->email = $athleteData['email'];
+            $player->gender = $athleteData['jenisKelamin'];
+            $player->tgl_lahir = $athleteData['tanggalLahir'];
 
-        $player->kelas_pertandingan_id = $athleteData['kelas_pertandingan_id'];
+            $player->kelas_pertandingan_id = $athleteData['kelas_pertandingan_id'];
 
-        $contingent_id = $athleteData['contingent_id'];
+            $contingent_id = $athleteData['contingent_id'];
 
-        // Upload file dengan uniqid
-        if (isset($athleteData['uploadKTP']) && $athleteData['uploadKTP'] instanceof \Illuminate\Http\UploadedFile) {
-            $player->foto_ktp = $athleteData['uploadKTP']->storeAs(
-                'uploads/ktp',
-                uniqid() . '.' . $athleteData['uploadKTP']->getClientOriginalExtension(),
-                'public'
-            );
+            // Upload file dengan uniqid
+            if (isset($athleteData['uploadKTP']) && $athleteData['uploadKTP'] instanceof \Illuminate\Http\UploadedFile) {
+                $player->foto_ktp = $athleteData['uploadKTP']->storeAs(
+                    'uploads/ktp',
+                    uniqid() . '.' . $athleteData['uploadKTP']->getClientOriginalExtension(),
+                    'public'
+                );
+            }
+
+            if (isset($athleteData['uploadFoto']) && $athleteData['uploadFoto'] instanceof \Illuminate\Http\UploadedFile) {
+                $player->foto_diri = $athleteData['uploadFoto']->storeAs(
+                    'uploads/foto',
+                    uniqid() . '.' . $athleteData['uploadFoto']->getClientOriginalExtension(),
+                    'public'
+                );
+            }
+
+            if (isset($athleteData['uploadPersetujuan']) && $athleteData['uploadPersetujuan'] instanceof \Illuminate\Http\UploadedFile) {
+                $player->foto_persetujuan_ortu = $athleteData['uploadPersetujuan']->storeAs(
+                    'uploads/persetujuan',
+                    uniqid() . '.' . $athleteData['uploadPersetujuan']->getClientOriginalExtension(),
+                    'public'
+                );
+            }
+
+            $player->save();
         }
 
-        if (isset($athleteData['uploadFoto']) && $athleteData['uploadFoto'] instanceof \Illuminate\Http\UploadedFile) {
-            $player->foto_diri = $athleteData['uploadFoto']->storeAs(
-                'uploads/foto',
-                uniqid() . '.' . $athleteData['uploadFoto']->getClientOriginalExtension(),
-                'public'
-            );
-        }
-
-        if (isset($athleteData['uploadPersetujuan']) && $athleteData['uploadPersetujuan'] instanceof \Illuminate\Http\UploadedFile) {
-            $player->foto_persetujuan_ortu = $athleteData['uploadPersetujuan']->storeAs(
-                'uploads/persetujuan',
-                uniqid() . '.' . $athleteData['uploadPersetujuan']->getClientOriginalExtension(),
-                'public'
-            );
-        }
-
-        $player->save();
-    }
-
-    return response()->json([
-        'status' => 'success',
-        'message' => 'Semua atlet berhasil disimpan',
-        'contingent' => $contingent_id
-    ]);
-
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Semua atlet berhasil disimpan',
+            'contingent' => $contingent_id
+        ]);
     }
 
     private function uploadImage($file, $path)
-{
-    if (!$file) {
-        return null;
+    {
+        if (!$file) {
+            return null;
+        }
+
+        $ext = $file->getClientOriginalExtension();
+        $fileName = uniqid() . '.' . $ext;
+        $file->move(public_path($path), $fileName);
+
+        return $path . '/' . $fileName; // simpan path relatif
     }
-
-    $ext = $file->getClientOriginalExtension();
-    $fileName = uniqid() . '.' . $ext;
-    $file->move(public_path($path), $fileName);
-
-    return $path . '/' . $fileName; // simpan path relatif
-}
 
 
     public function store_invoice(Request $request){
@@ -218,7 +236,7 @@ return response()->json([
         $contingent = Contingent::findOrFail($contingent_id);
         $players = $contingent->players;
         $totalHarga = 0;
-        
+
         foreach ($players as $player) {
             $data[] = [
                 'player_id' => $player->id,
@@ -234,6 +252,4 @@ return response()->json([
 
         return view('invoice.invoice', compact('contingent', 'players', 'data', 'totalHarga'));
     }
-
-
 }

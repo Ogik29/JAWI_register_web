@@ -59,12 +59,9 @@ Route::middleware('checkRole:1')->group(function () {
     Route::get('/superadmin', function () {
         return view('superadmin.index');
     });
-    Route::get('/admin', function () {
-        return view('admin.index');
-    });
 });
 
-Route::middleware('checkRole:2')->group(function () {
+Route::middleware('checkRole:1,2')->group(function () {
     Route::get('/admin', function () {
         return view('admin.index');
     });

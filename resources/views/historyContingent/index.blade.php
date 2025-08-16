@@ -37,7 +37,7 @@
                 @auth
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="{{ Auth::user()->name }}" style="width: 25px">
+                            <img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="{{ Auth::user()->nama_lengkap }}" style="width: 25px">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                             <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
@@ -133,7 +133,17 @@
                                     </div>
 
                                     <hr class="my-4">
-                                    <h5 class="mb-3">Daftar Peserta Terdaftar</h5>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0">Daftar Peserta Terdaftar</h5>
+                                        {{-- Tombol Add Player, hanya muncul jika status kontingen bukan ditolak --}}
+                                        @if ($contingent->status != 2)
+                                            <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-success">
+                                                <i class="bi bi-plus-circle"></i> Tambah Peserta
+                                            </a>
+                                        @endif
+                                    </div>
+                                    
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered table-hover">
                                             <thead class="table-dark">
@@ -143,6 +153,7 @@
                                                     <th scope="col">Gender</th>
                                                     <th scope="col">Kelas Tanding</th>
                                                     <th scope="col">Status</th>
+                                                    <th scope="col">Aksi</th> {{-- Kolom baru untuk tombol aksi --}}
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -161,10 +172,19 @@
                                                                 <span class="badge bg-warning text-dark">Pending</span>
                                                             @endif
                                                         </td>
+                                                        <td>
+                                                            {{-- Tombol Edit, hanya muncul jika status player masih pending (0) --}}
+                                                            @if ($player->status == 0)
+                                                                <a href="" class="btn btn-info btn-sm">
+                                                                    <i class="bi bi-pencil-square"></i> Edit
+                                                                </a>
+                                                            @endif
+                                                        </td>
                                                     </tr>
                                                 @empty
                                                     <tr>
-                                                        <td colspan="5" class="text-center">Belum ada peserta yang terdaftar di kontingen ini.</td>
+                                                        {{-- Colspan disesuaikan menjadi 6 karena ada kolom baru --}}
+                                                        <td colspan="6" class="text-center">Belum ada peserta yang terdaftar di kontingen ini.</td>
                                                     </tr>
                                                 @endforelse
                                             </tbody>

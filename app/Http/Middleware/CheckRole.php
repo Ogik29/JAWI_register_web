@@ -18,7 +18,7 @@ class CheckRole
     {
         // Cek apakah user sudah login.
         if (!auth()->check()) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+            return redirect('/')->with('status', 'Tolong Login atau Register terlebih Dahulu.');
         }
 
         // Cek apakah role_id user TIDAK ADA DI DALAM array $roles yang diizinkan.

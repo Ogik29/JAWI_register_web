@@ -26,14 +26,12 @@
                         <a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a>
                     </li>
                 </ul>
-
                 @guest
                     <form class="d-flex">
                         <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png"
                         alt="Login" style="width: 25px"></a>
                     </form>
                 @endguest
-
                 @auth
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -43,9 +41,7 @@
                             <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
                             <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item" href="/logout"> Logout</a>
-                            </li>
+                            <li><a class="dropdown-item" href="/logout"> Logout</a></li>
                         </ul>
                     </div>
                 @endauth
@@ -57,30 +53,40 @@
         <div class="row">
             <div class="col-12">
                 <h1 class="mb-4">Histori Pendaftaran Kontingen</h1>
+                
+                @if (session('status'))
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ session('status') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
                 @forelse ($contingents as $contingent)
                     <div class="card mb-3 shadow-sm">
                         <div class="card-body">
                             <div class="row align-items-center">
-                                <div class="col-md-7 col-12 mb-3 mb-md-0">
-                                    <h4 class="card-title fw-bold">{{ $contingent->name }}</h4>
-                                    <p class="card-text text-muted mb-1">
-                                        <i class="bi bi-calendar-event"></i> Event: <strong>{{ $contingent->event->name ?? 'Event tidak ditemukan' }}</strong>
-                                    </p>
-                                    <p class="card-text text-muted">
-                                        <i class="bi bi-person-badge"></i> Manajer: {{ $contingent->manajer_name }}
-                                    </p>
+                                <div class="col-md-6 col-12 mb-3 mb-md-0">
+                                    <h4 class="card-title fw-bold" id="contingent-name-{{ $contingent->id }}">{{ $contingent->name }}</h4>
+                                    <p class="card-text text-muted mb-1"><i class="bi bi-calendar-event"></i> Event: <strong>{{ $contingent->event->name ?? 'N/A' }}</strong></p>
+                                    <p class="card-text text-muted"><i class="bi bi-person-badge"></i> Manajer: {{ $contingent->manajer_name }}</p>
                                 </div>
                                 <div class="col-md-2 col-6 text-center">
-                                    @if ($contingent->status == 1)
-                                        <span class="badge bg-success p-2">Disetujui</span>
-                                    @elseif ($contingent->status == 2)
-                                        <span class="badge bg-danger p-2">Ditolak</span>
-                                    @else
-                                        <span class="badge bg-warning text-dark p-2">Menunggu Verifikasi</span>
-                                    @endif
+                                    <span id="contingent-status-badge-{{ $contingent->id }}">
+                                        @if ($contingent->status == 1)
+                                            <span class="badge bg-success p-2">Disetujui</span>
+                                        @elseif ($contingent->status == 2)
+                                            <span class="badge bg-danger p-2">Ditolak</span>
+                                        @else
+                                            <span class="badge bg-warning text-dark p-2">Menunggu Verifikasi</span>
+                                        @endif
+                                    </span>
                                 </div>
-                                <div class="col-md-3 col-6 text-end">
+                                <div class="col-md-4 col-6 text-end">
+                                    @if ($contingent->status == 0 || $contingent->status == 2)
+                                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#editContingentModal-{{ $contingent->id }}">
+                                            Edit
+                                        </button>
+                                    @endif
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailContingentModal-{{ $contingent->id }}">
                                         Lihat Detail
                                     </button>
@@ -89,11 +95,11 @@
                         </div>
                     </div>
 
-                    <div class="modal fade" id="detailContingentModal-{{ $contingent->id }}" tabindex="-1" aria-labelledby="detailContingentModalLabel-{{ $contingent->id }}" aria-hidden="true">
+                    <div class="modal fade" id="detailContingentModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title" id="detailContingentModalLabel-{{ $contingent->id }}">Detail Kontingen: {{ $contingent->name }}</h5>
+                                    <h5 class="modal-title">Detail Kontingen: {{ $contingent->name }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
@@ -106,12 +112,9 @@
                                                 <li class="list-group-item"><strong>No. Telepon:</strong> {{ $contingent->no_telp ?? '-' }}</li>
                                                 <li class="list-group-item"><strong>Jumlah Atlet:</strong> {{ $contingent->players->count() }} Orang</li>
                                                 <li class="list-group-item"><strong>Status:</strong>
-                                                    @if ($contingent->status == 1)
-                                                        <span class="badge bg-success">Aktif</span>
-                                                    @elseif ($contingent->status == 2)
-                                                        <span class="badge bg-danger">Ditolak</span>
-                                                    @else
-                                                        <span class="badge bg-warning text-dark">Menunggu Verifikasi</span>
+                                                    @if ($contingent->status == 1) <span class="badge bg-success">Aktif</span>
+                                                    @elseif ($contingent->status == 2) <span class="badge bg-danger">Ditolak</span>
+                                                    @else <span class="badge bg-warning text-dark">Menunggu Verifikasi</span>
                                                     @endif
                                                 </li>
                                             </ul>
@@ -121,9 +124,8 @@
                                             <ul class="list-group list-group-flush">
                                                 <li class="list-group-item"><strong>Nama Event:</strong> {{ $contingent->event->name ?? '-' }}</li>
                                                 <li class="list-group-item"><strong>Lokasi:</strong> {{ $contingent->event->lokasi ?? '-' }}</li>
-                                                <li class="list-group-item"><strong>Tanggal Tanding:</strong> {{ \Carbon\Carbon::parse($contingent->event->tgl_mulai_tanding)->format('d M Y') }} - {{ \Carbon\Carbon::parse($contingent->event->tgl_selesai_tanding)->format('d M Y') }}</li>
+                                                <li class="list-group-item"><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($contingent->event->tgl_mulai_tanding)->format('d M Y') }}</li>
                                             </ul>
-
                                             <h5 class="mt-3">Informasi Pemilik Akun</h5>
                                             <ul class="list-group list-group-flush">
                                                 <li class="list-group-item"><strong>Nama:</strong> {{ $contingent->user->nama_lengkap ?? '-' }}</li>
@@ -131,66 +133,50 @@
                                             </ul>
                                         </div>
                                     </div>
-
                                     <hr class="my-4">
-
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h5 class="mb-0">Daftar Peserta Terdaftar</h5>
-                                        {{-- Tombol Add Player, hanya muncul jika status kontingen bukan ditolak --}}
-                                        @if ($contingent->status != 2)
-                                            <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-success">
+                                        <h5 class="mb-0">Daftar Peserta</h5>
+                                        @if ($contingent->status != 1)
+                                            <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info">
                                                 <i class="bi bi-plus-circle"></i> Tambah Peserta
                                             </a>
                                         @endif
                                     </div>
-                                    
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered table-hover">
                                             <thead class="table-dark">
                                                 <tr>
-                                                    <th scope="col">#</th>
-                                                    <th scope="col">Nama Peserta</th>
-                                                    <th scope="col">Gender</th>
-                                                    <th scope="col">Kelas Tanding</th>
-                                                    <th scope="col">Status</th>
-                                                    <th scope="col">Aksi</th> {{-- Kolom baru untuk tombol aksi --}}
+                                                    <th>#</th><th>Nama</th><th>Gender</th><th>Kelas</th><th>Status</th><th>Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 @forelse ($contingent->players as $player)
                                                     <tr>
-                                                        <th scope="row">{{ $loop->iteration }}</th>
+                                                        <th>{{ $loop->iteration }}</th>
                                                         <td>{{ $player->name }}</td>
                                                         <td>{{ $player->gender }}</td>
                                                         <td>{{ $player->kelasPertandingan->nama_kelas ?? 'N/A' }}</td>
                                                         <td>
-                                                            @if ($player->status == 1)
-                                                                <span class="badge bg-success">Terverifikasi</span>
-                                                            @elseif ($player->status == 2)
-                                                                <span class="badge bg-danger">Ditolak</span>
-                                                            @else
-                                                                <span class="badge bg-warning text-dark">Pending</span>
+                                                            @if ($player->status == 1) <span class="badge bg-warning text-dark">Pending</span>
+                                                            @elseif ($player->status == 2) <span class="badge bg-success">Terverifikasi</span>
+                                                            @elseif ($player->status == 0) <span class="badge bg-secondary">Belum Bayar</span>
+                                                            @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
                                                         </td>
                                                         <td>
-                                                            {{-- Tombol Edit, hanya muncul jika status player masih pending (0) --}}
-                                                            @if ($player->status == 0)
-                                                                <a href="" class="btn btn-info btn-sm">
+                                                            @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
+                                                                <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm">
                                                                     <i class="bi bi-pencil-square"></i> Edit
                                                                 </a>
                                                             @endif
                                                         </td>
                                                     </tr>
                                                 @empty
-                                                    <tr>
-                                                        {{-- Colspan disesuaikan menjadi 6 karena ada kolom baru --}}
-                                                        <td colspan="6" class="text-center">Belum ada peserta yang terdaftar di kontingen ini.</td>
-                                                    </tr>
+                                                    <tr><td colspan="6" class="text-center">Belum ada peserta.</td></tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
                                     </div>
-
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
@@ -198,12 +184,39 @@
                             </div>
                         </div>
                     </div>
-                @empty
-                    <div class="alert alert-info text-center">
-                        Anda belum pernah mendaftarkan kontingen.
-                    </div>
-                @endforelse
 
+                    <div class="modal fade" id="editContingentModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit Nama Kontingen</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="{{ route('contingent.update', $contingent->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-body">
+                                        @if ($contingent->status == 2)
+                                        <div class="alert alert-warning" role="alert">
+                                            Mengubah nama akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.
+                                        </div>
+                                        @endif
+                                        <div class="mb-3">
+                                            <label for="name-{{ $contingent->id }}" class="form-label">Nama Kontingen</label>
+                                            <input type="text" class="form-control" name="name" id="name-{{ $contingent->id }}" value="{{ $contingent->name }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="alert alert-info text-center">Anda belum pernah mendaftarkan kontingen.</div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -211,6 +224,7 @@
     <footer class="bg-dark text-white py-5">
         <div class="container">
             <div class="row justify-content-between g-4">
+                {{-- PERUBAHAN: Bagian footer Anda sudah responsif, tidak ada perubahan signifikan yang diperlukan --}}
                 <div class="col-lg-4 col-md-6 text-center text-md-start">
                     <div class="h4 fw-bold text-danger mb-3">Jawara Indonesia</div>
                     <p class="text-muted">We look forward to working with you.</p>
@@ -218,9 +232,9 @@
                 <div class="col-lg-4 col-md-6 text-center text-md-start">
                     <h4 class="h6 fw-semibold mb-3">Menu Utama</h4>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="/#about" class="text-muted text-decoration-none">About Us</a></li>
-                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Our Team</a></li>
-                        <li class="mb-2"><a href="{{ url('/event') }}" class="text-muted text-decoration-none">Event</a></li>
+                        <li class="mb-2"><a href="#about" class="text-muted text-decoration-none">About Us</a></li>
+                        <li class="mb-2"><a href="#team" class="text-muted text-decoration-none">Our Team</a></li>
+                        <li class="mb-2"><a href="#contact" class="text-muted text-decoration-none">Event</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-4 col-md-6 text-center text-md-start">

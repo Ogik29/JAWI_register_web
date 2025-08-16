@@ -42,6 +42,9 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
     Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
     Route::get('/history', [historyController::class, 'index'])->name('history');
+    Route::put('/history/contingent/{contingent}', [historyController::class, 'updateContingent'])->name('contingent.update');
+    Route::get('/history/player/{player}/edit', [historyController::class, 'editPlayer'])->name('player.edit');
+    Route::put('/history/player/{player}', [historyController::class, 'updatePlayer'])->name('player.update');
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
     Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\JenisPertandingan;
 use App\Models\KategoriPertandingan;
 use App\Models\Event;
+use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -34,9 +35,143 @@ class SuperAdminController extends Controller
     return view('superadmin.kelola_event', compact('events'));
     }
 
-    public function kelola_admin(){
-        return view('superadmin.kelola_admin');
+     public function createAdmin()
+    {
+        $events = Event::select('id', 'name')->latest()->get();
+        return view('superadmin.tambah_admin', compact('events'));
     }
+
+    public function kelola_admin(){
+    
+        // Ambil semua PENGGUNA dengan role_id = 2, eager load relasi events (jamak)
+        $admins = User::with('events')->where('role_id', 2)->latest()->get();
+        $events = Event::select('id', 'name')->latest()->get();
+        return view('superadmin.kelola_admin', compact('admins', 'events'));
+    }
+
+    public function storeAdmin(Request $request)
+    {
+        // 1. VALIDASI DATA
+        // Aturan validasi ini mencakup semua field dari form Anda.
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+            'alamat' => 'required|string',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'tempat_lahir' => 'required|string|max:100',
+            'tanggal_lahir' => 'required|date',
+            'negara' => 'required|string|max:100',
+            'no_telp' => 'required|string|max:20',
+            'status' => 'required|boolean',
+            'role_id' => 'required|integer', // Validasi hidden field adalah praktik yang baik
+
+            // Validasi untuk relasi Many-to-Many
+            'event_ids' => 'required|array|min:1',
+            'event_ids.*' => 'exists:events,id', // Memastikan setiap ID event yang dikirim itu valid
+        ]);
+
+        // 2. BUAT USER BARU
+        // Gunakan User::create untuk membuat record baru di tabel 'users'.
+        // Pastikan semua field ini ada di dalam properti '$fillable' di model User Anda.
+        $admin = User::create([
+            'nama_lengkap' => $request->nama_lengkap,
+            'email' => $request->email,
+            'password' => bcrypt($request->password), // WAJIB: Selalu hash password!
+            'alamat' => $request->alamat,
+            'jenis_kelamin' => $request->jenis_kelamin,
+            'tempat_lahir' => $request->tempat_lahir,
+            'tanggal_lahir' => $request->tanggal_lahir,
+            'negara' => $request->negara,
+            'no_telp' => $request->no_telp,
+            'status' => $request->status,
+            'role_id' => $request->role_id, // Mengambil nilai dari hidden input (yaitu '2')
+        ]);
+
+        // 3. SIMPAN RELASI KE TABEL PIVOT
+        // Setelah user berhasil dibuat, kita lampirkan event yang dipilih ke user tersebut.
+        // Method sync() adalah cara terbaik untuk mengelola relasi many-to-many.
+        $admin->events()->sync($request->event_ids);
+
+        // 4. REDIRECT KEMBALI DENGAN PESAN SUKSES
+        // Arahkan pengguna kembali ke halaman daftar admin.
+        return redirect()->route('superadmin.kelola_admin')->with('success', 'Admin baru bernama "' . $request->nama_lengkap . '" berhasil ditambahkan.');
+    } 
+
+
+    public function editAdmin(User $admin)
+    {
+        // Eager load relasi events untuk efisiensi
+        $admin->load('events');
+        
+        // Ambil semua event untuk dropdown
+        $events = Event::select('id', 'name')->latest()->get();
+
+        return view('superadmin.edit_admin', compact('admin', 'events'));
+    }
+
+
+    public function updateAdmin(Request $request, User $admin)
+    {
+        // 1. VALIDASI DATA
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            // Aturan email unik diubah: abaikan email milik user yang sedang diedit
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($admin->id),
+            ],
+            // Password tidak wajib diisi saat edit. Hanya validasi jika diisi.
+            'password' => 'nullable|string|min:8|confirmed',
+            'alamat' => 'required|string',
+            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'tempat_lahir' => 'required|string|max:100',
+            'tanggal_lahir' => 'required|date',
+            'negara' => 'required|string|max:100',
+            'no_telp' => 'required|string|max:20',
+            'status' => 'required|boolean',
+            'event_ids' => 'required|array|min:1',
+            'event_ids.*' => 'exists:events,id',
+        ]);
+
+        // 2. KUMPULKAN DATA UNTUK UPDATE
+        $updateData = $request->except(['password', 'password_confirmation']);
+
+        // 3. HANYA UPDATE PASSWORD JIKA DIISI
+        if ($request->filled('password')) {
+            $updateData['password'] = bcrypt($request->password);
+        }
+
+        // 4. UPDATE DATA USER DI DATABASE
+        $admin->update($updateData);
+
+        // 5. SINKRONISASI RELASI DI TABEL PIVOT
+        // sync() akan menghapus relasi lama dan menggantinya dengan yang baru dari form
+        $admin->events()->sync($request->event_ids);
+
+        // 6. REDIRECT KEMBALI DENGAN PESAN SUKSES
+        return redirect()->route('superadmin.kelola_admin')->with('success', 'Data admin "' . $admin->nama_lengkap . '" berhasil diperbarui.');
+    }
+
+    public function destroyAdmin(User $admin)
+    {
+        // 1. HAPUS RELASI DARI TABEL PIVOT
+        // Method detach() akan menghapus semua entri untuk user ini di tabel event_user.
+        // Ini adalah langkah bersih sebelum menghapus user itu sendiri.
+        $admin->events()->detach();
+
+        // 2. HAPUS USER DARI TABEL 'users'
+        $admin->delete();
+
+        // 3. REDIRECT KEMBALI DENGAN PESAN SUKSES
+        return redirect()->route('superadmin.kelola_admin')->with('success', 'Admin "' . $admin->nama_lengkap . '" berhasil dihapus.');
+    }
+
+
+
 
     public function storeEvent(Request $request){
         // 1. VALIDASI DATA (Tidak ada perubahan di sini)

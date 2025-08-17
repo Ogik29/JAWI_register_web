@@ -38,6 +38,11 @@ class Event extends Model
         return $this->hasMany(ClassCategory::class, 'event_id', 'id');
     }
 
+     public function admins()
+    {
+        return $this->belongsToMany(User::class, 'user_event', 'event_id', 'user_id');
+    }
+
     public function eventRoles()
     {
         return $this->hasMany(EventRole::class, 'event_id', 'id');

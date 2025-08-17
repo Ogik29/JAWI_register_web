@@ -241,7 +241,7 @@ class EventController extends Controller
         }
 
         // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
-        return redirect()->back()->with('success', 'Bukti transfer dan data invoice berhasil disimpan!');
+        return redirect('/history')->with('success', 'Bukti transfer dan data invoice berhasil disimpan!');
     }
 
 

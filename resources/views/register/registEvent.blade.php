@@ -280,28 +280,28 @@
                         <p class="text-gray-600">${event.cp}</p>
                     </div>
                     
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-2">🥋 Kelas Pertandingan (Sample)</h4>
-                        <div class="flex flex-wrap gap-2">
-                            ${event.classes.map(cls => `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">${cls}</span>`).join('')}
-                        </div>
-                    </div>
                     
                     <div class="bg-gray-50 p-4 rounded-lg">
                         <h4 class="font-semibold text-gray-800 mb-2">📋 Status Pendaftaran</h4>
                         <p class="text-gray-600">Status: <strong>${event.registrationStatus}</strong></p>
-                    </div>
-                    
-                    <div class="pt-4">
-                        ${registrationButton}
-                    </div>
-                </div>
-            `;
-
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
-
+                        </div>
+                        
+                        <div class="pt-4">
+                            ${registrationButton}
+                            </div>
+                            </div>
+                            `;
+                            
+                            modal.classList.remove('hidden');
+                            document.body.style.overflow = 'hidden';
+                        }
+                        // <div class="bg-gray-50 p-4 rounded-lg">
+                        //     <h4 class="font-semibold text-gray-800 mb-2">🥋 Kelas Pertandingan (Sample)</h4>
+                        //     <div class="flex flex-wrap gap-2">
+                        //         ${event.classes.map(cls => `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">${cls}</span>`).join('')}
+                        //     </div>
+                        // </div>
+                        
         function closeModal() {
             const modal = document.getElementById('eventModal');
             modal.classList.add('hidden');

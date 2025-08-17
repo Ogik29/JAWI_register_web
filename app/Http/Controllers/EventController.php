@@ -201,9 +201,10 @@ class EventController extends Controller
 
         $ext = $file->getClientOriginalExtension();
         $fileName = uniqid() . '.' . $ext;
-        $file->move(public_path($path), $fileName);
 
-        return $path . '/' . $fileName; // simpan path relatif
+        $storedPath = $file->storeAs($path, $fileName, 'public');
+
+        return $storedPath;
     }
 
 

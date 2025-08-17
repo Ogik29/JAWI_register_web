@@ -47,4 +47,16 @@ class Player extends Model
     {
         return $this->belongsTo(KelasPertandingan::class, 'kelas_pertandingan_id', 'id');
     }
+
+    public function playerInvoice()
+    {
+        return $this->hasOneThrough(
+            PlayerInvoice::class,       // The final model we want to access
+            TransactionDetail::class,   // The intermediate model/table
+            'player_id',                // Foreign key on TransactionDetail table...
+            'id',                       // Foreign key on PlayerInvoice table...
+            'id',                       // Local key on Player table...
+            'player_invoice_id'         // Local key on TransactionDetail table.
+        );
+    }
 }

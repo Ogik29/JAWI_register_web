@@ -12,24 +12,43 @@ class adminController extends Controller
 {
     public function index()
     {
-        // Data for Header & Dashboard Cards
-        $totalPlayers = Player::count();
-        $pendingContingentsCount = Contingent::where('status', 0)->count();
-        $activeEvents = Event::where('status', 'Pendaftaran Dibuka')->latest()->take(5)->get(); // Assuming status 1 = active
+        $admin = Auth::user();
+        $managedEventIds = $admin->eventRoles->pluck('event_id');
 
-        $events = Event::withCount('players')->latest()->get();
+        // --- Data for Dashboard & "Kelola Event" Section ---
+        $eventsQuery = Event::whereIn('id', $managedEventIds);
+        $events = (clone $eventsQuery)->withCount('players')->latest()->get();
+        $activeEvents = (clone $eventsQuery)->where('status', 'Pendaftaran Dibuka')->latest()->take(5)->get();
 
-        // Data for "Verifikasi Kontingen" Table
+        // --- Data for Verification Tables ---
         $contingentsForVerification = Contingent::with(['user', 'event', 'players', 'transactions'])
+            ->whereIn('event_id', $managedEventIds)
             ->where('status', 0) // 0 = Menunggu Verifikasi
             ->latest()
             ->get();
 
-        // Data for "Verifikasi Atlet" Table
-        $playersForVerification = Player::with(['contingent.event', 'kelasPertandingan'])
+        $playersForVerification = Player::with(['contingent.event', 'kelasPertandingan', 'playerInvoice'])
+            ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 1) // 1 = Pending (sudah bayar, menunggu verif dokumen)
             ->latest()
             ->get();
+
+        // --- [NEW] Data for Approved Lists Tables ---
+        $approvedContingents = Contingent::with(['user', 'event', 'players'])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('status', 1) // 1 = Disetujui
+            ->latest()
+            ->get();
+
+        $approvedPlayers = Player::with(['contingent.event', 'kelasPertandingan'])
+            ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
+            ->where('status', 2) // 2 = Terverifikasi
+            ->latest()
+            ->get();
+
+        // --- Data for Dashboard Cards ---
+        $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
+        $pendingContingentsCount = $contingentsForVerification->count();
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -37,53 +56,37 @@ class adminController extends Controller
             'activeEvents',
             'events',
             'contingentsForVerification',
-            'playersForVerification'
+            'playersForVerification',
+            'approvedContingents', // Pass new data
+            'approvedPlayers'      // Pass new data
         ));
     }
 
-    /**
-     * Process the verification for a contingent.
-     */
     public function verifyContingent(Request $request, Contingent $contingent)
     {
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-            'catatan' => 'nullable|string',
-        ]);
-
-        if ($request->action == 'approve') {
-            $contingent->status = 1; // Set status to "Disetujui"
-            $contingent->catatan = null;
-        } else {
-            $contingent->status = 2; // Set status to "Ditolak"
-            $contingent->catatan = $request->catatan;
-        }
-
+        $this->authorizeAdminAction($contingent->event_id);
+        $request->validate(['action' => 'required|in:approve,reject', 'catatan' => 'nullable|string']);
+        $contingent->status = ($request->action == 'approve') ? 1 : 2;
+        $contingent->catatan = ($request->action == 'approve') ? null : $request->catatan;
         $contingent->save();
-
         return redirect()->route('adminIndex')->with('status', 'Verifikasi kontingen berhasil diproses.');
     }
 
-    /**
-     * Process the verification for a player.
-     */
     public function verifyPlayer(Request $request, Player $player)
     {
-        $request->validate([
-            'action' => 'required|in:approve,reject',
-            'catatan' => 'nullable|string',
-        ]);
-
-        if ($request->action == 'approve') {
-            $player->status = 2; // Set status to "Terverifikasi"
-            $player->catatan = null;
-        } else {
-            $player->status = 3; // Set status to "Ditolak"
-            $player->catatan = $request->catatan;
-        }
-
+        $this->authorizeAdminAction($player->contingent->event_id);
+        $request->validate(['action' => 'required|in:approve,reject', 'catatan' => 'nullable|string']);
+        $player->status = ($request->action == 'approve') ? 2 : 3;
+        $player->catatan = ($request->action == 'approve') ? null : $request->catatan;
         $player->save();
-
         return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet berhasil diproses.');
+    }
+
+    private function authorizeAdminAction($event_id)
+    {
+        $adminEventIds = Auth::user()->eventRoles->pluck('event_id')->toArray();
+        if (!in_array($event_id, $adminEventIds)) {
+            abort(403, 'Anda tidak memiliki hak akses untuk event ini.');
+        }
     }
 }

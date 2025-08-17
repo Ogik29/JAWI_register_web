@@ -62,6 +62,27 @@ class EventSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'name' => 'Festival Silat Tradisional Yogyakarta 2026',
+                'slug' => Str::slug('Festival Silat Tradisional Yogyakarta 2025'),
+                'image' => 'event-1.jpg', // Contoh path gambar
+                'desc' => 'Festival ini bertujuan untuk melestarikan dan memperkenalkan kekayaan aliran pencak silat tradisional dari seluruh nusantara. Tidak hanya kompetisi, acara ini juga diisi dengan workshop dan pertunjukan budaya.',
+                'type' => 'official',
+                'month' => 'November',
+                'harga_contingent' => 100000,
+                'harga_peserta' => 75000,
+                'kotaOrKabupaten' => 'Yogyakarta',
+                'lokasi' => 'Alun-Alun Kidul, Yogyakarta',
+                'tgl_mulai_tanding' => Carbon::create(2025, 11, 15),
+                'tgl_selesai_tanding' => Carbon::create(2025, 11, 16),
+                'tgl_batas_pendaftaran' => Carbon::create(2025, 11, 1),
+                'status' => 'Ditutup',
+                'cp' => '08282828339 AN.Budi <br> 08737372819 AN.Gopal',
+                'juknis' => 'https://drive.google.com/drive/folders/1q-vAkN3uUt6wMcYnMBY5y3kCS28_yezF',
+                'total_hadiah' => 20000000,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
     }
 }

@@ -92,8 +92,8 @@ class UserSeeder extends Seeder
             ],
 
             [
-                'nama_lengkap' => 'atmint Jakarta',
-                'email' => 'admin@example.com',
+                'nama_lengkap' => 'atmint Suki',
+                'email' => 'admin1@example.com',
                 'password' => Hash::make('password123'), // Ganti dengan password yang aman
                 'alamat' => 'Jl. Merdeka No. 1, Jakarta',
                 'jenis_kelamin' => 'Laki-laki',
@@ -101,6 +101,38 @@ class UserSeeder extends Seeder
                 'tanggal_lahir' => '1990-01-15',
                 'negara' => 'Indonesia',
                 'no_telp' => '081234567890',
+                'status' => 1,
+                'role_id' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            [
+                'nama_lengkap' => 'atmint Bleki',
+                'email' => 'admin2@example.com',
+                'password' => Hash::make('password123'), // Ganti dengan password yang aman
+                'alamat' => 'Jl. Merdeka No. 1, Jakarta',
+                'jenis_kelamin' => 'Laki-laki',
+                'tempat_lahir' => 'Jakarta',
+                'tanggal_lahir' => '1990-01-15',
+                'negara' => 'Indonesia',
+                'no_telp' => '0812345673',
+                'status' => 1,
+                'role_id' => 2,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            [
+                'nama_lengkap' => 'atmint Acumalaka',
+                'email' => 'admin3@example.com',
+                'password' => Hash::make('password123'), // Ganti dengan password yang aman
+                'alamat' => 'Jl. Merdeka No. 1, Jakarta',
+                'jenis_kelamin' => 'Laki-laki',
+                'tempat_lahir' => 'Ngawi',
+                'tanggal_lahir' => '1990-01-15',
+                'negara' => 'Indonesia',
+                'no_telp' => '0814563393',
                 'status' => 1,
                 'role_id' => 2,
                 'created_at' => now(),

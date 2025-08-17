@@ -39,7 +39,13 @@
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                             <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
-                            <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
+                            @if (Auth::user()->role_id == 3)
+                                <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
+                            @elseif (Auth::user()->role_id == 2)
+                                <li><a class="dropdown-item" href="{{ route('adminIndex') }}">Admin</a></li>
+                            @else
+                                <li><a class="dropdown-item" href="/superadmin">Super Admin</a></li>
+                            @endif
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="/logout"> Logout</a></li>
                         </ul>
@@ -82,14 +88,19 @@
                                     </span>
                                 </div>
                                 <div class="col-md-4 col-6 text-end">
-                                    @if ($contingent->status == 0 || $contingent->status == 2)
-                                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#editContingentModal-{{ $contingent->id }}">
-                                            Edit
+                                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                        @if ($contingent->players->where('status', 0)->count() > 0)
+                                            <a href="{{ route('invoice.show', $contingent->id) }}" class="btn btn-info">Invoice Pelunasan</a>
+                                        @endif
+                                        @if ($contingent->status == 0 || $contingent->status == 2)
+                                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#editContingentModal-{{ $contingent->id }}">
+                                                Edit
+                                            </button>
+                                        @endif
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailContingentModal-{{ $contingent->id }}">
+                                            Lihat Detail
                                         </button>
-                                    @endif
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailContingentModal-{{ $contingent->id }}">
-                                        Lihat Detail
-                                    </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -146,7 +157,12 @@
                                         <table class="table table-striped table-bordered table-hover">
                                             <thead class="table-dark">
                                                 <tr>
-                                                    <th>#</th><th>Nama</th><th>Gender</th><th>Kelas</th><th>Status</th><th>Aksi</th>
+                                                    <th>#</th>
+                                                    <th>Nama</th>
+                                                    <th>Gender</th>
+                                                    <th>Kelas</th>
+                                                    <th>Status</th>
+                                                    <th>Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -163,11 +179,22 @@
                                                             @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
                                                         </td>
-                                                        <td>
+                                                        {{-- PERBAIKAN: Gunakan d-flex agar tombol tidak turun ke bawah --}}
+                                                        <td class="d-flex flex-wrap gap-2">
                                                             @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
                                                                 <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm">
                                                                     <i class="bi bi-pencil-square"></i> Edit
                                                                 </a>
+                                                            @endif
+                                                                
+                                                            @if ($player->status == 0)    
+                                                                <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus peserta ini?');">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                                        <i class="bi bi-trash"></i> Hapus
+                                                                    </button>
+                                                                </form>
                                                             @endif
                                                         </td>
                                                     </tr>

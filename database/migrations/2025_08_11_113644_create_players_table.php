@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->string('foto_ktp')->nullable();
             $table->string('foto_diri')->nullable();
             $table->string('foto_persetujuan_ortu')->nullable();
-            $table->integer('status')->default(0);
+            $table->integer('status')->default(0); // 0 belum bayar, 1 pending, 2 verifikasi, 3 ditolak
 
             $table->date('tgl_lahir')->nullable();
             $table->foreignId('kelas_pertandingan_id')->constrained('kelas_pertandingan')->cascadeOnDelete();

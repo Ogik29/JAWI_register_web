@@ -23,7 +23,7 @@ class EventController extends Controller
     //
     public function index()
     {
-        $events = Event::all();
+        $events = Event::orderBy('created_at', 'desc')->get();
         return view('register.registEvent', compact('events'));
     }
 
@@ -43,7 +43,6 @@ class EventController extends Controller
     {
         $event = Event::findOrFail($event_id);
 
-        // Mengambil data dari user yang login untuk validasi
         $request->merge([
             'namaManajer' => Auth::user()->nama_lengkap,
             'noTelepon'   => Auth::user()->no_telp,
@@ -62,10 +61,12 @@ class EventController extends Controller
             'email'         => 'required|email|max:255',
             'user_id'       => 'required|integer|exists:users,id',
             'event_id'      => 'required|integer|exists:events,id',
+            'surat_rekomendasi' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ];
 
         $messages = [
             'namaKontingen.unique' => 'Nama kontingen ini sudah terdaftar di event ini. Silakan gunakan nama lain.',
+            'surat_rekomendasi.required' => 'Surat rekomendasi wajib diunggah.',
         ];
 
         if ($event->harga_contingent > 0) {
@@ -80,13 +81,23 @@ class EventController extends Controller
 
         $data = $validator->validated();
 
+        // upload surat rekomendasi
+        $rekomendasiPath = null;
+        if ($request->hasFile('surat_rekomendasi')) {
+            $file = $request->file('surat_rekomendasi');
+            $ext = $file->getClientOriginalExtension();
+            $fileName = uniqid('rekomendasi_') . '.' . $ext;
+            $rekomendasiPath = $file->storeAs('contingent', $fileName, 'public');
+        }
+
         $contingent = Contingent::create([
-            'name'          => $data['namaKontingen'],
-            'manajer_name'  => $data['namaManajer'],
-            'email'         => $data['email'],
-            'no_telp'       => $data['noTelepon'],
-            'user_id'       => $data['user_id'],
-            'event_id'      => $data['event_id'],
+            'name'                => $data['namaKontingen'],
+            'manajer_name'        => $data['namaManajer'],
+            'email'               => $data['email'],
+            'no_telp'             => $data['noTelepon'],
+            'user_id'             => $data['user_id'],
+            'event_id'            => $data['event_id'],
+            'surat_rekomendasi'   => $rekomendasiPath, // Simpan path file ke database
         ]);
 
         $fotoInvoicePath = null;
@@ -196,8 +207,9 @@ class EventController extends Controller
     }
 
 
-    public function store_invoice(Request $request){
-          // 1. Validasi input dari form
+    public function store_invoice(Request $request)
+    {
+        // 1. Validasi input dari form
         $request->validate([
             'total_price'    => 'required|numeric',
             'foto_invoice'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // Max 5MB

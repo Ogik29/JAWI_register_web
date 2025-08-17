@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Contingent;
 use App\Models\Player;
+use App\Models\Contingent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class historyController extends Controller
 {
@@ -103,5 +104,28 @@ class historyController extends Controller
         $player->save();
 
         return redirect()->route('history')->with('status', 'Data peserta berhasil diperbarui.');
+    }
+
+    public function destroyPlayer(Player $player)
+    {
+        // Otorisasi: Pastikan user yang login adalah pemilik kontingen
+        if ($player->contingent->user_id !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki hak untuk menghapus peserta ini.');
+        }
+
+        if ($player->foto_ktp) {
+            Storage::disk('public')->delete($player->foto_ktp);
+        }
+        if ($player->foto_diri) {
+            Storage::disk('public')->delete($player->foto_diri);
+        }
+        if ($player->foto_persetujuan_ortu) {
+            Storage::disk('public')->delete($player->foto_persetujuan_ortu);
+        }
+
+        // Hapus record player dari database
+        $player->delete();
+
+        return redirect()->route('history')->with('status', 'Data peserta berhasil dihapus.');
     }
 }

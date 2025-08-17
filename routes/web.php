@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\adminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\historyController;
@@ -45,6 +46,7 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::put('/history/contingent/{contingent}', [historyController::class, 'updateContingent'])->name('contingent.update');
     Route::get('/history/player/{player}/edit', [historyController::class, 'editPlayer'])->name('player.edit');
     Route::put('/history/player/{player}', [historyController::class, 'updatePlayer'])->name('player.update');
+    Route::delete('/history/player/{player}', [historyController::class, 'destroyPlayer'])->name('player.destroy');
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
     Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');
@@ -65,9 +67,7 @@ Route::middleware('checkRole:1')->group(function () {
 });
 
 Route::middleware('checkRole:1,2')->group(function () {
-    Route::get('/admin', function () {
-        return view('admin.index');
-    });
+    Route::get('/admin', [adminController::class, 'index'])->name('adminIndex');
 });
 
 

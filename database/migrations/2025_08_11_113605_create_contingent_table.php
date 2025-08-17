@@ -5,7 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('contingent', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -16,10 +17,12 @@ return new class extends Migration {
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->timestamps();
             $table->integer('status')->default(0); // 1 = aktif, 0 = tidak aktif, 2 = ditolak
+            $table->string('surat_rekomendasi');
         });
     }
 
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('contingent');
     }
 };

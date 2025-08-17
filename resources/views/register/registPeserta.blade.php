@@ -168,7 +168,7 @@
                         <div class="col-12">
                             <h4 class="text-danger mb-3"><i class="fas fa-users me-2"></i>Informasi Kontingen</h4>
                             <div class="mb-3">
-                                <h1 class="text-center">Nama Kontingen</h1>
+                                <h1 class="text-center">{{ $contingent->name }}</h1>
                             </div>
                         </div>
                     </div>

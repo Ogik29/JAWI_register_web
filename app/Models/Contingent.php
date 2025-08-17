@@ -12,7 +12,14 @@ class Contingent extends Model
     protected $table = 'contingent';
 
     protected $fillable = [
-        'name', 'manajer_name', 'email', 'no_telp', 'user_id', 'event_id'
+        'name',
+        'manajer_name',
+        'email',
+        'no_telp',
+        'user_id',
+        'event_id',
+        'status',
+        'surat_rekomendasi'
     ];
 
     public function user()

@@ -19,7 +19,8 @@ class Contingent extends Model
         'user_id',
         'event_id',
         'status',
-        'surat_rekomendasi'
+        'surat_rekomendasi',
+        'catatan'
     ];
 
     public function user()

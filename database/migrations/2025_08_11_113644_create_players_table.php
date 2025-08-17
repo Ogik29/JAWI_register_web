@@ -24,6 +24,7 @@ return new class extends Migration {
 
             $table->date('tgl_lahir')->nullable();
             $table->foreignId('kelas_pertandingan_id')->constrained('kelas_pertandingan')->cascadeOnDelete();
+            $table->text('catatan')->nullable();
             $table->timestamps();
         });
     }

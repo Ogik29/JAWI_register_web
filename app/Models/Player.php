@@ -24,8 +24,8 @@ class Player extends Model
         'foto_persetujuan_ortu',
         'status',
         'tgl_lahir',
-        'kelas_pertandingan_id'
-
+        'kelas_pertandingan_id',
+        'catatan'
     ];
 
     public function contingent()

@@ -9,12 +9,11 @@ class EventRole extends Model
 {
     use HasFactory;
 
-    protected $table = 'roles_event';
+    protected $table = 'user_event';
 
     protected $fillable = [
         'user_id',
         'event_id',
-        'type'
     ];
 
     public function user()

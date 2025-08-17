@@ -62,7 +62,7 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     // Rute untuk 'superadmin' saja, bisa diarahkan ke dashboard
     Route::get('/', [SuperAdminController::class, 'dashboard'])->name('index');
     Route::get('/kelola_admin', [SuperAdminController::class, 'kelola_admin'])->name('kelola_admin');
-    Route::get('/index', function(){
+    Route::get('/index', function () {
         return view('superadmin.index');
     });
     Route::post('/tambah-event', [SuperAdminController::class, 'storeEvent'])->name('store_event');
@@ -70,7 +70,6 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('event/{event}/edit', [SuperAdminController::class, 'editEvent'])->name('event.edit');
     Route::put('event/{event}', [SuperAdminController::class, 'updateEvent'])->name('event.update');
     Route::delete('event/{event}', [SuperAdminController::class, 'destroyEvent'])->name('event.destroy');
-
 });
 
 
@@ -83,6 +82,9 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('checkRole:1,2')->group(function () {
     Route::get('/admin', [adminController::class, 'index'])->name('adminIndex');
+    // Rute untuk proses verifikasi
+    Route::post('/admin/verify/contingent/{contingent}', [adminController::class, 'verifyContingent'])->name('admin.verify.contingent');
+    Route::post('/admin/verify/player/{player}', [adminController::class, 'verifyPlayer'])->name('admin.verify.player');
 });
 
 

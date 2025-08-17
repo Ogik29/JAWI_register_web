@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->timestamps();
             $table->integer('status')->default(0); // 1 = aktif, 0 = tidak aktif, 2 = ditolak
             $table->string('surat_rekomendasi');
+            $table->text('catatan')->nullable();
         });
     }
 

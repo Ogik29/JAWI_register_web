@@ -47,4 +47,10 @@ class Event extends Model
     {
         return $this->hasMany(KelasPertandingan::class, 'event_id', 'id');
     }
+
+    // relasi ini memberitahu Laravel untuk mencari Player melalui model Contingent
+    public function players()
+    {
+        return $this->hasManyThrough(Player::class, Contingent::class);
+    }
 }

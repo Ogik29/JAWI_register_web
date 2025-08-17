@@ -61,7 +61,6 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('/kelola-event', [SuperAdminController::class, 'kelolaEvent'])->name('kelola_event');
     // Rute untuk 'superadmin' saja, bisa diarahkan ke dashboard
     Route::get('/', [SuperAdminController::class, 'dashboard'])->name('index');
-    Route::get('/kelola_admin', [SuperAdminController::class, 'kelola_admin'])->name('kelola_admin');
     Route::get('/index', function () {
         return view('superadmin.index');
     });
@@ -70,6 +69,18 @@ Route::prefix('superadmin')->name('superadmin.')->group(function () {
     Route::get('event/{event}/edit', [SuperAdminController::class, 'editEvent'])->name('event.edit');
     Route::put('event/{event}', [SuperAdminController::class, 'updateEvent'])->name('event.update');
     Route::delete('event/{event}', [SuperAdminController::class, 'destroyEvent'])->name('event.destroy');
+    
+    Route::get('/kelola_admin', [SuperAdminController::class, 'kelola_admin'])->name('kelola_admin');
+     // BARU: Rute untuk mengambil form tambah admin via AJAX
+    Route::get('kelola-admin/create', [SuperAdminController::class, 'createAdmin'])->name('admin.create');
+    Route::post('kelola-admin', [SuperAdminController::class, 'storeAdmin'])->name('admin.store');
+
+      // BARU: Rute untuk menampilkan form edit
+    Route::get('kelola-admin/{admin}/edit', [SuperAdminController::class, 'editAdmin'])->name('admin.edit');
+    // BARU: Rute untuk memproses update
+    Route::put('kelola-admin/{admin}', [SuperAdminController::class, 'updateAdmin'])->name('admin.update');
+    // BARU: Rute untuk memproses penghapusan data admin
+    Route::delete('kelola-admin/{admin}', [SuperAdminController::class, 'destroyAdmin'])->name('admin.destroy');
 });
 
 

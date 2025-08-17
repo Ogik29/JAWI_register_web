@@ -11,17 +11,17 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-            EventSeeder::class,
-            ClassCategorySeeder::class,
-            PlayerCategorySeeder::class,
-            ContingentSeeder::class,
-            KategoriPertandinganSeeder::class,
-            JenisPertandinganSeeder::class,
-            KelasPertandinganSeeder::class,
-            PlayerSeeder::class,
-            TransactionSeeder::class,
-            TransactionDetailSeeder::class,
-            EventRoleSeeder::class,
+            // EventSeeder::class,
+            // ClassCategorySeeder::class,
+            // PlayerCategorySeeder::class,
+            // ContingentSeeder::class,
+            // KategoriPertandinganSeeder::class,
+            // JenisPertandinganSeeder::class,
+            // KelasPertandinganSeeder::class,
+            // PlayerSeeder::class,
+            // TransactionSeeder::class,
+            // TransactionDetailSeeder::class,
+            // EventRoleSeeder::class,
         ]);
     }
 }

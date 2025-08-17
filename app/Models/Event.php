@@ -22,7 +22,6 @@ class Event extends Model
         'type',
         'month',
         'harga_contingent',
-        'harga_peserta',
         'kotaOrKabupaten',
         'lokasi',
         'tgl_mulai_tanding',

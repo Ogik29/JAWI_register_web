@@ -22,7 +22,6 @@ class Event extends Model
         'type',
         'month',
         'harga_contingent',
-        'harga_peserta',
         'kotaOrKabupaten',
         'lokasi',
         'tgl_mulai_tanding',
@@ -30,7 +29,8 @@ class Event extends Model
         'tgl_batas_pendaftaran',
         'status',
         'cp',
-        'juknis'
+        'juknis',
+        'total_hadiah'
     ];
 
     public function classCategories()

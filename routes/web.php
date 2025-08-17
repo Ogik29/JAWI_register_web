@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\historyController;
+use App\Http\Controllers\SuperAdminController;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
 
@@ -52,17 +53,31 @@ Route::middleware('checkRole:1,3')->group(function () {
 });
 
 
+Route::prefix('superadmin')->name('superadmin.')->group(function () {
+    Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
+    Route::get('/tambah-event', [SuperAdminController::class, 'tambahEvent'])->name('tambah_event');
+    Route::get('/kelola-event', [SuperAdminController::class, 'kelolaEvent'])->name('kelola_event');
+    // Rute untuk 'superadmin' saja, bisa diarahkan ke dashboard
+    Route::get('/', [SuperAdminController::class, 'dashboard'])->name('index');
+    Route::get('/kelola_admin', [SuperAdminController::class, 'kelola_admin'])->name('kelola_admin');
+    Route::get('/index', function(){
+        return view('superadmin.index');
+    });
+    Route::post('/tambah-event', [SuperAdminController::class, 'storeEvent'])->name('store_event');
+    Route::get('kelola-event', [SuperAdminController::class, 'kelolaEvent'])->name('kelola_event');
+    Route::get('event/{event}/edit', [SuperAdminController::class, 'editEvent'])->name('event.edit');
+    Route::put('event/{event}', [SuperAdminController::class, 'updateEvent'])->name('event.update');
+    Route::delete('event/{event}', [SuperAdminController::class, 'destroyEvent'])->name('event.destroy');
+
+});
+
+
 Route::middleware('auth')->group(function () {
     Route::get('/datapeserta', function () {
         return view('register.dataPeserta');
     });
 });
 
-Route::middleware('checkRole:1')->group(function () {
-    Route::get('/superadmin', function () {
-        return view('superadmin.index');
-    });
-});
 
 Route::middleware('checkRole:1,2')->group(function () {
     Route::get('/admin', function () {

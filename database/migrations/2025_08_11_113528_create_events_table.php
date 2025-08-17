@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->string('type')->nullable();
             $table->string('month');
             $table->integer('harga_contingent');
-            $table->integer('harga_peserta');
+            $table->integer('harga_peserta')->nullable();
             $table->string('kotaOrKabupaten');
             $table->string('lokasi');
             $table->date('tgl_mulai_tanding');

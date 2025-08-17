@@ -7,6 +7,8 @@ use App\Models\KategoriPertandingan;
 use App\Models\Event;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class SuperAdminController extends Controller
 {
@@ -24,8 +26,12 @@ class SuperAdminController extends Controller
 
     public function kelolaEvent()
     {
-        $events = Event::latest()->withCount('kelasPertandingan')->get();
-        return view('superadmin.kelola_event', compact('events'));
+        $events = Event::with('kelasPertandingan')
+                    ->latest()
+                    ->withCount('kelasPertandingan')
+                    ->get();
+                    
+    return view('superadmin.kelola_event', compact('events'));
     }
 
     public function kelola_admin(){
@@ -124,4 +130,133 @@ class SuperAdminController extends Controller
         // 5. REDIRECT (Tidak ada perubahan di sini)
         return redirect()->route('superadmin.kelola_event')->with('success', 'Event baru berhasil ditambahkan!');
     }
+
+
+      public function editEvent(Event $event)
+    {
+        // Eager load relasi untuk efisiensi
+        $event->load('kelasPertandingan');
+
+        // Ambil data yang dibutuhkan untuk form (sama seperti di method create)
+        $kategori_pertandingan = KategoriPertandingan::all();
+        $jenis_pertandingan = JenisPertandingan::all();
+
+        return view('superadmin.edit_event', compact('event', 'kategori_pertandingan', 'jenis_pertandingan'));
+    }
+
+
+    public function updateEvent(Request $request, Event $event)
+    {
+        // 1. VALIDASI DATA
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            // Aturan slug diubah: harus unik, tapi abaikan event dengan ID saat ini
+            'slug' => [
+                'required',
+                'string',
+                Rule::unique('events')->ignore($event->id),
+            ],
+            // Aturan image diubah: tidak wajib diisi (nullable)
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'desc' => 'required|string',
+            'type' => 'required|in:official,non-official',
+            'month' => 'required|string|max:100',
+            'harga_contingent' => 'required|integer|min:0',
+            'total_hadiah' => 'required|integer|min:0',
+            'kotaOrKabupaten' => 'required|string|max:255',
+            'lokasi' => 'required|string|max:255',
+            'tgl_mulai_tanding' => 'required|date',
+            'tgl_selesai_tanding' => 'required|date|after_or_equal:tgl_mulai_tanding',
+            'tgl_batas_pendaftaran' => 'required|date',
+            'status' => 'required|in:belum dibuka,sudah dibuka,ditutup',
+            'cp' => 'required|string',
+            'juknis' => 'required|string', // Diubah menjadi nullable dan harus URL
+            'kelas' => 'required|array|min:1',
+            'kelas.*.kategori_id' => 'required|exists:kategori_pertandingan,id', // Pastikan nama tabel benar
+            'kelas.*.jenis_id' => 'required|exists:jenis_pertandingan,id', // Pastikan nama tabel benar
+            'kelas.*.nama_kelas' => 'required|string|max:255',
+            'kelas.*.rentang_usia' => 'required|string|max:255',
+            'kelas.*.gender' => 'required|in:Laki-laki,Perempuan',
+            'kelas.*.harga' => 'required|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        // 2. HANDLE FILE UPLOAD (DENGAN LOGIKA HAPUS GAMBAR LAMA)
+        $imagePath = $event->image; // Defaultnya adalah gambar yang sudah ada
+        if ($request->hasFile('image')) {
+            // Jika ada file gambar lama, hapus dari storage
+            if ($event->image) {
+                Storage::disk('public')->delete($event->image);
+            }
+
+            // Simpan gambar baru dengan nama unik
+            $slug = $request->slug;
+            $extension = $request->file('image')->getClientOriginalExtension();
+            $imageName = $slug . '-' . time() . '.' . $extension;
+            $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
+        }
+        
+        // 3. UPDATE DATA EVENT UTAMA
+        // Kita tidak membuat objek baru, tapi mengupdate yang sudah ada
+        $event->name = $request->name;
+        $event->slug = $request->slug;
+        $event->image = $imagePath; // Path gambar baru atau lama
+        $event->desc = $request->desc;
+        $event->type = $request->type;
+        $event->month = $request->month;
+        $event->harga_contingent = $request->harga_contingent;
+        $event->total_hadiah = $request->total_hadiah;
+        $event->kotaOrKabupaten = $request->kotaOrKabupaten;
+        $event->lokasi = $request->lokasi;
+        $event->tgl_mulai_tanding = $request->tgl_mulai_tanding;
+        $event->tgl_selesai_tanding = $request->tgl_selesai_tanding;
+        $event->tgl_batas_pendaftaran = $request->tgl_batas_pendaftaran;
+        $event->status = $request->status;
+        $event->cp = $request->cp;
+        $event->juknis = $request->juknis;
+        
+        $event->save(); // Simpan perubahan
+
+        // 4. SINKRONISASI DATA KELAS PERTANDINGAN (Delete & Re-create)
+        // Hapus semua kelas pertandingan yang lama terkait event ini
+        $event->kelasPertandingan()->delete();
+
+        // Buat ulang kelas pertandingan dari data form yang baru
+        foreach ($request->kelas as $kelasData) {
+            $event->kelasPertandingan()->create([
+                'kategori_pertandingan_id' => $kelasData['kategori_id'],
+                'jenis_pertandingan_id' => $kelasData['jenis_id'],
+                'nama_kelas' => $kelasData['nama_kelas'],
+                'rentang_usia' => $kelasData['rentang_usia'],
+                'gender' => $kelasData['gender'],
+                'harga' => $kelasData['harga'],
+            ]);
+        }
+
+        // 5. REDIRECT DENGAN PESAN SUKSES
+        return redirect()->route('superadmin.kelola_event')->with('success', 'Event berhasil diperbarui!');
+    }
+
+
+     public function destroyEvent(Event $event)
+    {
+        // 1. HAPUS GAMBAR LAMA DARI STORAGE JIKA ADA
+        // Ini mencegah file sampah tertinggal di server.
+        if ($event->image) {
+            Storage::disk('public')->delete($event->image);
+        }
+
+        // 2. HAPUS RECORD EVENT DARI DATABASE
+        // Jika Anda sudah mengatur onDelete('cascade') di migrasi,
+        // semua kelas pertandingan yang terkait akan terhapus secara otomatis.
+        $event->delete();
+
+        // 3. REDIRECT KEMBALI DENGAN PESAN SUKSES
+        return redirect()->route('superadmin.kelola_event')->with('success', 'Event "' . $event->name . '" berhasil dihapus.');
+    }
+
+
 }

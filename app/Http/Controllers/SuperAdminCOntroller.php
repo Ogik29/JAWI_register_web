@@ -15,7 +15,23 @@ class SuperAdminController extends Controller
 {
     public function dashboard()
     {
-        return view('superadmin.dashboard');
+ // Menghitung data untuk kartu statistik
+        $totalEvent = Event::count();
+        $totalAdmin = User::where('role_id', 2)->count();
+        $eventAktif = Event::where('status', 1)->count(); // Status 1 = Dibuka/Aktif
+        $eventSelesai = Event::where('status', 2)->count(); // Status 2 = Ditutup/Selesai
+
+        // Mengambil 5 event terbaru untuk ditampilkan di tabel
+        $recentEvents = Event::latest()->take(5)->get();
+        
+        // Kirim semua data yang dibutuhkan ke view
+        return view('superadmin.dashboard', compact(
+            'totalEvent', 
+            'totalAdmin', 
+            'eventAktif', 
+            'eventSelesai',
+            'recentEvents' // Kirim data event terbaru
+        ));
     }
 
     public function tambahEvent()
@@ -58,7 +74,7 @@ class SuperAdminController extends Controller
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'alamat' => 'required|string',
-            'jenis_kelamin' => 'required|in:Laki-laki,Perempuan',
+            'jenis_kelamin' => 'required|string',
             'tempat_lahir' => 'required|string|max:100',
             'tanggal_lahir' => 'required|date',
             'negara' => 'required|string|max:100',
@@ -189,7 +205,7 @@ class SuperAdminController extends Controller
             'tgl_mulai_tanding' => 'required|date',
             'tgl_selesai_tanding' => 'required|date|after_or_equal:tgl_mulai_tanding',
             'tgl_batas_pendaftaran' => 'required|date',
-            'status' => 'required|in:belum dibuka,sudah dibuka,ditutup',
+            'status' => 'required',
             'cp' => 'required|string',
             'juknis' => 'string',
             'kelas' => 'required|array|min:1',

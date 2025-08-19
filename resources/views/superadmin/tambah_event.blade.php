@@ -77,9 +77,9 @@
         <div class="col-md-4 mb-3">
             <label for="status" class="form-label fw-bold">Status Pendaftaran</label>
             <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
-                <option value="belum dibuka" {{ old('status') == 'belum dibuka' ? 'selected' : '' }}>Belum Dibuka</option>
-                <option value="sudah dibuka" {{ old('status') == 'sudah dibuka' ? 'selected' : '' }}>Sudah Dibuka</option>
-                <option value="ditutup" {{ old('status') == 'ditutup' ? 'selected' : '' }}>Ditutup</option>
+                <option value="0" {{ old('status') == '0' ? 'selected' : '' }}>Belum Dibuka</option>
+                <option value="1" {{ old('status') == '1' ? 'selected' : '' }}>Sudah Dibuka</option>
+                <option value="2" {{ old('status') == '2' ? 'selected' : '' }}>Ditutup</option>
             </select>
             @error('status')
                 <div class="invalid-feedback">{{ $message }}</div>

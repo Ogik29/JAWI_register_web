@@ -122,8 +122,7 @@
     <nav class="container-fluid d-flex justify-content-between align-items-center">
         {{-- Brand/Logo --}}
         <a class="navbar-brand d-flex align-items-center" href="{{ route('superadmin.dashboard') }}">
-            <i class="bi bi-shield-shaded"></i>
-            <span>Aurora</span>
+            <img src="{{ asset('assets/img/icon/logo-jawi.png') }}" alt="Logo JAWI" style="height: 40px;">
         </a>
 
         {{-- Menu Navigasi Utama --}}

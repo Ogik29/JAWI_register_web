@@ -45,13 +45,23 @@
     </nav>
 
     <main class="p-6">
-        {{-- Dashboard Section --}}
         <div id="dashboard" class="section">
             <div class="mb-6">
                 <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
                 <p class="text-gray-600">Ringkasan aktivitas event silat Anda</p>
             </div>
+            
+            {{-- [PERBAIKAN] Grid sekarang memiliki 4 kartu --}}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Total Kontingen</p>
+                            <p class="text-2xl font-bold text-gray-900">{{ $totalContingents }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><span class="text-blue-600 text-xl">🏢</span></div>
+                    </div>
+                </div>
                 <div class="bg-white p-6 rounded-xl shadow-sm border">
                     <div class="flex items-center justify-between">
                         <div>
@@ -64,13 +74,23 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm border">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm text-gray-600">Kontingen Menunggu Verifikasi</p>
+                            <p class="text-sm text-gray-600">Kontingen Pending</p>
                             <p class="text-2xl font-bold text-orange-600">{{ $pendingContingentsCount }}</p>
                         </div>
                         <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center"><span class="text-orange-600 text-xl">⏳</span></div>
                     </div>
                 </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Atlet Pending</p>
+                            <p class="text-2xl font-bold text-yellow-600">{{ $pendingPlayersCount }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><span class="text-yellow-600 text-xl">🏃</span></div>
+                    </div>
+                </div>
             </div>
+
             <div class="bg-white rounded-xl shadow-sm border p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Event Aktif Terbaru Anda</h3>
                 <div class="space-y-4">
@@ -104,8 +124,8 @@
                                 <td class="p-3 text-sm text-gray-900">{{ \Carbon\Carbon::parse($event->tgl_mulai_tanding)->format('d M Y') }}</td>
                                 <td class="p-3 text-sm text-gray-900">{{ $event->lokasi }}</td>
                                 <td class="p-3">
-                                    @if($event->status == "Pendaftaran Dibuka") <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Aktif</span>
-                                    @elseif ($event->status == "Segera Dibuka") <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Segera</span>
+                                    @if($event->status == 1) <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Aktif</span>
+                                    @elseif ($event->status == 0) <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Segera Dibuka</span>
                                     @else <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Tutup</span> @endif
                                 </td>
                                 <td class="p-3 text-sm text-gray-900">{{ $event->players_count }} atlet</td>

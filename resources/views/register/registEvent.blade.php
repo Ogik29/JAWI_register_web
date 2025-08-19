@@ -53,11 +53,12 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status Event</label>
+                    {{-- [PERBAIKAN] Mengubah value menjadi integer --}}
                     <select id="statusFilter" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         <option value="">Semua Status</option>
-                        <option value="Pendaftaran Dibuka">Pendaftaran Dibuka</option>
-                        <option value="Segera Hadir">Segera Hadir</option>
-                        <option value="Selesai">Selesai</option>
+                        <option value="1">Pendaftaran Dibuka</option>
+                        <option value="0">Belum Dibuka</option>
+                        <option value="2">Selesai</option>
                     </select>
                 </div>
                 <div>
@@ -100,17 +101,13 @@
                     <h2 id="modalTitle" class="text-2xl font-bold text-gray-800"></h2>
                     <button id="closeModal" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">×</button>
                 </div>
-                
-                <div id="modalContent">
-                    <!-- Modal content will be populated by JavaScript -->
-                </div>
+                <div id="modalContent"></div>
             </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
     @php
-        // Blok ini untuk mentransformasi data dari Eloquent menjadi array yang sesuai dengan format JavaScript
         $transformedEvents = [];
         $bulanIndonesia = [
             'January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April',
@@ -121,34 +118,31 @@
         foreach ($events as $event) {
             $tglMulai = \Carbon\Carbon::parse($event->tgl_mulai_tanding);
             $tglSelesai = \Carbon\Carbon::parse($event->tgl_selesai_tanding);
-            
-            // Format tanggal menjadi "20 - 23 Oktober 2025"
             $formattedDate = $tglMulai->format('j') . ' - ' . $tglSelesai->format('j F Y');
             $formattedDate = str_replace(array_keys($bulanIndonesia), array_values($bulanIndonesia), $formattedDate);
 
-            // Tentukan status registrasi untuk tombol
+            // [PERBAIKAN] Logika status registrasi menggunakan integer
             $registrationStatus = 'Ditutup'; // Default
-            if ($event->status == 'Pendaftaran Dibuka') {
+            if ($event->status == 1) { // Pendaftaran Dibuka
                 $registrationStatus = 'Dibuka';
-            } elseif ($event->status == 'Selesai') {
+            } elseif ($event->status == 2) { // Selesai
                 $registrationStatus = 'Selesai';
             }
             
             $transformedEvents[] = [
                 'id' => $event->id,
                 'title' => $event->name,
-                'status' => $event->status,
+                'status' => $event->status, // Mengirim status sebagai integer (0, 1, or 2)
                 'month' => $event->month,
                 'date' => $formattedDate,
                 'tgl_batas_pendaftaran' => $event->tgl_batas_pendaftaran,
                 'location' => $event->lokasi,
                 'kotaOrKabupaten' => $event->kotaOrKabupaten,
-                'harga_peserta' => 'Rp ' . number_format($event->harga_peserta, 0, ',', '.'), // Format harga peserta
-                'harga_contingent' => 'Rp ' . number_format($event->harga_contingent, 0, ',', '.'), // Format harga peserta
+                'harga_peserta' => 'Rp ' . number_format($event->harga_peserta, 0, ',', '.'),
+                'harga_contingent' => 'Rp ' . number_format($event->harga_contingent, 0, ',', '.'),
                 'description' => $event->desc,
-                'classes' => ["Tanding", "Tunggal", "Ganda", "Regu"], // Data sample sesuai instruksi
                 'registrationStatus' => $registrationStatus,
-                'poster' => asset('assets/img/poster/' . $event->image), // Menggunakan helper asset()
+                'poster' => asset('storage/' . $event->image),
                 'cp' => $event->cp,
                 'juknis' => $event->juknis
             ];
@@ -156,8 +150,14 @@
     @endphp
 
     <script>
-        // Mengambil data event dari Blade dan mengubahnya menjadi variabel JavaScript
         const events = @json($transformedEvents);
+        
+        // [PERBAIKAN] Objek pemetaan untuk status integer ke teks dan kelas CSS
+        const statusMapping = {
+            1: { text: 'Pendaftaran Dibuka', className: 'bg-green-100 text-green-800' },
+            0: { text: 'Belum Dibuka', className: 'bg-yellow-100 text-yellow-800' },
+            2: { text: 'Selesai', className: 'bg-gray-100 text-gray-800' }
+        };
         
         let filteredEvents = [...events];
 
@@ -166,22 +166,13 @@
             container.innerHTML = '';
 
             if (eventsToRender.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <div class="text-6xl mb-4">🔍</div>
-                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada event ditemukan</h3>
-                        <p class="text-gray-500">Coba ubah filter pencarian Anda</p>
-                    </div>
-                `;
+                container.innerHTML = `<div class="col-span-full text-center py-12"><div class="text-6xl mb-4">🔍</div><h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada event ditemukan</h3><p class="text-gray-500">Coba ubah filter pencarian Anda</p></div>`;
                 return;
             }
 
             eventsToRender.forEach(event => {
-                const statusColor = {
-                    'Pendaftaran Dibuka': 'bg-green-100 text-green-800',
-                    'Segera Hadir': 'bg-yellow-100 text-yellow-800',
-                    'Selesai': 'bg-gray-100 text-gray-800'
-                };
+                // [PERBAIKAN] Menggunakan objek pemetaan untuk mendapatkan teks dan kelas
+                const eventStatus = statusMapping[event.status] || { text: 'Tidak Diketahui', className: 'bg-gray-100 text-gray-800' };
 
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1';
@@ -193,26 +184,14 @@
                             <img src="${event.poster}" alt="Poster ${event.title}" class="w-full h-48 mx-auto rounded-lg shadow-md object-cover object-center">
                         </div>
                         <div class="flex justify-between items-start mb-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${statusColor[event.status] || 'bg-gray-100 text-gray-800'}">${event.status}</span>
+                            <span class="px-3 py-1 rounded-full text-xs font-medium ${eventStatus.className}">${eventStatus.text}</span>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2 truncate" title="${event.title}">${event.title}</h3>
                         <div class="space-y-2 text-sm text-gray-600">
-                            <div class="flex items-center">
-                                <span class="mr-2">📅</span>
-                                <span>${event.date}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="mr-2">📅</span>
-                                <span>${event.tgl_batas_pendaftaran} (Batas Pendaftaran)</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="mr-2">📍</span>
-                                <span>${event.location}</span>
-                            </div>
-                            <div class="flex items-center">
-                                <span class="mr-2">💰</span>
-                                <span class="font-medium text-red-600">${event.harga_contingent} (Harga Kontingen)</span>
-                            </div>
+                            <div class="flex items-center"><span class="mr-2">📅</span><span>${event.date}</span></div>
+                            <div class="flex items-center"><span class="mr-2">📅</span><span>${event.tgl_batas_pendaftaran} (Batas Pendaftaran)</span></div>
+                            <div class="flex items-center"><span class="mr-2">📍</span><span>${event.location}</span></div>
+                            <div class="flex items-center"><span class="mr-2">💰</span><span class="font-medium text-red-600">${event.harga_contingent} (Harga Kontingen)</span></div>
                         </div>
                         <button class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
                             Lihat Detail
@@ -231,80 +210,32 @@
 
             modalTitle.textContent = event.title;
 
+            // [PERBAIKAN] Menggunakan objek pemetaan di dalam modal
+            const eventStatus = statusMapping[event.status] || { text: 'Tidak Diketahui' };
+
             const registrationButton = event.registrationStatus === 'Dibuka' 
-                ? `<button onclick="registerEvent(${event.id})" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">
-                     Daftar Sekarang
-                   </button>`
-                : `<button disabled class="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-lg cursor-not-allowed">
-                     Pendaftaran ${event.registrationStatus}
-                   </button>`;
+                ? `<button onclick="registerEvent(${event.id})" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Daftar Sekarang</button>`
+                : `<button disabled class="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-lg cursor-not-allowed">Pendaftaran ${event.registrationStatus}</button>`;
 
             modalContent.innerHTML = `
                 <div class="space-y-6">
-                    <div class="text-center">
-                        <div class="mb-4">
-                            <img src="${event.poster}" alt="Poster ${event.title}" class="w-48 h-64 mx-auto rounded-lg shadow-lg object-cover">
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-800">${event.title}</h3>
-                    </div>
-                    
+                    <div class="text-center"><div class="mb-4"><img src="${event.poster}" alt="Poster ${event.title}" class="w-48 h-64 mx-auto rounded-lg shadow-lg object-cover"></div><h3 class="text-xl font-semibold text-gray-800">${event.title}</h3></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="font-semibold text-gray-800 mb-2">📅 Informasi Event</h4>
-                            <div class="space-y-1 text-sm text-gray-600">
-                                <p><strong>Tanggal:</strong> ${event.date}</p>
-                                <p><strong>Lokasi:</strong> ${event.location}</p>
-                                <p><strong>Kota/Kabupaten:</strong> ${event.kotaOrKabupaten}</p>
-                                <p><strong>Petunjuk Teknis:</strong><a href="${event.juknis}" style="color: blue; text-decoration: underline;"> Link Drive</a></p>
-                                <p><strong>Status:</strong> ${event.status}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="font-semibold text-gray-800 mb-2">💰 Biaya Pendaftaran</h4>
-                            <p class="text-2xl font-bold text-red-600">${event.harga_contingent}</p>
-                            <p class="text-sm text-gray-600 mt-1">Per kontingen</p>
-                            <br>
-                            <p class="text-2xl font-bold text-red-600">${event.harga_peserta}</p>
-                            <p class="text-sm text-gray-600 mt-1">Per peserta</p>
-                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📅 Informasi Event</h4><div class="space-y-1 text-sm text-gray-600"><p><strong>Tanggal:</strong> ${event.date}</p><p><strong>Lokasi:</strong> ${event.location}</p><p><strong>Kota/Kabupaten:</strong> ${event.kotaOrKabupaten}</p><p><strong>Petunjuk Teknis:</strong><a href="${event.juknis}" style="color: blue; text-decoration: underline;"> Link Drive</a></p><p><strong>Status:</strong> ${eventStatus.text}</p></div></div>
+                        <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">💰 Biaya Pendaftaran</h4><p class="text-2xl font-bold text-red-600">${event.harga_contingent}</p><p class="text-sm text-gray-600 mt-1">Per kontingen</p><br><p class="text-2xl font-bold text-red-600">${event.harga_peserta}</p><p class="text-sm text-gray-600 mt-1">Per peserta</p></div>
                     </div>
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-2">📝 Deskripsi</h4>
-                        <p class="text-gray-600">${event.description}</p>
-                    </div>
-
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-2">Contact Person:</h4>
-                        <p class="text-gray-600">${event.cp}</p>
-                    </div>
-                    
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <h4 class="font-semibold text-gray-800 mb-2">📋 Status Pendaftaran</h4>
-                        <p class="text-gray-600">Status: <strong>${event.registrationStatus}</strong></p>
-                        </div>
-                        
-                        <div class="pt-4">
-                            ${registrationButton}
-                            </div>
-                            </div>
-                            `;
-                            
-                            modal.classList.remove('hidden');
-                            document.body.style.overflow = 'hidden';
-                        }
-                        // <div class="bg-gray-50 p-4 rounded-lg">
-                        //     <h4 class="font-semibold text-gray-800 mb-2">🥋 Kelas Pertandingan (Sample)</h4>
-                        //     <div class="flex flex-wrap gap-2">
-                        //         ${event.classes.map(cls => `<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm">${cls}</span>`).join('')}
-                        //     </div>
-                        // </div>
+                    <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📝 Deskripsi</h4><p class="text-gray-600">${event.description}</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">Contact Person:</h4><p class="text-gray-600">${event.cp}</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📋 Status Pendaftaran</h4><p class="text-gray-600">Status: <strong>${event.registrationStatus}</strong></p></div>
+                    <div class="pt-4">${registrationButton}</div>
+                </div>`;
+            
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
                         
         function closeModal() {
-            const modal = document.getElementById('eventModal');
-            modal.classList.add('hidden');
+            document.getElementById('eventModal').classList.add('hidden');
             document.body.style.overflow = 'auto';
         }
 
@@ -317,7 +248,8 @@
             const monthFilter = document.getElementById('monthFilter').value;
 
             filteredEvents = events.filter(event => {
-                const statusMatch = !statusFilter || event.status === statusFilter;
+                // [PERBAIKAN] Logika filter menggunakan integer, bandingkan sebagai string untuk konsistensi
+                const statusMatch = !statusFilter || String(event.status) === statusFilter;
                 const monthMatch = !monthFilter || event.month === monthFilter;
                 return statusMatch && monthMatch;
             });
@@ -337,18 +269,8 @@
         document.getElementById('monthFilter').addEventListener('change', applyFilters);
         document.getElementById('resetFilter').addEventListener('click', resetFilters);
         document.getElementById('closeModal').addEventListener('click', closeModal);
-
-        document.getElementById('eventModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-            }
-        });
+        document.getElementById('eventModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
         // Initial render
         renderEvents(events);

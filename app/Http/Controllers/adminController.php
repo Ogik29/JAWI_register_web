@@ -15,12 +15,12 @@ class adminController extends Controller
         $admin = Auth::user();
         $managedEventIds = $admin->eventRoles->pluck('event_id');
 
-        // --- Data for Dashboard & "Kelola Event" Section ---
+        // --- Data Dashboard & "Kelola Event" Section ---
         $eventsQuery = Event::whereIn('id', $managedEventIds);
         $events = (clone $eventsQuery)->withCount('players')->latest()->get();
-        $activeEvents = (clone $eventsQuery)->where('status', 'Pendaftaran Dibuka')->latest()->take(5)->get();
+        $activeEvents = (clone $eventsQuery)->where('status', 1)->latest()->take(5)->get();
 
-        // --- Data for Verification Tables ---
+        // --- Data Verification Tables ---
         $contingentsForVerification = Contingent::with(['user', 'event', 'players', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 0) // 0 = Menunggu Verifikasi
@@ -33,7 +33,7 @@ class adminController extends Controller
             ->latest()
             ->get();
 
-        // --- [NEW] Data for Approved Lists Tables ---
+        // --- Data Approved Lists Tables ---
         $approvedContingents = Contingent::with(['user', 'event', 'players'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 1) // 1 = Disetujui
@@ -46,9 +46,16 @@ class adminController extends Controller
             ->latest()
             ->get();
 
-        // --- Data for Dashboard Cards ---
+        // --- Data Dashboard Cards ---
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
         $pendingContingentsCount = $contingentsForVerification->count();
+
+        // Calculate total contingents for the managed events
+        $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
+
+        // Calculate total pending players for the managed events
+        $pendingPlayersCount = $playersForVerification->count();
+
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -57,8 +64,10 @@ class adminController extends Controller
             'events',
             'contingentsForVerification',
             'playersForVerification',
-            'approvedContingents', // Pass new data
-            'approvedPlayers'      // Pass new data
+            'approvedContingents',
+            'approvedPlayers',
+            'totalContingents',      // Pass new data
+            'pendingPlayersCount'    // Pass new data
         ));
     }
 

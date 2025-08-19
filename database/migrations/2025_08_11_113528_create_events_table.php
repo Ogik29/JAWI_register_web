@@ -26,7 +26,7 @@ return new class extends Migration {
             $table->date('tgl_mulai_tanding');
             $table->date('tgl_selesai_tanding');
             $table->date('tgl_batas_pendaftaran');
-            $table->string('status');
+            $table->integer('status'); // 0 belum dibuka, 1 sudah dibuka, 2 ditutup
             $table->text('cp');
             $table->string('juknis');
             $table->integer('total_hadiah');

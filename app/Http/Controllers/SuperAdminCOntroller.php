@@ -307,30 +307,82 @@ if ($request->hasFile('image')) {
 
       public function editEvent(Event $event)
     {
-        // Eager load relasi untuk efisiensi
-        $event->load('kelasPertandingan');
+        // 1. Eager load relasi yang dibutuhkan untuk efisiensi query
+        //    Kita butuh 'kelasPertandingan' DAN juga relasi 'kelas' di dalamnya
+        $event->load('kelasPertandingan.kelas');
 
-        // Ambil data yang dibutuhkan untuk form (sama seperti di method create)
+        // 2. Ambil semua data master yang dibutuhkan untuk mengisi pilihan di form
         $kategori_pertandingan = KategoriPertandingan::all();
         $jenis_pertandingan = JenisPertandingan::all();
+        $daftar_rentang_usia = DB::table('rentang_usia')->get();
+        $daftar_kelas = Kelas::orderBy('nama_kelas')->get();
 
-        return view('superadmin.edit_event', compact('event', 'kategori_pertandingan', 'jenis_pertandingan'));
+        // =================================================================
+        // 3. LOGIKA KUNCI: Mengelompokkan kelas yang sudah ada ke dalam "Grup Aturan"
+        // =================================================================
+        $existingGroups = [];
+        $kelasPertandingan = $event->kelasPertandingan;
+
+        foreach ($kelasPertandingan as $kelas) {
+            // Buat 'key' unik untuk setiap kombinasi aturan.
+            // Ini akan menggabungkan kelas-kelas dengan Kategori, Jenis, Gender, dan Harga yang sama.
+            $groupKey = $kelas->kategori_pertandingan_id . '-' .
+                        $kelas->jenis_pertandingan_id . '-' .
+                        $kelas->gender . '-' .
+                        (int)$kelas->harga; // Cast harga ke integer untuk konsistensi
+
+            // Jika grup dengan kunci ini belum ada di array $existingGroups, buat entri baru.
+            if (!isset($existingGroups[$groupKey])) {
+                $existingGroups[$groupKey] = [
+                    // Ambil rentang usia dari relasi 'kelas' yang sudah kita eager load
+                    'rentang_usia_id' => $kelas->kelas->rentang_usia_id,
+                    'kategori_id'     => $kelas->kategori_pertandingan_id,
+                    'jenis_id'        => $kelas->jenis_pertandingan_id,
+                    'gender'          => $kelas->gender,
+                    'harga'           => $kelas->harga,
+                    'kelas_ids'       => [], // Siapkan array kosong untuk menampung semua kelas_id di grup ini
+                ];
+            }
+            
+            // Tambahkan kelas_id dari loop saat ini ke grup yang sesuai.
+            $existingGroups[$groupKey]['kelas_ids'][] = $kelas->kelas_id;
+        }
+
+        // Ubah dari array asosiatif (yang menggunakan $groupKey) menjadi array numerik biasa
+        // agar mudah di-loop dengan @foreach di Blade.
+        $eventGroups = array_values($existingGroups);
+
+
+        // 4. Kirim semua data yang dibutuhkan ke view.
+        return view('superadmin.edit_event', [ // Sesuaikan path view Anda jika perlu
+            'event'                 => $event,
+            'kategori_pertandingan' => $kategori_pertandingan,
+            'jenis_pertandingan'    => $jenis_pertandingan,
+            'daftar_rentang_usia'   => $daftar_rentang_usia,
+            'daftar_kelas'          => $daftar_kelas,
+            'eventGroups'           => $eventGroups, // <-- INI VARIABEL KUNCI YANG MENGATASI ERROR
+        ]);
     }
 
 
     public function updateEvent(Request $request, Event $event)
     {
-        // 1. VALIDASI DATA
+         // ... (method index, create, store, edit Anda di sini) ...
+
+    /**
+     * Memperbarui data event di database.
+     * VERSI YANG SUDAH DIPERBAIKI TOTAL.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Models\Event  $event
+     * @return \Illuminate\Http\RedirectResponse
+     */
+        // 1. VALIDASI DATA SESUAI STRUKTUR BARU
         $validator = Validator::make($request->all(), [
+            // Validasi Event Utama
             'name' => 'required|string|max:255',
-            // Aturan slug diubah: harus unik, tapi abaikan event dengan ID saat ini
-            'slug' => [
-                'required',
-                'string',
-                Rule::unique('events')->ignore($event->id),
-            ],
-            // Aturan image diubah: tidak wajib diisi (nullable)
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'slug' => ['required', 'string', Rule::unique('events')->ignore($event->id)],
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Nullable saat update
             'desc' => 'required|string',
             'type' => 'required|in:official,non-official',
             'month' => 'required|string|max:100',
@@ -341,16 +393,19 @@ if ($request->hasFile('image')) {
             'tgl_mulai_tanding' => 'required|date',
             'tgl_selesai_tanding' => 'required|date|after_or_equal:tgl_mulai_tanding',
             'tgl_batas_pendaftaran' => 'required|date',
-            'status' => 'required|in:belum dibuka,sudah dibuka,ditutup',
+            'status' => 'required|in:0,1,2', // Menggunakan angka 0, 1, 2
             'cp' => 'required|string',
-            'juknis' => 'required|string', // Diubah menjadi nullable dan harus URL
-            'kelas' => 'required|array|min:1',
-            'kelas.*.kategori_id' => 'required|exists:kategori_pertandingan,id', // Pastikan nama tabel benar
-            'kelas.*.jenis_id' => 'required|exists:jenis_pertandingan,id', // Pastikan nama tabel benar
-            'kelas.*.nama_kelas' => 'required|string|max:255',
-            'kelas.*.rentang_usia' => 'required|string|max:255',
-            'kelas.*.gender' => 'required|in:Laki-laki,Perempuan',
-            'kelas.*.harga' => 'required|integer|min:0',
+            'juknis' => 'nullable|string',
+
+            // Validasi untuk "Grup Aturan"
+            'groups' => 'required|array|min:1',
+            'groups.*.rentang_usia_id' => 'required|exists:rentang_usia,id',
+            'groups.*.kategori_id' => 'required|exists:kategori_pertandingan,id',
+            'groups.*.jenis_id' => 'required|exists:jenis_pertandingan,id',
+            'groups.*.gender' => 'required|in:Laki-laki,Perempuan,Campuran',
+            'groups.*.harga' => 'required|integer|min:0',
+            'groups.*.kelas_ids' => 'required|array|min:1',
+            'groups.*.kelas_ids.*' => 'required|exists:kelas,id',
         ]);
 
         if ($validator->fails()) {
@@ -360,53 +415,61 @@ if ($request->hasFile('image')) {
         // 2. HANDLE FILE UPLOAD (DENGAN LOGIKA HAPUS GAMBAR LAMA)
         $imagePath = $event->image; // Defaultnya adalah gambar yang sudah ada
         if ($request->hasFile('image')) {
-            // Jika ada file gambar lama, hapus dari storage
             if ($event->image) {
                 Storage::disk('public')->delete($event->image);
             }
-
-            // Simpan gambar baru dengan nama unik
-            $slug = $request->slug;
-            $extension = $request->file('image')->getClientOriginalExtension();
-            $imageName = $slug . '-' . time() . '.' . $extension;
+            $slug = Str::slug($request->name, '-');
+            $imageName = $slug . '-' . time() . '.' . $request->file('image')->getClientOriginalExtension();
             $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
         }
-        
-        // 3. UPDATE DATA EVENT UTAMA
-        // Kita tidak membuat objek baru, tapi mengupdate yang sudah ada
-        $event->name = $request->name;
-        $event->slug = $request->slug;
-        $event->image = $imagePath; // Path gambar baru atau lama
-        $event->desc = $request->desc;
-        $event->type = $request->type;
-        $event->month = $request->month;
-        $event->harga_contingent = $request->harga_contingent;
-        $event->total_hadiah = $request->total_hadiah;
-        $event->kotaOrKabupaten = $request->kotaOrKabupaten;
-        $event->lokasi = $request->lokasi;
-        $event->tgl_mulai_tanding = $request->tgl_mulai_tanding;
-        $event->tgl_selesai_tanding = $request->tgl_selesai_tanding;
-        $event->tgl_batas_pendaftaran = $request->tgl_batas_pendaftaran;
-        $event->status = $request->status;
-        $event->cp = $request->cp;
-        $event->juknis = $request->juknis;
-        
-        $event->save(); // Simpan perubahan
 
-        // 4. SINKRONISASI DATA KELAS PERTANDINGAN (Delete & Re-create)
+        // 3. UPDATE DATA EVENT UTAMA MENGGUNAKAN mass assignment
+        $event->update([
+            'name' => $request->name,
+            'slug' => $request->slug,
+            'image' => $imagePath,
+            'desc' => $request->desc,
+            'type' => $request->type,
+            'month' => $request->month,
+            'harga_contingent' => $request->harga_contingent,
+            'total_hadiah' => $request->total_hadiah,
+            'kotaOrKabupaten' => $request->kotaOrKabupaten,
+            'lokasi' => $request->lokasi,
+            'tgl_mulai_tanding' => $request->tgl_mulai_tanding,
+            'tgl_selesai_tanding' => $request->tgl_selesai_tanding,
+            'tgl_batas_pendaftaran' => $request->tgl_batas_pendaftaran,
+            'status' => $request->status,
+            'cp' => $request->cp,
+            'juknis' => $request->juknis,
+        ]);
+
+        // =================================================================
+        // 4. SINKRONISASI DATA KELAS PERTANDINGAN DENGAN LOGIC BARU
+        // =================================================================
+        
         // Hapus semua kelas pertandingan yang lama terkait event ini
         $event->kelasPertandingan()->delete();
 
-        // Buat ulang kelas pertandingan dari data form yang baru
-        foreach ($request->kelas as $kelasData) {
-            $event->kelasPertandingan()->create([
-                'kategori_pertandingan_id' => $kelasData['kategori_id'],
-                'jenis_pertandingan_id' => $kelasData['jenis_id'],
-                'nama_kelas' => $kelasData['nama_kelas'],
-                'rentang_usia' => $kelasData['rentang_usia'],
-                'gender' => $kelasData['gender'],
-                'harga' => $kelasData['harga'],
-            ]);
+        // Siapkan data baru dari "Grup Aturan" untuk di-insert
+        $newKelasPertandingan = [];
+        foreach ($request->groups as $grupData) {
+            foreach ($grupData['kelas_ids'] as $kelasId) {
+                $newKelasPertandingan[] = [
+                    'event_id' => $event->id,
+                    'kategori_pertandingan_id' => $grupData['kategori_id'],
+                    'jenis_pertandingan_id' => $grupData['jenis_id'],
+                    'kelas_id' => $kelasId, // Menggunakan kelas_id
+                    'gender' => $grupData['gender'],
+                    'harga' => $grupData['harga'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+        }
+
+        // Insert semua data baru dalam satu query untuk efisiensi
+        if (!empty($newKelasPertandingan)) {
+            DB::table('kelas_pertandingan')->insert($newKelasPertandingan);
         }
 
         // 5. REDIRECT DENGAN PESAN SUKSES

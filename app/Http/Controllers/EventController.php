@@ -24,7 +24,9 @@ class EventController extends Controller
     //
     public function index()
     {
-        $events = Event::orderBy('created_at', 'desc')->get();
+        // Eager load the kelasPertandingan relationship to make prices available in the view.
+        $events = Event::with('kelasPertandingan')->latest()->get();
+
         return view('register.registEvent', compact('events'));
     }
 
@@ -126,14 +128,14 @@ class EventController extends Controller
 
     public function pesertaEvent($contingent_id)
     {
-         // 1. Ambil data dasar (Kontingen dan Event)
+        // 1. Ambil data dasar (Kontingen dan Event)
         $contingent = Contingent::findOrFail($contingent_id);
         $event = $contingent->event;
 
         // 2. Ambil semua data master yang dibutuhkan untuk filter di view
         $kategoriPertandingan = KategoriPertandingan::all();
         $jenisPertandingan = JenisPertandingan::all();
-        
+
         // =================================================================
         // PERBAIKAN 1: Mengambil data Rentang Usia yang dibutuhkan oleh view
         // =================================================================
@@ -317,7 +319,7 @@ class EventController extends Controller
         // ambil unique kategori dan class dari data player
         $kategoriPertandingan = $players->pluck('kelasPertandingan.kategoriPertandingan')->unique()->whereNotNull();
         $jenisPertandingan = $players->pluck('kelasPertandingan.jenisPertandingan')->unique()->whereNotNull();
-        $kelasPertandingan = $players->pluck('kelasPertandingan')->unique()->whereNotNull();
+        $kelasPertandingan = $players->pluck('kelasPertandingan.kelas')->unique()->whereNotNull();
 
         return view('register/datapeserta', compact(
             'players',

@@ -98,7 +98,7 @@
                 'telepon' => $player->no_telp ?? 'N/A',
                 'kategori' => $player->kelasPertandingan->kategoriPertandingan->nama_kategori ?? 'N/A',
                 'jenis' => $player->kelasPertandingan->jenisPertandingan->nama_jenis ?? 'N/A',
-                'kelas' => $player->kelasPertandingan->nama_kelas ?? 'N/A',
+                'kelas' => $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A',
                 'tanggalLahir' => $player->tgl_lahir,
                 'usia' => $usia,
                 'dokumenKTP' => $player->foto_ktp,

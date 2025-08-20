@@ -28,24 +28,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item mx-5">
-                        <a class=" hover-underline nav-link " aria-current="page" href="{{ url('/home') }}">Home</a>
-                    </li>
-                    <li class="nav-item mx-5">
-                        <a class="nav-link hover-underline" href="#about">About</a>
-                    </li>
-                    <li class="nav-item mx-5">
-                        <a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a>
-                    </li>
+                    <li class="nav-item mx-5"><a class="hover-underline nav-link" href="{{ url('/home') }}">Home</a></li>
+                    <li class="nav-item mx-5"><a class="nav-link hover-underline" href="#about">About</a></li>
+                    <li class="nav-item mx-5"><a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a></li>
                     @auth    
-                        <li class="nav-item mx-lg-5 mx-2">
-                            <a class="nav-link hover-underline" href="{{ url('/datapeserta') }}">Data Peserta</a>
-                        </li>
+                        <li class="nav-item mx-lg-5 mx-2"><a class="nav-link hover-underline" href="{{ url('/datapeserta') }}">Data Peserta</a></li>
                     @endauth
                 </ul>
                 <form class="d-flex">
-                    <a class="nav-link" href="{{ url('/') }}" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png"
-                            alt="lah" style="width: 25px"></a>
+                    <a class="nav-link" href="{{ url('/') }}" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="lah" style="width: 25px"></a>
                 </form>
             </div>
         </div>
@@ -58,7 +49,6 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status Event</label>
-                    {{-- [PERBAIKAN] Mengubah value menjadi integer --}}
                     <select id="statusFilter" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
                         <option value="">Semua Status</option>
                         <option value="1">Pendaftaran Dibuka</option>
@@ -85,17 +75,13 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button id="resetFilter" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition duration-200">
-                        Reset Filter
-                    </button>
+                    <button id="resetFilter" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-3 px-4 rounded-lg transition duration-200">Reset Filter</button>
                 </div>
             </div>
         </div>
 
         <!-- Events Grid -->
-        <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {{-- Konten event akan di-generate oleh JavaScript di bawah --}}
-        </div>
+        <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
     <!-- Modal -->
@@ -114,11 +100,7 @@
 
     @php
         $transformedEvents = [];
-        $bulanIndonesia = [
-            'January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April',
-            'May' => 'Mei', 'June' => 'Juni', 'July' => 'Juli', 'August' => 'Agustus',
-            'September' => 'September', 'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember'
-        ];
+        $bulanIndonesia = ['January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 'April' => 'April', 'May' => 'Mei', 'June' => 'Juni', 'July' => 'Juli', 'August' => 'Agustus', 'September' => 'September', 'October' => 'Oktober', 'November' => 'November', 'December' => 'Desember'];
 
         foreach ($events as $event) {
             $tglMulai = \Carbon\Carbon::parse($event->tgl_mulai_tanding);
@@ -126,24 +108,33 @@
             $formattedDate = $tglMulai->format('j') . ' - ' . $tglSelesai->format('j F Y');
             $formattedDate = str_replace(array_keys($bulanIndonesia), array_values($bulanIndonesia), $formattedDate);
 
-            // [PERBAIKAN] Logika status registrasi menggunakan integer
-            $registrationStatus = 'Ditutup'; // Default
-            if ($event->status == 1) { // Pendaftaran Dibuka
-                $registrationStatus = 'Dibuka';
-            } elseif ($event->status == 2) { // Selesai
-                $registrationStatus = 'Selesai';
-            }
+            $registrationStatus = 'Ditutup';
+            if ($event->status == 1) { $registrationStatus = 'Dibuka'; } 
+            elseif ($event->status == 2) { $registrationStatus = 'Selesai'; }
             
+            // [PERBAIKAN] Logika kalkulasi rentang harga diletakkan di sini
+            $priceRangeText = 'N/A';
+            $prices = $event->kelasPertandingan->pluck('harga')->filter();
+            if ($prices->isNotEmpty()) {
+                $minPrice = $prices->min();
+                $maxPrice = $prices->max();
+                if ($minPrice === $maxPrice) {
+                    $priceRangeText = 'Rp ' . number_format($minPrice, 0, ',', '.');
+                } else {
+                    $priceRangeText = 'Rp ' . number_format($minPrice, 0, ',', '.') . ' - ' . number_format($maxPrice, 0, ',', '.');
+                }
+            }
+
             $transformedEvents[] = [
                 'id' => $event->id,
                 'title' => $event->name,
-                'status' => $event->status, // Mengirim status sebagai integer (0, 1, or 2)
+                'status' => $event->status,
                 'month' => $event->month,
                 'date' => $formattedDate,
-                'tgl_batas_pendaftaran' => $event->tgl_batas_pendaftaran,
+                'tgl_batas_pendaftaran' => \Carbon\Carbon::parse($event->tgl_batas_pendaftaran)->format('d F Y'),
                 'location' => $event->lokasi,
                 'kotaOrKabupaten' => $event->kotaOrKabupaten,
-                'harga_peserta' => 'Rp ' . number_format($event->harga_peserta, 0, ',', '.'),
+                'price_range_peserta' => $priceRangeText, // Menyimpan string yang sudah diformat
                 'harga_contingent' => 'Rp ' . number_format($event->harga_contingent, 0, ',', '.'),
                 'description' => $event->desc,
                 'registrationStatus' => $registrationStatus,
@@ -156,68 +147,47 @@
 
     <script>
         const events = @json($transformedEvents);
-        
-        // [PERBAIKAN] Objek pemetaan untuk status integer ke teks dan kelas CSS
         const statusMapping = {
             1: { text: 'Pendaftaran Dibuka', className: 'bg-green-100 text-green-800' },
             0: { text: 'Belum Dibuka', className: 'bg-yellow-100 text-yellow-800' },
             2: { text: 'Selesai', className: 'bg-gray-100 text-gray-800' }
         };
-        
         let filteredEvents = [...events];
 
         function renderEvents(eventsToRender) {
             const container = document.getElementById('eventsContainer');
             container.innerHTML = '';
-
             if (eventsToRender.length === 0) {
                 container.innerHTML = `<div class="col-span-full text-center py-12"><div class="text-6xl mb-4">🔍</div><h3 class="text-xl font-semibold text-gray-600 mb-2">Tidak ada event ditemukan</h3><p class="text-gray-500">Coba ubah filter pencarian Anda</p></div>`;
                 return;
             }
-
             eventsToRender.forEach(event => {
-                // [PERBAIKAN] Menggunakan objek pemetaan untuk mendapatkan teks dan kelas
                 const eventStatus = statusMapping[event.status] || { text: 'Tidak Diketahui', className: 'bg-gray-100 text-gray-800' };
-
                 const card = document.createElement('div');
                 card.className = 'bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-1';
                 card.onclick = () => openModal(event);
-                
                 card.innerHTML = `
                     <div class="p-6">
-                        <div class="mb-4 text-center">
-                            <img src="${event.poster}" alt="Poster ${event.title}" class="w-full h-48 mx-auto rounded-lg shadow-md object-cover object-center">
-                        </div>
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-medium ${eventStatus.className}">${eventStatus.text}</span>
-                        </div>
+                        <div class="mb-4 text-center"><img src="${event.poster}" alt="Poster ${event.title}" class="w-full h-48 mx-auto rounded-lg shadow-md object-cover object-center"></div>
+                        <div class="flex justify-between items-start mb-3"><span class="px-3 py-1 rounded-full text-xs font-medium ${eventStatus.className}">${eventStatus.text}</span></div>
                         <h3 class="text-lg font-semibold text-gray-800 mb-2 truncate" title="${event.title}">${event.title}</h3>
                         <div class="space-y-2 text-sm text-gray-600">
                             <div class="flex items-center"><span class="mr-2">📅</span><span>${event.date}</span></div>
-                            <div class="flex items-center"><span class="mr-2">📅</span><span>${event.tgl_batas_pendaftaran} (Batas Pendaftaran)</span></div>
+                            <div class="flex items-center"><span class="mr-2">📅</span><span>${event.tgl_batas_pendaftaran} (Batas Daftar)</span></div>
                             <div class="flex items-center"><span class="mr-2">📍</span><span>${event.location}</span></div>
-                            <div class="flex items-center"><span class="mr-2">💰</span><span class="font-medium text-red-600">${event.harga_contingent} (Harga Kontingen)</span></div>
+                            <div class="flex items-center"><span class="mr-2">💰</span><span class="font-medium text-red-600">${event.harga_contingent}</span></div>
                         </div>
-                        <button class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">
-                            Lihat Detail
-                        </button>
-                    </div>
-                `;
-                
+                        <button class="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200">Lihat Detail</button>
+                    </div>`;
                 container.appendChild(card);
             });
         }
 
         function openModal(event) {
-            const modal = document.getElementById('eventModal');
             const modalTitle = document.getElementById('modalTitle');
             const modalContent = document.getElementById('modalContent');
-
             modalTitle.textContent = event.title;
-
-            // [PERBAIKAN] Menggunakan objek pemetaan di dalam modal
             const eventStatus = statusMapping[event.status] || { text: 'Tidak Diketahui' };
-
             const registrationButton = event.registrationStatus === 'Dibuka' 
                 ? `<button onclick="registerEvent(${event.id})" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200">Daftar Sekarang</button>`
                 : `<button disabled class="w-full bg-gray-400 text-white font-bold py-3 px-6 rounded-lg cursor-not-allowed">Pendaftaran ${event.registrationStatus}</button>`;
@@ -226,8 +196,15 @@
                 <div class="space-y-6">
                     <div class="text-center"><div class="mb-4"><img src="${event.poster}" alt="Poster ${event.title}" class="w-48 h-64 mx-auto rounded-lg shadow-lg object-cover"></div><h3 class="text-xl font-semibold text-gray-800">${event.title}</h3></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📅 Informasi Event</h4><div class="space-y-1 text-sm text-gray-600"><p><strong>Tanggal:</strong> ${event.date}</p><p><strong>Lokasi:</strong> ${event.location}</p><p><strong>Kota/Kabupaten:</strong> ${event.kotaOrKabupaten}</p><p><strong>Petunjuk Teknis:</strong><a href="${event.juknis}" style="color: blue; text-decoration: underline;"> Link Drive</a></p><p><strong>Status:</strong> ${eventStatus.text}</p></div></div>
-                        <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">💰 Biaya Pendaftaran</h4><p class="text-2xl font-bold text-red-600">${event.harga_contingent}</p><p class="text-sm text-gray-600 mt-1">Per kontingen</p><br><p class="text-2xl font-bold text-red-600">${event.harga_peserta}</p><p class="text-sm text-gray-600 mt-1">Per peserta</p></div>
+                        <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📅 Informasi Event</h4><div class="space-y-1 text-sm text-gray-600"><p><strong>Tanggal:</strong> ${event.date}</p><p><strong>Lokasi:</strong> ${event.location}</p><p><strong>Kota/Kab:</strong> ${event.kotaOrKabupaten}</p><p><strong>Juknis:</strong><a href="${event.juknis}" style="color: blue; text-decoration: underline;"> Link Drive</a></p><p><strong>Status:</strong> ${eventStatus.text}</p></div></div>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-semibold text-gray-800 mb-2">💰 Biaya Pendaftaran</h4>
+                            <p class="text-2xl font-bold text-red-600">${event.harga_contingent}</p>
+                            <p class="text-sm text-gray-600 mt-1">Per kontingen</p><br>
+                            {{-- [PERBAIKAN] Menggunakan variabel price_range_peserta --}}
+                            <p class="text-2xl font-bold text-red-600">${event.price_range_peserta}</p>
+                            <p class="text-sm text-gray-600 mt-1">Per-kelas</p>
+                        </div>
                     </div>
                     <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📝 Deskripsi</h4><p class="text-gray-600">${event.description}</p></div>
                     <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">Contact Person:</h4><p class="text-gray-600">${event.cp}</p></div>
@@ -235,49 +212,31 @@
                     <div class="pt-4">${registrationButton}</div>
                 </div>`;
             
-            modal.classList.remove('hidden');
+            document.getElementById('eventModal').classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         }
                         
-        function closeModal() {
-            document.getElementById('eventModal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
-        }
-
-        function registerEvent(eventId) {
-            window.location.href = `/kontingen/${eventId}`;
-        }
-
+        function closeModal() { document.getElementById('eventModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
+        function registerEvent(eventId) { window.location.href = `/kontingen/${eventId}`; }
         function applyFilters() {
             const statusFilter = document.getElementById('statusFilter').value;
             const monthFilter = document.getElementById('monthFilter').value;
-
-            filteredEvents = events.filter(event => {
-                // [PERBAIKAN] Logika filter menggunakan integer, bandingkan sebagai string untuk konsistensi
-                const statusMatch = !statusFilter || String(event.status) === statusFilter;
-                const monthMatch = !monthFilter || event.month === monthFilter;
-                return statusMatch && monthMatch;
-            });
-
+            filteredEvents = events.filter(event => (!statusFilter || String(event.status) === statusFilter) && (!monthFilter || event.month === monthFilter));
             renderEvents(filteredEvents);
         }
-
         function resetFilters() {
             document.getElementById('statusFilter').value = '';
             document.getElementById('monthFilter').value = '';
             filteredEvents = [...events];
             renderEvents(filteredEvents);
         }
-
-        // Event listeners
+        
         document.getElementById('statusFilter').addEventListener('change', applyFilters);
         document.getElementById('monthFilter').addEventListener('change', applyFilters);
         document.getElementById('resetFilter').addEventListener('click', resetFilters);
         document.getElementById('closeModal').addEventListener('click', closeModal);
         document.getElementById('eventModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
         document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-
-        // Initial render
         renderEvents(events);
     </script>
 </body>

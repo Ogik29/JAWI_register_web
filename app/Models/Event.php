@@ -22,6 +22,7 @@ class Event extends Model
         'type',
         'month',
         'harga_contingent',
+        'harga_peserta',
         'kotaOrKabupaten',
         'lokasi',
         'tgl_mulai_tanding',
@@ -38,7 +39,7 @@ class Event extends Model
         return $this->hasMany(ClassCategory::class, 'event_id', 'id');
     }
 
-     public function admins()
+    public function admins()
     {
         return $this->belongsToMany(User::class, 'user_event', 'event_id', 'user_id');
     }

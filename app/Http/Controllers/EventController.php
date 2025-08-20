@@ -269,4 +269,29 @@ class EventController extends Controller
 
         return view('invoice.invoice', compact('contingent', 'players', 'data', 'totalHarga'));
     }
+
+    // data peserta part
+    public function dataPeserta()
+    {
+        // ambil semua data player dengan relasi2 yg dibutuhkan
+        $players = Player::with(['contingent', 'kelasPertandingan.jenisPertandingan', 'kelasPertandingan.kategoriPertandingan'])->get();
+
+        $contingents = Contingent::orderBy('name')->get();
+
+        $totalContingents = $contingents->count();
+
+        // ambil unique kategori dan class dari data player
+        $kategoriPertandingan = $players->pluck('kelasPertandingan.kategoriPertandingan')->unique()->whereNotNull();
+        $jenisPertandingan = $players->pluck('kelasPertandingan.jenisPertandingan')->unique()->whereNotNull();
+        $kelasPertandingan = $players->pluck('kelasPertandingan')->unique()->whereNotNull();
+
+        return view('register/datapeserta', compact(
+            'players',
+            'contingents',
+            'totalContingents',
+            'kategoriPertandingan',
+            'jenisPertandingan',
+            'kelasPertandingan'
+        ));
+    }
 }

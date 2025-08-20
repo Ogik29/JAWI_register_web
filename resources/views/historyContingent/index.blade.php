@@ -19,6 +19,11 @@
                     <li class="nav-item mx-lg-5 mx-2"><a class="hover-underline nav-link" href="{{ url('/') }}">Home</a></li>
                     <li class="nav-item mx-lg-5 mx-2"><a class="nav-link hover-underline" href="/#about">About</a></li>
                     <li class="nav-item mx-lg-5 mx-2"><a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a></li>
+                    @auth    
+                        <li class="nav-item mx-lg-5 mx-2">
+                            <a class="nav-link hover-underline" href="{{ url('/datapeserta') }}">Data Peserta</a>
+                        </li>
+                    @endauth
                 </ul>
                 @guest
                     <form class="d-flex"><a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#staticBackdrop"><img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="Login" style="width: 25px"></a></form>

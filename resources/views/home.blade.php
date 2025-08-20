@@ -41,6 +41,11 @@
                     <li class="nav-item mx-lg-5 mx-2">
                         <a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a>
                     </li>
+                    @auth    
+                        <li class="nav-item mx-lg-5 mx-2">
+                            <a class="nav-link hover-underline" href="{{ url('/datapeserta') }}">Data Peserta</a>
+                        </li>
+                    @endauth
                 </ul>
 
                 @guest

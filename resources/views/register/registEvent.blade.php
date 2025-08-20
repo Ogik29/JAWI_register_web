@@ -37,6 +37,11 @@
                     <li class="nav-item mx-5">
                         <a class="nav-link hover-underline" href="{{ url('/event') }}">Event</a>
                     </li>
+                    @auth    
+                        <li class="nav-item mx-lg-5 mx-2">
+                            <a class="nav-link hover-underline" href="{{ url('/datapeserta') }}">Data Peserta</a>
+                        </li>
+                    @endauth
                 </ul>
                 <form class="d-flex">
                     <a class="nav-link" href="{{ url('/') }}" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png"

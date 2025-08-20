@@ -24,7 +24,7 @@ Route::get('/', function () {
     return view('home', [
         'data' => Event::all()
     ]);
-});
+})->name('home');
 
 Route::get('/registMain', [AuthController::class, 'index']);
 Route::post('/registMain', [AuthController::class, 'register']);
@@ -59,7 +59,7 @@ Route::prefix('superadmin')
     ->name('superadmin.')
     ->middleware(['auth', 'checkRole:1']) // ✅ tambahkan middleware di sini
     ->group(function () {
-        
+
         Route::get('/dashboard', [SuperAdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/tambah-event', [SuperAdminController::class, 'tambahEvent'])->name('tambah_event');
         Route::get('/kelola-event', [SuperAdminController::class, 'kelolaEvent'])->name('kelola_event');
@@ -76,7 +76,7 @@ Route::prefix('superadmin')
         Route::delete('event/{event}', [SuperAdminController::class, 'destroyEvent'])->name('event.destroy');
 
         Route::get('/kelola_admin', [SuperAdminController::class, 'kelola_admin'])->name('kelola_admin');
-        
+
         // Admin CRUD
         Route::get('kelola-admin/create', [SuperAdminController::class, 'createAdmin'])->name('admin.create');
         Route::post('kelola-admin', [SuperAdminController::class, 'storeAdmin'])->name('admin.store');
@@ -88,9 +88,7 @@ Route::prefix('superadmin')
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/datapeserta', function () {
-        return view('register.dataPeserta');
-    });
+    Route::get('/datapeserta', [EventController::class, 'dataPeserta']);
 });
 
 

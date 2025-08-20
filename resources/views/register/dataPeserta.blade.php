@@ -127,7 +127,7 @@
             const totalPeserta = participantsData.length;
             const totalTanding = participantsData.filter(p => p.jenis.toLowerCase() === 'tanding').length;
             const totalSeni = participantsData.filter(p => p.jenis.toLowerCase() === 'seni').length;
-            const totalJurus = participantsData.filter(p => p.jenis.toLowerCase() === 'jurus').length;
+            const totalJurus = participantsData.filter(p => p.jenis.toLowerCase() === 'jurus baku').length;
             // const totalKontingen = new Set(participantsData.map(p => p.kontingen)).size;
             
             document.getElementById('totalPeserta').textContent = totalPeserta;

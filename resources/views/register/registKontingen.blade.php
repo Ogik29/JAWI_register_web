@@ -104,7 +104,7 @@
                             <label for="suratRekomendasi" class="form-label fw-semibold">
                                 <i class="bi bi-file-earmark-image-fill text-danger me-1"></i> Kirim Surat Rekomendasi
                             </label>
-                            <input type="file" class="form-control" id="suratRekomendasi" name="surat_rekomendasi" accept="image/*" required>
+                            <input type="file" class="form-control" id="suratRekomendasi" name="surat_rekomendasi" required>
                             <div id="suratRekomendasiError" class="invalid-feedback"></div>
                         </div>
 
@@ -113,7 +113,7 @@
                                 <label for="fotoInvoice" class="form-label fw-semibold">
                                     <i class="bi bi-file-earmark-image-fill text-danger me-1"></i> Kirim Bukti Pembayaran
                                 </label>
-                                <input type="file" class="form-control" id="fotoInvoice" name="fotoInvoice" accept="image/*" required>
+                                <input type="file" class="form-control" id="fotoInvoice" name="fotoInvoice" required>
                                 <div id="fotoInvoiceError" class="invalid-feedback"></div>
                             </div>
                         @endif

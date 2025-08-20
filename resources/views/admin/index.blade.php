@@ -176,7 +176,7 @@
                         <tbody class="divide-y divide-gray-200">
                            @forelse ($playersForVerification as $player)
                             <tr>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->nama_kelas ?? 'N/A' }}</div></td>
+                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td>
                                 <td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td>
                                 <td class="p-3 text-sm text-blue-600">
                                     @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP/KK</a> | @endif
@@ -229,7 +229,7 @@
                            @forelse($approvedPlayers as $player)
                            <tr>
                                 <td class="p-3 text-sm font-medium text-gray-900">{{ $player->name }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $player->kelasPertandingan->nama_kelas ?? 'N/A' }}</td>
+                                <td class="p-3 text-sm text-gray-900">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td>
                                 <td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td>
                                 <td class="p-3"><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td>
                            </tr>
@@ -358,7 +358,7 @@
                     <div><strong class="block text-gray-500">Email</strong> <p>${player.email}</p></div>
                     <div><strong class="block text-gray-500">No. Telepon</strong> <p>${player.no_telp}</p></div>
                     <div><strong class="block text-gray-500">Gender</strong> <p>${player.gender}</p></div>
-                    <div><strong class="block text-gray-500">Kelas Tanding</strong> <p>${player.kelas_pertandingan.nama_kelas || 'N/A'}</p></div>
+                    <div><strong class="block text-gray-500">Kelas Tanding</strong> <p>${player.kelas_pertandingan.kelas.nama_kelas || 'N/A'}</p></div>
                 </div>
                 <div class="mt-4"><strong class="block text-gray-500">Catatan Admin</strong> <p class="whitespace-pre-wrap">${player.catatan || 'Tidak ada catatan.'}</p></div>
             `;

@@ -142,9 +142,9 @@
                                     <hr class="my-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Daftar Peserta</h5>
-                                        @if ($contingent->status != 1)
+                                        {{-- @if ($contingent->status != 1) --}}
                                             <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
-                                        @endif
+                                        {{-- @endif --}}
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered table-hover">
@@ -154,7 +154,7 @@
                                                     <tr>
                                                         <th>{{ $loop->iteration }}</th>
                                                         <td>{{ $player->name }}</td>
-                                                        <td>{{ $player->kelasPertandingan->nama_kelas ?? 'N/A' }}</td>
+                                                        <td>{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td>
                                                         <td>
                                                             @if ($player->status == 1) <span class="badge bg-warning text-dark">Pending</span>
                                                             @elseif ($player->status == 2) <span class="badge bg-success">Terverifikasi</span>
@@ -192,34 +192,62 @@
                         </div>
                     </div>
 
-                    {{-- [PERBAIKAN] Mengembalikan isi konten modal edit --}}
                     <div class="modal fade" id="editContingentModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Edit Nama Kontingen</h5>
+                                    <h5 class="modal-title">Edit Data Kontingen</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form action="{{ route('contingent.update', $contingent->id) }}" method="POST">
+                                <form action="{{ route('contingent.update', $contingent->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
                                     <div class="modal-body">
                                         @if ($contingent->status == 2)
-                                        <div class="alert alert-warning" role="alert">Mengubah nama akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.</div>
+                                        <div class="alert alert-warning" role="alert">Mengubah data akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.</div>
                                         @endif
+
                                         <div class="mb-3">
                                             <label for="name-{{ $contingent->id }}" class="form-label">Nama Kontingen</label>
                                             <input type="text" class="form-control" name="name" id="name-{{ $contingent->id }}" value="{{ $contingent->name }}" required>
                                         </div>
+
+                                        <hr>
+
+                                        <div class="mb-3">
+                                            <label for="surat_rekomendasi-{{ $contingent->id }}" class="form-label">Surat Rekomendasi</label>
+                                            @if ($contingent->surat_rekomendasi)
+                                                <div class="mb-2">
+                                                    <a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Surat Saat Ini</a>
+                                                </div>
+                                            @endif
+                                            <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}">
+                                            <small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                        </div>
+
+                                        @if ($contingent->event->harga_contingent > 0)
+                                        <div class="mb-3">
+                                            <label for="foto_invoice-{{ $contingent->id }}" class="form-label">Bukti Bayar Kontingen</label>
+                                            @php $transaction = $contingent->transactions->first(); @endphp
+                                            @if ($transaction && $transaction->foto_invoice)
+                                                <div class="mb-2">
+                                                    <a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Bukti Bayar Saat Ini</a>
+                                                </div>
+                                            @endif
+                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice-{{ $contingent->id }}">
+                                            <small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                        </div>
+                                        @endif
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Simpan</button>
+                                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
+
 
                     {{-- [PERBAIKAN] Memindahkan semua modal catatan ke luar dari modal lain --}}
                     @if ($contingent->status == 2 && !empty($contingent->catatan))

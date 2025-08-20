@@ -38,12 +38,39 @@ class historyController extends Controller
                 'max:255',
                 Rule::unique('contingent')->where('event_id', $contingent->event_id)->ignore($contingent->id),
             ],
+            // Add validation for the new optional file uploads
+            'surat_rekomendasi' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
+            'foto_invoice' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ], [
             'name.unique' => 'Nama kontingen ini sudah ada di event ini. Gunakan nama lain.',
         ]);
 
-        // Update nama
+        // Update name
         $contingent->name = $request->name;
+
+        // Handle Surat Rekomendasi upload
+        if ($request->hasFile('surat_rekomendasi')) {
+            // Delete old file if it exists
+            if ($contingent->surat_rekomendasi) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($contingent->surat_rekomendasi);
+            }
+            // Store the new file
+            $contingent->surat_rekomendasi = $request->file('surat_rekomendasi')->store('contingent', 'public');
+        }
+
+        // Handle Foto Invoice upload
+        if ($request->hasFile('foto_invoice')) {
+            $transaction = $contingent->transactions()->first();
+            if ($transaction) {
+                // Delete old file if it exists
+                if ($transaction->foto_invoice) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($transaction->foto_invoice);
+                }
+                // Store the new file and update the transaction
+                $transaction->foto_invoice = $request->file('foto_invoice')->store('invoices', 'public');
+                $transaction->save();
+            }
+        }
 
         // Jika statusnya 'ditolak' (2), ubah kembali menjadi 'pending' (0)
         if ($contingent->status == 2) {
@@ -52,7 +79,7 @@ class historyController extends Controller
 
         $contingent->save();
 
-        return redirect()->route('history')->with('status', 'Nama kontingen berhasil diperbarui.');
+        return redirect()->route('history')->with('status', 'Data kontingen berhasil diperbarui.');
     }
 
     public function editPlayer(Player $player)

@@ -18,7 +18,7 @@ class RentangUsiaSeeder extends Seeder
         Schema::disableForeignKeyConstraints();
 
         // 2. Kosongkan tabel (tabel anak dulu, baru tabel induk)
-        DB::table('rentang_usia_event')->truncate();
+        // DB::table('rentang_usia_event')->truncate();
         DB::table('rentang_usia')->truncate();
 
         // 3. Aktifkan kembali foreign key checks
@@ -45,20 +45,20 @@ class RentangUsiaSeeder extends Seeder
         // Masukkan data ke tabel 'rentang_usia'
         DB::table('rentang_usia')->insert($dataUntukInsert);
         
-        // 5. Siapkan data untuk tabel pivot 'rentang_usia_event'
+        // // 5. Siapkan data untuk tabel pivot 'rentang_usia_event'
 
-        // Ambil semua ID yang baru saja dibuat dari tabel 'rentang_usia'
-        $rentangUsiaIds = DB::table('rentang_usia')->pluck('id');
+        // // Ambil semua ID yang baru saja dibuat dari tabel 'rentang_usia'
+        // $rentangUsiaIds = DB::table('rentang_usia')->pluck('id');
 
-        $pivotData = [];
-        foreach ($rentangUsiaIds as $usiaId) {
-            $pivotData[] = [
-                'event_id' => 1, // Sesuai permintaan, set event_id ke 1
-                'rentang_usia_id' => $usiaId,
-            ];
-        }
+        // $pivotData = [];
+        // foreach ($rentangUsiaIds as $usiaId) {
+        //     $pivotData[] = [
+        //         // 'event_id' => 1, // Sesuai permintaan, set event_id ke 1
+        //         'rentang_usia_id' => $usiaId,
+        //     ];
+        // }
 
-        // Masukkan data relasi ke tabel pivot 'rentang_usia_event'
-        DB::table('rentang_usia_event')->insert($pivotData);
+        // // Masukkan data relasi ke tabel pivot 'rentang_usia_event'
+        // DB::table('rentang_usia_event')->insert($pivotData);
     }
 }

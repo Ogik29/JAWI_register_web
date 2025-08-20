@@ -197,12 +197,13 @@ class SuperAdminController extends Controller
 
 
     public function storeEvent(Request $request){
+        
     // 1. VALIDASI DATA SESUAI STRUKTUR INPUT 'GROUPS'
         $validator = Validator::make($request->all(), [
             // Validasi Event Utama
             'name' => 'required|string|max:255',
             'slug' => 'required|string|unique:events,slug',
-            'image' => 'sometimes|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'required|mimes:jpeg,png,jpg,webp|max:2048',
             'desc' => 'required|string',
             'type' => 'required|in:official,non-official',
             'month' => 'required|string|max:100',
@@ -256,6 +257,8 @@ if ($request->hasFile('image')) {
     //    Method storeAs() akan mengembalikan path: 'event-images/nama-file-barunya.jpg'
     $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
 }
+
+
 
         // 3. BUAT DAN SIMPAN EVENT UTAMA
         $event = new Event();

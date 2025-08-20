@@ -2,96 +2,91 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Schema; // <-- WAJIB TAMBAHKAN INI
 
 class KelasSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * @return void
      */
-    public function run(): void
+    public function run()
     {
-        // 1. Nonaktifkan sementara foreign key checks
+        // =================================================================
+        // BAGIAN PERBAIKAN: Menangani Foreign Key Constraint
+        // =================================================================
+        
+        // 1. Nonaktifkan sementara pemeriksaan foreign key
         Schema::disableForeignKeyConstraints();
 
-        // 2. Hapus data lama (tabel anak dulu, baru tabel induk)
-        DB::table('kelas_pertandingan')->truncate();
-        DB::table('kelas')->truncate();
+        // 2. Kosongkan tabel (WAJIB: tabel anak dulu, baru tabel induk)
+        DB::table('kelas_pertandingan')->truncate(); // <-- Kosongkan tabel anak
+        DB::table('kelas')->truncate();              // <-- Baru kosongkan tabel induk
 
-        // 3. Aktifkan kembali foreign key checks
+        // 3. Aktifkan kembali pemeriksaan foreign key
         Schema::enableForeignKeyConstraints();
+        
+        // =================================================================
+        // Sisa kode seeder Anda (tidak ada perubahan di bawah ini)
+        // =================================================================
 
-        // Data untuk tabel 'kelas'
-        $daftarKelas = [
-            // Kategori Seni (Pemasalan & Prestasi)
-            'Seni Tunggal',
-            'Seni Tunggal Bebas',
-            'Seni Ganda',
-            'Seni Regu',
-            'Perorangan Jurus Paket',
-            'Berpasangan Jurus Paket',
-            'Berkelompok Jurus Paket',
-            'Tunggal Tangan Kosong',
-            'Tunggal Bersenjata',
-            'Ganda Tangan Kosong',
-            'Ganda Bersenjata',
-            'Beregu Jurus 1-6',
-            'Tunggal Bebas Tangan Kosongan',
-            'Tunggal Bebas Bersenjata',
-            'Berpasangan Jurus Paket SD A - SD B',
-            'Berkelompok Jurus Paket TK',
-            'Tunggal', // Umum untuk prestasi
-            'Ganda',   // Umum untuk prestasi
-            'Beregu',  // Umum untuk prestasi
-            'Tunggal Bebas', // Umum untuk prestasi
-            'Perorangan Jurus Paket SMA',
-            'Berpasangan Jurus Paket SMP',
+        // Ambil ID rentang usia dari database untuk pemetaan
+        $usiaIds = DB::table('rentang_usia')->pluck('id', 'rentang_usia');
 
-            // Contoh Kategori Tanding (Berdasarkan Berat Badan)
-            'Kelas A 12 - 15kg',
-            'Kelas B 15 - 18kg',
-            'Kelas C 18 - 21kg',
-            'Kelas D 21 - 24kg',
-            'Kelas E 24 - 27kg',
-            'Kelas F 27 - 30kg',
-            'Kelas G 30 - 33kg',
-            'Kelas H 33 - 36kg',
-            'Kelas I 36 - 39kg',
-            'Kelas J 39 - 42kg',
-            'Kelas K 42 - 45kg',
-            'Kelas L 45 - 48kg',
-            'Kelas M 48 - 51kg',
-            'Kelas N 51 - 54kg',
-            'Kelas O 54 - 57kg',
-            'Kelas P 57 - 60kg',
-            'Kelas Q 60 - 63kg',
-            'Kelas R 63 - 66kg',
-            'Kelas S 66 - 69kg',
-            'Kelas T 69 - 72kg',
-            'Kelas U 72 - 75kg',
-            'Kelas V 75 - 78kg',
-            'Kelas W 78 - 81kg',
-            'Kelas X 81 - 84kg',
-            'Kelas Y 84 - 87kg',
-            'Kelas Z 87 - 90kg',
+        $dataToInsert = [];
+
+        // DATA KELAS TANDING (PUTRA & PUTRI)
+        $tandingData = [
+            'Usia Dini 1 (5-8 Tahun)'   => ['Kelas A (18 - 19 kg)', 'Kelas B (19 - 20 kg)', 'Kelas C (20 - 21 kg)', 'Kelas D (21 - 22 kg)', 'Kelas E (22 - 23 kg)', 'Kelas F (23 - 24 kg)', 'Kelas G (24 - 25 kg)', 'Kelas H (25 - 26 kg)', 'Kelas I (26 - 27 kg)'],
+            'Usia Dini 2 (8-11 Tahun)'  => ['Kelas A (26 - 28 kg)', 'Kelas B (28 - 30 kg)', 'Kelas C (30 - 32 kg)', 'Kelas D (32 - 34 kg)', 'Kelas E (34 - 36 kg)', 'Kelas F (36 - 38 kg)', 'Kelas G (38 - 40 kg)', 'Kelas H (40 - 42 kg)', 'Kelas I (42 - 44 kg)'],
+            'Pra Remaja (11-14 Tahun)'  => ['Kelas A (30 - 33 kg)', 'Kelas B (33 - 36 kg)', 'Kelas C (36 - 39 kg)', 'Kelas D (39 - 42 kg)', 'Kelas E (42 - 45 kg)', 'Kelas F (45 - 48 kg)', 'Kelas G (48 - 51 kg)', 'Kelas H (51 - 54 kg)', 'Kelas I (54 - 57 kg)'],
+            'Remaja (13-17 Tahun)'      => ['Kelas A (39 - 43 kg)', 'Kelas B (43 - 47 kg)', 'Kelas C (47 - 51 kg)', 'Kelas D (51 - 55 kg)', 'Kelas E (55 - 59 kg)', 'Kelas F (59 - 63 kg)', 'Kelas G (63 - 67 kg)', 'Kelas H (67 - 71 kg)', 'Kelas I (71 - 75 kg)'],
+            'Dewasa (17-23 Tahun)'      => ['Kelas A (45 - 50 kg)', 'Kelas B (50 - 55 kg)', 'Kelas C (55 - 60 kg)', 'Kelas D (60 - 65 kg)', 'Kelas E (65 - 70 kg)', 'Kelas F (70 - 75 kg)', 'Kelas G (75 - 80 kg)', 'Kelas H (80 - 85 kg)', 'Kelas I (85 - 90 kg)', 'Kelas J (90 - 95 kg)'],
         ];
 
-        $kelasData = [];
-
-        // Loop melalui daftar kelas dan siapkan data untuk dimasukkan
-        foreach ($daftarKelas as $nama) {
-            $kelasData[] = [
-                'nama_kelas' => $nama,
-                'rentang_usia_id' => 1, // <-- Menambahkan ID rentang usia
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+        foreach ($tandingData as $usiaNama => $kelasArray) {
+            if (isset($usiaIds[$usiaNama])) {
+                $usiaId = $usiaIds[$usiaNama];
+                foreach ($kelasArray as $namaKelas) {
+                    $dataToInsert[] = ['nama_kelas' => $namaKelas, 'rentang_usia_id' => $usiaId];
+                }
+            }
         }
 
-        // Masukkan semua data ke database dalam satu query
-        DB::table('kelas')->insert($kelasData);
+        // DATA KELAS SENI PEMASALAN
+        $seniPemasalanKelas = ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Beregu Jurus 1 - 6', 'Tunggal Bebas Kosongan', 'Tunggal Bebas Bersenjata', 'Berpasangan Jurus Baku SD A - SD B', 'Berkelompok Jurus Baku TK'];
+        $seniPemasalanUsia = ['Usia Dini 1 (5-8 Tahun)', 'Usia Dini 2 (8-11 Tahun)', 'Pra Remaja (11-14 Tahun)'];
+
+        foreach ($seniPemasalanKelas as $namaKelas) {
+            foreach ($seniPemasalanUsia as $usiaNama) {
+                if (isset($usiaIds[$usiaNama])) {
+                    $dataToInsert[] = ['nama_kelas' => $namaKelas, 'rentang_usia_id' => $usiaIds[$usiaNama]];
+                }
+            }
+        }
+
+        // DATA KELAS SENI PRESTASI
+        $seniPrestasiKelas = ['Tunggal', 'Ganda', 'Beregu', 'Tunggal Bebas', 'Perorangan Jurus Baku SMA', 'Berpasangan Jurus Baku SMP', 'Berkelompok Jurus Baku TK'];
+        $seniPrestasiUsia = ['Remaja (13-17 Tahun)', 'Dewasa (17-23 Tahun)'];
+
+        foreach ($seniPrestasiKelas as $namaKelas) {
+            foreach ($seniPrestasiUsia as $usiaNama) {
+                if (isset($usiaIds[$usiaNama])) {
+                    $dataToInsert[] = ['nama_kelas' => $namaKelas, 'rentang_usia_id' => $usiaIds[$usiaNama]];
+                }
+            }
+        }
+        
+        // Tambahkan timestamp ke semua data yang akan dimasukkan
+        foreach ($dataToInsert as &$data) {
+            $data['created_at'] = now();
+            $data['updated_at'] = now();
+        }
+
+        // Masukkan semua data yang sudah disiapkan ke database
+        DB::table('kelas')->insert($dataToInsert);
     }
 }

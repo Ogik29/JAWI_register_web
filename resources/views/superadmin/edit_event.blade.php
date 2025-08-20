@@ -50,7 +50,7 @@
                 {{-- KODE BARU YANG BENAR --}}
 <div class="col-md-4 mb-3">
     <label for="status" class="form-label fw-bold">Status Pendaftaran</label>
-    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+    <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>'
         {{-- Value diubah menjadi angka 0, 1, 2 --}}
         <option value="0" {{ old('status', $event->status) == 0 ? 'selected' : '' }}>Belum Dibuka</option>
         <option value="1" {{ old('status', $event->status) == 1 ? 'selected' : '' }}>Sudah Dibuka</option>
@@ -180,91 +180,115 @@
 @push('scripts')
 <script type="text/javascript" src="https://unpkg.com/trix@2.0.0/dist/trix.umd.min.js"></script>
 <script>
-    // JavaScript di sini sama persis dengan yang ada di form create.
-    // Tidak perlu ada perubahan.
-    document.addEventListener('DOMContentLoaded', function() {
-        const nameInput = document.getElementById('name');
-        const slugInput = document.getElementById('slug');
-        if(nameInput) {
-            nameInput.addEventListener('keyup', () => { slugInput.value = nameInput.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-'); });
-        }
-        document.addEventListener("trix-file-accept", e => e.preventDefault());
+document.addEventListener('DOMContentLoaded', function() {
+    // --- SLUG GENERATOR (Tidak berubah) ---
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    if(nameInput) {
+        nameInput.addEventListener('keyup', () => { slugInput.value = nameInput.value.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-'); });
+    }
+    document.addEventListener("trix-file-accept", e => e.preventDefault());
 
-        const grupContainer = document.getElementById('grup-container');
-        const addGrupBtn = document.getElementById('add-grup-btn');
-        const template = document.getElementById('grup-item-template');
+    // --- LOGIKA GRUP KELAS PERTANDINGAN (DIPERBAIKI) ---
+    const grupContainer = document.getElementById('grup-container');
+    const addGrupBtn = document.getElementById('add-grup-btn');
+    const template = document.getElementById('grup-item-template');
+    
+    // Fungsi untuk memfilter checklist di DALAM satu grup spesifik
+    const filterChecklistForGroup = (grupElement, selectedUsiaId) => {
+        const placeholder = grupElement.querySelector('.checklist-placeholder');
+        let hasVisibleItems = false;
         
-        const filterChecklistForGroup = (grupElement, selectedUsiaId) => {
-            const placeholder = grupElement.querySelector('.checklist-placeholder');
-            let hasVisibleItems = false;
-            grupElement.querySelectorAll('.kelas-choice-item').forEach(item => {
-                const checkbox = item.querySelector('input[type="checkbox"]');
-                if (item.dataset.rentangId === selectedUsiaId) {
-                    item.style.display = 'block';
-                    hasVisibleItems = true;
-                } else {
-                    item.style.display = 'none';
-                    if (checkbox) checkbox.checked = false;
+        grupElement.querySelectorAll('.kelas-choice-item').forEach(item => {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            // Gunakan '==' karena dataset adalah string dan value bisa jadi number
+            if (item.dataset.rentangId == selectedUsiaId) {
+                item.style.display = 'block';
+                hasVisibleItems = true;
+            } else {
+                item.style.display = 'none';
+                // Jangan hilangkan centang pada item yang sudah dipilih sebelumnya
+                // checkbox.checked = false; 
+            }
+        });
+        
+        if(placeholder) placeholder.style.display = hasVisibleItems ? 'none' : 'block';
+    };
+
+    // Event listener untuk menangani perubahan radio button di dalam grup
+    grupContainer.addEventListener('change', function(e) {
+        if (e.target.classList.contains('rentang-usia-radio')) {
+            const parentGroup = e.target.closest('.grup-item');
+            // Saat pengguna mengganti filter, hilangkan centang kelas lama
+            parentGroup.querySelectorAll('.kelas-choice-item input[type="checkbox"]').forEach(cb => cb.checked = false);
+            filterChecklistForGroup(parentGroup, e.target.value);
+        }
+    });
+
+    // Event listener untuk tombol "Tambah Grup"
+    addGrupBtn.addEventListener('click', function() {
+        // PERBAIKAN 1: Gunakan jumlah item saat ini sebagai indeks baru (0, 1, 2, ...)
+        const newIndex = grupContainer.querySelectorAll('.grup-item').length;
+        
+        const clone = template.content.cloneNode(true);
+        const newForm = clone.querySelector('.grup-item');
+        
+        newForm.querySelector('.grup-index').textContent = newIndex + 1;
+        
+        // Ganti placeholder dengan indeks numerik yang benar
+        newForm.querySelectorAll('[name*="__INDEX__"], [id*="__INDEX__"], [for*="__INDEX__"]').forEach(el => {
+            const replaceIndex = (attr) => attr.replace(/__INDEX__/g, newIndex);
+            if (el.name) el.name = replaceIndex(el.name);
+            if (el.id) el.id = replaceIndex(el.id);
+            if (el.htmlFor) el.htmlFor = replaceIndex(el.htmlFor);
+        });
+
+        grupContainer.appendChild(newForm);
+    });
+
+    // Event listener untuk tombol "Hapus Grup"
+    grupContainer.addEventListener('click', function(e) {
+        const removeBtn = e.target.closest('.remove-grup-btn');
+        if (removeBtn) {
+            removeBtn.closest('.grup-item').remove();
+            updateIndexes(); // Panggil updateIndexes setelah menghapus
+        }
+    });
+
+    // PERBAIKAN 2: Fungsi untuk mengurutkan ulang semua indeks setelah menghapus
+    const updateIndexes = () => {
+        grupContainer.querySelectorAll('.grup-item').forEach((item, index) => {
+            item.querySelector('.grup-index').textContent = index + 1;
+            
+            item.querySelectorAll('[name^="groups["]').forEach(el => {
+                if (el.name) {
+                    el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
                 }
             });
-            if(placeholder) placeholder.style.display = hasVisibleItems ? 'none' : 'block';
-        };
-
-        grupContainer.addEventListener('change', function(e) {
-            if (e.target.classList.contains('rentang-usia-radio')) {
-                const parentGroup = e.target.closest('.grup-item');
-                filterChecklistForGroup(parentGroup, e.target.value);
-            }
-        });
-
-        addGrupBtn.addEventListener('click', function() {
-            const newIndex = Date.now(); // Use timestamp for unique index to avoid conflict
-            const clone = template.content.cloneNode(true);
-            const newForm = clone.querySelector('.grup-item');
             
-            newForm.querySelector('.grup-index').textContent = grupContainer.querySelectorAll('.grup-item').length + 1;
-            
-            newForm.querySelectorAll('[name*="__INDEX__"], [id*="__INDEX__"], [for*="__INDEX__"]').forEach(el => {
-                const replaceIndex = (attr) => attr.replace(/__INDEX__/g, newIndex);
-                if (el.name) el.name = replaceIndex(el.name);
-                if (el.id) el.id = replaceIndex(el.id);
-                if (el.htmlFor) el.htmlFor = replaceIndex(el.htmlFor);
+            item.querySelectorAll('[id*="_"], [for*="_"]').forEach(el => {
+                let currentId = el.id;
+                let currentFor = el.htmlFor;
+
+                if (currentId) {
+                    let newId = currentId.replace(/_(\d+)_/, `_${index}_`);
+                    el.id = newId;
+                }
+                if (currentFor) {
+                    let newFor = currentFor.replace(/_(\d+)_/, `_${index}_`);
+                    el.htmlFor = newFor;
+                }
             });
-            grupContainer.appendChild(newForm);
         });
+    };
 
-        grupContainer.addEventListener('click', function(e) {
-            const removeBtn = e.target.closest('.remove-grup-btn');
-            if (removeBtn) {
-                removeBtn.closest('.grup-item').remove();
-                updateIndexes();
-            }
-        });
-
-        const updateIndexes = () => {
-            grupContainer.querySelectorAll('.grup-item').forEach((item, index) => {
-                item.querySelector('.grup-index').textContent = index + 1;
-                item.querySelectorAll('[name^="groups["]').forEach(el => {
-                    if (el.name) el.name = el.name.replace(/\[.*?\]/, `[${index}]`);
-                });
-                item.querySelectorAll('[id*="_"], [for*="_"]').forEach(el => {
-                    if (el.id) {
-                        let newId = el.id.replace(/_(\d+|__INDEX__)_/, `_${index}_`);
-                        let label = item.querySelector(`label[for="${el.id}"]`);
-                        el.id = newId;
-                        if(label) label.htmlFor = newId;
-                    }
-                });
-            });
-        };
-
-        // KUNCI UNTUK EDIT: Jalankan filter untuk setiap grup yang sudah ada saat halaman dimuat
-        grupContainer.querySelectorAll('.grup-item').forEach(grup => {
-            const selectedRadio = grup.querySelector('.rentang-usia-radio:checked');
-            if (selectedRadio) {
-                filterChecklistForGroup(grup, selectedRadio.value);
-            }
-        });
+    // PERBAIKAN 3: Jalankan filter untuk setiap grup yang sudah ada saat halaman dimuat
+    grupContainer.querySelectorAll('.grup-item').forEach(grup => {
+        const selectedRadio = grup.querySelector('.rentang-usia-radio:checked');
+        if (selectedRadio) {
+            filterChecklistForGroup(grup, selectedRadio.value);
+        }
     });
+});
 </script>
 @endpush

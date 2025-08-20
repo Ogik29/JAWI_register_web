@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Kelas;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -17,6 +18,8 @@ class DatabaseSeeder extends Seeder
             ContingentSeeder::class,
             KategoriPertandinganSeeder::class,
             JenisPertandinganSeeder::class,
+            RentangUsiaSeeder::class,
+            KelasSeeder::class,
             KelasPertandinganSeeder::class,
             PlayerSeeder::class,
             TransactionSeeder::class,

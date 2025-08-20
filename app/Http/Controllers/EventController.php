@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 use Illuminate\Http\Request;
 
@@ -125,14 +126,47 @@ class EventController extends Controller
 
     public function pesertaEvent($contingent_id)
     {
+         // 1. Ambil data dasar (Kontingen dan Event)
         $contingent = Contingent::findOrFail($contingent_id);
         $event = $contingent->event;
+
+        // 2. Ambil semua data master yang dibutuhkan untuk filter di view
         $kategoriPertandingan = KategoriPertandingan::all();
         $jenisPertandingan = JenisPertandingan::all();
-        $kelasPertandingan = $event->kelasPertandingan()
-            ->with('kategoriPertandingan', 'jenisPertandingan')
+        
+        // =================================================================
+        // PERBAIKAN 1: Mengambil data Rentang Usia yang dibutuhkan oleh view
+        // =================================================================
+        $rentangUsia = DB::table('rentang_usia')->get();
+
+        // =================================================================
+        // PERBAIKAN 2: Mengambil data Kelas dengan JOIN agar lengkap
+        // Nama variabel diubah menjadi 'availableClasses' agar sesuai dengan view
+        // =================================================================
+        $availableClasses = DB::table('kelas_pertandingan')
+            ->where('kelas_pertandingan.event_id', $event->id)
+            ->join('kelas', 'kelas_pertandingan.kelas_id', '=', 'kelas.id')
+            ->select(
+                'kelas_pertandingan.id as kelas_pertandingan_id',
+                'kelas.nama_kelas',
+                'kelas_pertandingan.kategori_pertandingan_id',
+                'kelas_pertandingan.jenis_pertandingan_id',
+                'kelas.rentang_usia_id', // Data ini krusial untuk filter
+                'kelas_pertandingan.gender',
+                'kelas_pertandingan.harga'
+            )
             ->get();
-        return view('register.registPeserta', compact('contingent', 'event', 'kategoriPertandingan', 'jenisPertandingan', 'kelasPertandingan'));
+
+        // 3. Kirim semua data yang sudah disiapkan ke view
+        // Menggunakan array asosiatif agar lebih jelas
+        return view('register.registPeserta', [
+            'contingent' => $contingent,
+            'event' => $event,
+            'kategoriPertandingan' => $kategoriPertandingan,
+            'jenisPertandingan' => $jenisPertandingan,
+            'rentangUsia' => $rentangUsia, // <-- Mengirim variabel $rentangUsia
+            'availableClasses' => $availableClasses, // <-- Mengirim data kelas yang sudah lengkap
+        ]);
     }
 
     public function storePeserta(Request $request)
@@ -141,8 +175,8 @@ class EventController extends Controller
         // return $request->all();
 
         // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
-        $processedAthletesDetails = [];
-        $totalHarga = 0;
+        // $processedAthletesDetails = [];
+        // $totalHarga = 0;
 
         foreach ($request->athletes as $athleteData) {
             $player = new Player();
@@ -259,7 +293,7 @@ class EventController extends Controller
                 'player_id' => $player->id,
                 'name' => $player->name,
                 'nik' => $player->nik,
-                'kelas' => $player->kelasPertandingan->nama_kelas ?? '-',
+                'kelas' => $player->kelasPertandingan->kelas->nama_kelas ?? '-',
                 'harga' => $player->kelasPertandingan->harga ?? 0
             ];
 

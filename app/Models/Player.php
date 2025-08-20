@@ -25,7 +25,8 @@ class Player extends Model
         'status',
         'tgl_lahir',
         'kelas_pertandingan_id',
-        'catatan'
+        'catatan',
+        'rentang_usia_id'
     ];
 
     public function contingent()
@@ -59,4 +60,6 @@ class Player extends Model
             'player_invoice_id'         // Local key on TransactionDetail table.
         );
     }
+
+  
 }

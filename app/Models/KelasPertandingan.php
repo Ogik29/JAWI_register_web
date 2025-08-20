@@ -12,9 +12,8 @@ class KelasPertandingan extends Model
     protected $table = 'kelas_pertandingan';
 
     protected $fillable = [
-        'nama_kelas',
+        'kelas_id',
         'harga',
-        'rentang_usia',
         'gender',
         'kategori_pertandingan_id',
         'event_id',
@@ -24,6 +23,11 @@ class KelasPertandingan extends Model
     public function kategoriPertandingan()
     {
         return $this->belongsTo(KategoriPertandingan::class, 'kategori_pertandingan_id', 'id');
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class, 'kelas_id', 'id');
     }
 
     public function jenisPertandingan()

@@ -4,12 +4,24 @@ namespace Database\Seeders;
 
 use Carbon\Carbon;
 use App\Models\Player;
+use App\Models\RentangUsia;
+use App\Models\RentangUsiaEvent;
 use Illuminate\Database\Seeder;
 
 class PlayerSeeder extends Seeder
 {
     public function run(): void
     {
+
+        $rentangUsia = RentangUsia::create([
+            'rentang_usia' => '18-25',
+        ]);
+
+        RentangUsiaEvent::create([
+            'rentang_usia_id' => $rentangUsia->id,
+            'event_id' => 1,
+        ]);
+
         Player::create([
             'name' => 'Budi Santoso',
             'contingent_id' => 1,
@@ -22,7 +34,7 @@ class PlayerSeeder extends Seeder
             'foto_diri' => 'budi.jpg',
             // 'status' => 'Aktif',
             'tgl_lahir' => Carbon::create(2004, 11, 15),
-            'kelas_pertandingan_id' => 1
+            'kelas_pertandingan_id' => 1,
         ]);
 
         Player::create([
@@ -37,7 +49,7 @@ class PlayerSeeder extends Seeder
             'foto_diri' => 'budi.jpg',
             'status' => 1,
             'tgl_lahir' => Carbon::create(1987, 11, 15),
-            'kelas_pertandingan_id' => 1
+            'kelas_pertandingan_id' => 1,
         ]);
     }
 }

@@ -6,10 +6,13 @@ use App\Models\JenisPertandingan;
 use App\Models\KategoriPertandingan;
 use App\Models\Event;
 use App\Models\User;
+use App\Models\Kelas;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SuperAdminController extends Controller
 {
@@ -38,7 +41,11 @@ class SuperAdminController extends Controller
     {
         $kategori_pertandingan = KategoriPertandingan::all();
         $jenis_pertandingan = JenisPertandingan::all();
-        return view('superadmin.tambah_event', compact('kategori_pertandingan', 'jenis_pertandingan'));
+        $daftar_kelas = Kelas::orderBy('nama_kelas')->get();
+        // TAMBAHKAN INI: Ambil semua data rentang usia
+    $daftar_rentang_usia = DB::table('rentang_usia')->get();
+
+        return view('superadmin.tambah_event', compact('kategori_pertandingan', 'jenis_pertandingan', 'daftar_kelas', 'daftar_rentang_usia'));
     }
 
     public function kelolaEvent()
@@ -190,11 +197,12 @@ class SuperAdminController extends Controller
 
 
     public function storeEvent(Request $request){
-        // 1. VALIDASI DATA (Tidak ada perubahan di sini)
+    // 1. VALIDASI DATA SESUAI STRUKTUR INPUT 'GROUPS'
         $validator = Validator::make($request->all(), [
+            // Validasi Event Utama
             'name' => 'required|string|max:255',
             'slug' => 'required|string|unique:events,slug',
-            'image' => 'required|mimes:jpeg,png,jpg,webp|max:2048',
+            'image' => 'sometimes|mimes:jpeg,png,jpg,webp|max:2048',
             'desc' => 'required|string',
             'type' => 'required|in:official,non-official',
             'month' => 'required|string|max:100',
@@ -205,51 +213,55 @@ class SuperAdminController extends Controller
             'tgl_mulai_tanding' => 'required|date',
             'tgl_selesai_tanding' => 'required|date|after_or_equal:tgl_mulai_tanding',
             'tgl_batas_pendaftaran' => 'required|date',
-            'status' => 'required',
+            'status' => 'required|in:0,1,2',
             'cp' => 'required|string',
-            'juknis' => 'string',
-            'kelas' => 'required|array|min:1',
-            'kelas.*.kategori_id' => 'required|exists:kategori_pertandingan,id',
-            'kelas.*.jenis_id' => 'required|exists:jenis_pertandingan,id',
-            'kelas.*.nama_kelas' => 'required|string|max:255',
-            'kelas.*.rentang_usia' => 'required|string|max:255',
-            'kelas.*.gender' => 'required|in:Laki-laki,Perempuan',
-            'kelas.*.harga' => 'required|integer|min:0',
+            'juknis' => 'nullable|string',
+
+            // Validasi untuk Grup Kelas Pertandingan
+            'groups' => 'required|array|min:1',
+            'groups.*.rentang_usia_id' => 'required|exists:rentang_usia,id',
+            'groups.*.kategori_id' => 'required|exists:kategori_pertandingan,id',
+            'groups.*.jenis_id' => 'required|exists:jenis_pertandingan,id',
+            'groups.*.gender' => 'required|in:Laki-laki,Perempuan,Campuran',
+            'groups.*.harga' => 'required|integer|min:0',
+            'groups.*.kelas_ids' => 'required|array|min:1',
+            'groups.*.kelas_ids.*' => 'required|exists:kelas,id',
+        ], [
+            // Custom error messages
+            'groups.required' => 'Anda harus menambahkan setidaknya satu grup aturan.',
+            'groups.*.rentang_usia_id.required' => 'Anda harus memilih rentang usia untuk setiap grup.',
+            'groups.*.kelas_ids.required' => 'Anda harus memilih setidaknya satu kelas untuk setiap grup.',
         ]);
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
+        // 2. HANDLE FILE UPLOAD
         $imagePath = null;
-        // =================================================================
-        // PERUBAHAN DIMULAI DI SINI: HANDLE FILE UPLOAD DENGAN NAMA UNIK
-        // =================================================================
-        if ($request->hasFile('image')) {
-            // 1. Ambil slug dari request untuk nama file
-            $slug = $request->slug;
-            
-            // 2. Ambil ekstensi asli dari file yang di-upload (misal: .jpg, .png)
-            $extension = $request->file('image')->getClientOriginalExtension();
+if ($request->hasFile('image')) {
+    // 1. Ambil nama file asli dan ekstensinya
+    $originalFileName = $request->file('image')->getClientOriginalName();
+    $extension = $request->file('image')->getClientOriginalExtension();
 
-            // 3. Buat nama file baru yang unik
-            // Format: slug-timestamp.ekstensi
-            $imageName = $slug . '-' . time() . '.' . $extension;
+    // 2. Buat slug yang bersih dari nama event untuk nama file
+    //    Menggunakan Str::slug memastikan tidak ada karakter aneh di nama file.
+    $slug = Str::slug($request->name, '-');
 
-            // 4. Simpan file dengan nama baru yang sudah kita buat
-            // Gunakan storeAs() untuk menentukan nama file secara manual
-            // Path: storage/app/public/event-images/nama-file-unik.jpg
-            $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
-        }
-        // =================================================================
-        // PERUBAHAN SELESAI
-        // =================================================================
+    // 3. Gabungkan semuanya untuk membuat nama file yang unik dan deskriptif
+    //    Format: slug-event-timestamp-unik.ekstensi
+    $imageName = $slug . '-' . time() . '.' . $extension;
 
-        // 3. BUAT DAN SIMPAN EVENT UTAMA (Tidak ada perubahan di sini)
+    // 4. Simpan file ke disk 'public' di dalam folder 'event-images'
+    //    Method storeAs() akan mengembalikan path: 'event-images/nama-file-barunya.jpg'
+    $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
+}
+
+        // 3. BUAT DAN SIMPAN EVENT UTAMA
         $event = new Event();
         $event->name = $request->name;
         $event->slug = $request->slug;
-        $event->image = $imagePath; // Simpan path file ke database
+        $event->image = $imagePath;
         $event->desc = $request->desc;
         $event->type = $request->type;
         $event->month = $request->month;
@@ -263,22 +275,32 @@ class SuperAdminController extends Controller
         $event->status = $request->status;
         $event->cp = $request->cp;
         $event->juknis = $request->juknis;
-        
         $event->save();
 
-        // 4. SIMPAN DATA KELAS PERTANDINGAN (Tidak ada perubahan di sini)
-        foreach ($request->kelas as $kelasData) {
-            $event->kelasPertandingan()->create([
-                'kategori_pertandingan_id' => $kelasData['kategori_id'],
-                'jenis_pertandingan_id' => $kelasData['jenis_id'],
-                'nama_kelas' => $kelasData['nama_kelas'],
-                'rentang_usia' => $kelasData['rentang_usia'],
-                'gender' => $kelasData['gender'],
-                'harga' => $kelasData['harga'],
-            ]);
+        // 4. SIMPAN DATA KELAS PERTANDINGAN DENGAN LOGIC BARU
+        $kelasPertandinganToInsert = [];
+
+        foreach ($request->groups as $grupData) {
+            foreach ($grupData['kelas_ids'] as $kelasId) {
+                $kelasPertandinganToInsert[] = [
+                    'event_id' => $event->id,
+                    'kategori_pertandingan_id' => $grupData['kategori_id'],
+                    'jenis_pertandingan_id' => $grupData['jenis_id'],
+                    'kelas_id' => $kelasId, // Menggunakan kelas_id
+                    'gender' => $grupData['gender'],
+                    'harga' => $grupData['harga'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
         }
 
-        // 5. REDIRECT (Tidak ada perubahan di sini)
+        // Masukkan semua data dalam satu query untuk efisiensi
+        if (!empty($kelasPertandinganToInsert)) {
+            DB::table('kelas_pertandingan')->insert($kelasPertandinganToInsert);
+        }
+
+        // 5. REDIRECT
         return redirect()->route('superadmin.kelola_event')->with('success', 'Event baru berhasil ditambahkan!');
     }
 

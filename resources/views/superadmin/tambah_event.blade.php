@@ -119,7 +119,7 @@
             </div>
 
             <button type="button" id="add-grup-btn" class="btn btn-outline-success">
-                <i class="bi bi-plus-circle-fill"></i> Tambah Grup Aturan Lain
+                <i class="bi bi-plus-circle-fill"></i> Tambah Kategori Usia
             </button>
             <hr class="my-4">
 

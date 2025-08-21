@@ -143,9 +143,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const updateAvailableClasses = (card) => {
         const uniqueId = card.dataset.athleteId;
-        // =======================================================================
-        // PERBAIKAN 1: Ambil nilai dari dropdown Jenis Kelamin
-        // =======================================================================
         const selectedGender = card.querySelector('select[name="jenisKelamin"]').value;
         const selectedRentang = card.querySelector(`input[name="rentang_usia_${uniqueId}"]:checked`)?.value;
         const selectedKategori = card.querySelector(`input[name="kategori_${uniqueId}"]:checked`)?.value;
@@ -154,22 +151,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         kelasSelect.innerHTML = '<option value="">Pilih...</option>';
         
-        // =======================================================================
-        // PERBAIKAN 2: Pastikan semua 4 filter sudah dipilih
-        // =======================================================================
         if (!selectedRentang || !selectedKategori || !selectedJenis || !selectedGender) {
             kelasSelect.firstElementChild.textContent = "Lengkapi 4 filter di atas";
             return;
         }
 
-        // =======================================================================
-        // PERBAIKAN 3: Tambahkan filter gender ke dalam logika
-        // =======================================================================
         const filteredClasses = KELAS_PERTANDINGAN_DATA.filter(k => 
             k.rentang_usia_id == selectedRentang &&
             k.kategori_pertandingan_id == selectedKategori &&
             k.jenis_pertandingan_id == selectedJenis &&
-            (k.gender.toLowerCase() === selectedGender || k.gender === 'Campuran') // Cek gender atau 'Campuran'
+            (k.gender.toLowerCase() === selectedGender.toLowerCase() || k.gender === 'Campuran')
         );
 
         if (filteredClasses.length > 0) {
@@ -188,9 +179,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const card = e.target.closest('.athlete-card');
         if (!card) return;
 
-        // =======================================================================
-        // PERBAIKAN 4: Picu filter saat dropdown jenis kelamin diubah
-        // =======================================================================
         if (e.target.type === 'radio' || e.target.name === 'jenisKelamin') {
             updateAvailableClasses(card);
         }
@@ -220,11 +208,99 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     
-    // ... (Sisa kode untuk submit form tidak berubah)
-    registrationForm.addEventListener('submit', function(e) { /* ... */ });
-    const showAlert = (message, type = 'danger') => { /* ... */ };
+    // =======================================================================
+    // BAGIAN PENGIRIMAN FORM (FETCH DAN FORM APPEND)
+    // =======================================================================
+    registrationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Mengirim...`;
+
+        const formData = new FormData();
+        let hasError = false;
+
+        document.querySelectorAll('.athlete-card').forEach((card, index) => {
+            const kelasId = card.querySelector('select[name="kelas_pertandingan_id"]').value;
+            if (!kelasId) {
+                showAlert(`Atlet ${index + 1} belum memilih Kelas Pertandingan yang valid.`, 'danger');
+                hasError = true;
+            }
+
+            // Append data ke FormData dengan format array yang benar
+            formData.append(`athletes[${index}][contingent_id]`, CONTINGENT_ID);
+            formData.append(`athletes[${index}][namaLengkap]`, card.querySelector('input[name="namaLengkap"]').value);
+            formData.append(`athletes[${index}][nik]`, card.querySelector('input[name="nik"]').value);
+            formData.append(`athletes[${index}][noTelepon]`, card.querySelector('input[name="noTelepon"]').value);
+            formData.append(`athletes[${index}][email]`, card.querySelector('input[name="email"]').value);
+            formData.append(`athletes[${index}][jenisKelamin]`, card.querySelector('select[name="jenisKelamin"]').value);
+            formData.append(`athletes[${index}][tanggalLahir]`, card.querySelector('input[name="tanggalLahir"]').value);
+            formData.append(`athletes[${index}][kelas_pertandingan_id]`, kelasId);
+            formData.append(`athletes[${index}][uploadKTP]`, card.querySelector('input[name="uploadKTP"]').files[0]);
+            formData.append(`athletes[${index}][uploadFoto]`, card.querySelector('input[name="uploadFoto"]').files[0]);
+            formData.append(`athletes[${index}][uploadPersetujuan]`, card.querySelector('input[name="uploadPersetujuan"]').files[0]);
+        });
+        
+        if (hasError) {
+             submitBtn.disabled = false;
+             submitBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i>Daftar Kejuaraan`;
+             return;
+        }
+
+        // Kirim data menggunakan Fetch API
+        fetch('/player_store', { // PASTIKAN URL INI BENAR
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
+            },
+            body: formData
+        })
+        .then(response => response.json().then(data => ({ status: response.status, body: data })))
+        .then(({ status, body }) => {
+            if (status >= 400) { // Menangani error (termasuk validasi)
+                let errorMessages = 'Terjadi kesalahan. Silakan periksa kembali data Anda.<br>';
+                if(body.errors){
+                    for (const key in body.errors) { 
+                        errorMessages += `- ${body.errors[key][0]}<br>`; 
+                    }
+                } else { 
+                    errorMessages = body.message || 'Error tidak diketahui.'; 
+                }
+                showAlert(errorMessages, 'danger');
+            } else {
+                // Menangani sukses
+                showAlert('Pendaftaran berhasil! Anda akan dialihkan...', 'success');
+                setTimeout(() => { 
+                    window.location.href = `/invoice/${body.contingent}`; // Redirect ke halaman invoice
+                }, 2000);
+            }
+        })
+        .catch(error => {
+            showAlert('Gagal terhubung ke server. Silakan coba lagi.', 'danger');
+            console.error('Error:', error);
+        })
+        .finally(() => {
+             // Hanya aktifkan kembali tombol jika tidak ada proses redirect
+             if (!window.location.href.includes('/invoice/')) {
+                 submitBtn.disabled = false;
+                 submitBtn.innerHTML = `<i class="fas fa-paper-plane me-2"></i>Daftar Kejuaraan`;
+             }
+        });
+    });
+
+    const showAlert = (message, type = 'danger') => {
+        alertContainer.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+        window.scrollTo(0, 0); // Scroll ke atas untuk melihat pesan
+    };
+
     addAthleteBtn.addEventListener('click', addAthlete);
-    addAthlete();
+    addAthlete(); // Initialize with the first athlete
 });
 </script>
 </body>

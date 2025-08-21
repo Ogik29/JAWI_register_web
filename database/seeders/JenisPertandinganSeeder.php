@@ -20,6 +20,7 @@ class JenisPertandinganSeeder extends Seeder
         DB::table('jenis_pertandingan')->insert([
             ['nama_jenis' => 'Tanding'],
             ['nama_jenis' => 'Seni'],
+            ['nama_jenis' => 'Jurus Baku'],
         ]);
     }
 }

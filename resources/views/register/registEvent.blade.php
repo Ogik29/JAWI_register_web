@@ -207,7 +207,7 @@
                         </div>
                     </div>
                     <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📝 Deskripsi</h4><p class="text-gray-600">${event.description}</p></div>
-                    <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">Contact Person:</h4><p class="text-gray-600">${event.cp}</p></div>
+                    <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">Narahubung & No.rek:</h4><p class="text-gray-600">${event.cp}</p></div>
                     <div class="bg-gray-50 p-4 rounded-lg"><h4 class="font-semibold text-gray-800 mb-2">📋 Status Pendaftaran</h4><p class="text-gray-600">Status: <strong>${event.registrationStatus}</strong></p></div>
                     <div class="pt-4">${registrationButton}</div>
                 </div>`;

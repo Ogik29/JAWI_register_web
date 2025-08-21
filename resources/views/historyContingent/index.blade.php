@@ -62,6 +62,16 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
                 @endif
+                @if ($errors->any())
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                @endif
 
                 @forelse ($contingents as $contingent)
                     <div class="card mb-3 shadow-sm">
@@ -79,9 +89,7 @@
                                         @elseif ($contingent->status == 2)
                                             <span class="badge bg-danger p-2">Ditolak</span>
                                             @if(!empty($contingent->catatan))
-                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#noteContingentModal-{{ $contingent->id }}">
-                                                    <i class="bi bi-info-circle-fill"></i>
-                                                </button>
+                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#noteContingentModal-{{ $contingent->id }}"><i class="bi bi-info-circle-fill"></i></button>
                                             @endif
                                         @else
                                             <span class="badge bg-warning text-dark p-2">Menunggu Verifikasi</span>
@@ -142,9 +150,18 @@
                                     <hr class="my-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Daftar Peserta</h5>
-                                        {{-- @if ($contingent->status != 1) --}}
-                                            <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
-                                        {{-- @endif --}}
+                                        <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                            {{-- [PERUBAHAN DI SINI] Tombol Upload Ulang Invoice --}}
+                                            {{-- @if ($contingent->players->where('status', 3)->count() > 0)
+                                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadInvoiceModal-{{ $contingent->id }}">
+                                                    <i class="bi bi-upload"></i> Upload Ulang Invoice (jika alasan ditolak terkait bukti bayar)
+                                                </button>
+                                            @endif --}}
+                                            
+                                            @if ($contingent->status == 1)
+                                                <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered table-hover">
@@ -162,9 +179,7 @@
                                                             @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
                                                             @if ($player->status == 3 && !empty($player->catatan))
-                                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $player->id }}">
-                                                                    <i class="bi bi-info-circle-fill"></i>
-                                                                </button>
+                                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $player->id }}"><i class="bi bi-info-circle-fill"></i></button>
                                                             @endif
                                                         </td>
                                                         <td class="d-flex flex-wrap gap-2">
@@ -177,6 +192,9 @@
                                                                     @method('DELETE')
                                                                     <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
                                                                 </form>
+                                                            @endif
+                                                            @if ($player->status == 2)
+                                                                <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm"><i class="bi bi-printer"></i> Kartu Peserta</a>
                                                             @endif
                                                         </td>
                                                     </tr>
@@ -192,64 +210,74 @@
                         </div>
                     </div>
 
+                    {{-- Modal Edit Kontingen --}}
                     <div class="modal fade" id="editContingentModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                             <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Edit Data Kontingen</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
+                                <div class="modal-header"><h5 class="modal-title">Edit Data Kontingen</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
                                 <form action="{{ route('contingent.update', $contingent->id) }}" method="POST" enctype="multipart/form-data">
                                     @csrf
                                     @method('PUT')
                                     <div class="modal-body">
-                                        @if ($contingent->status == 2)
-                                        <div class="alert alert-warning" role="alert">Mengubah data akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.</div>
-                                        @endif
-
-                                        <div class="mb-3">
-                                            <label for="name-{{ $contingent->id }}" class="form-label">Nama Kontingen</label>
-                                            <input type="text" class="form-control" name="name" id="name-{{ $contingent->id }}" value="{{ $contingent->name }}" required>
-                                        </div>
-
-                                        <hr>
-
+                                        @if ($contingent->status == 2)<div class="alert alert-warning" role="alert">Mengubah data akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.</div>@endif
+                                        <div class="mb-3"><label for="name-{{ $contingent->id }}" class="form-label">Nama Kontingen</label><input type="text" class="form-control" name="name" id="name-{{ $contingent->id }}" value="{{ $contingent->name }}" required></div><hr>
                                         <div class="mb-3">
                                             <label for="surat_rekomendasi-{{ $contingent->id }}" class="form-label">Surat Rekomendasi</label>
-                                            @if ($contingent->surat_rekomendasi)
-                                                <div class="mb-2">
-                                                    <a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Surat Saat Ini</a>
-                                                </div>
-                                            @endif
-                                            <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}">
-                                            <small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                            @if ($contingent->surat_rekomendasi)<div class="mb-2"><a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Surat Saat Ini</a></div>@endif
+                                            <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
                                         </div>
-
                                         @if ($contingent->event->harga_contingent > 0)
                                         <div class="mb-3">
                                             <label for="foto_invoice-{{ $contingent->id }}" class="form-label">Bukti Bayar Kontingen</label>
                                             @php $transaction = $contingent->transactions->first(); @endphp
-                                            @if ($transaction && $transaction->foto_invoice)
-                                                <div class="mb-2">
-                                                    <a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Bukti Bayar Saat Ini</a>
-                                                </div>
-                                            @endif
-                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice-{{ $contingent->id }}">
-                                            <small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                            @if ($transaction && $transaction->foto_invoice)<div class="mb-2"><a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Bukti Bayar Saat Ini</a></div>@endif
+                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
                                         </div>
                                         @endif
                                     </div>
+                                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- [BARU] Modal untuk Upload Ulang Invoice Peserta --}}
+                    <div class="modal fade" id="uploadInvoiceModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Upload Ulang Bukti Bayar Peserta</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data">
+                                    @csrf
+                                    <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">
+                                    <div class="modal-body">
+                                        <div class="alert alert-info">
+                                            Halaman ini untuk melakukan pembayaran ulang. Sistem akan otomatis menyertakan semua peserta dengan status "Ditolak" dan "Belum Bayar" dalam invoice baru ini.
+                                        </div>
+                                        <p><strong>Peserta yang akan diproses:</strong></p>
+                                        <ul>
+                                            @foreach($contingent->players->whereIn('status', [0, 3]) as $player)
+                                                <li>{{ $player->name }} (Status: {{ $player->status == 0 ? 'Belum Bayar' : 'Ditolak' }})</li>
+                                            @endforeach
+                                        </ul>
+                                        <hr>
+                                        <div class="mb-3">
+                                            <label for="foto_invoice_{{ $contingent->id }}" class="form-label">Upload File Bukti Bayar Baru</label>
+                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice_{{ $contingent->id }}" required>
+                                        </div>
+                                    </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                                        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+                                        <button type="submit" class="btn btn-primary">Kirim Bukti Bayar</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                     </div>
 
-
-                    {{-- [PERBAIKAN] Memindahkan semua modal catatan ke luar dari modal lain --}}
+                    {{-- Modals for Notes --}}
                     @if ($contingent->status == 2 && !empty($contingent->catatan))
                         <div class="modal fade" id="noteContingentModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
@@ -261,7 +289,6 @@
                             </div>
                         </div>
                     @endif
-
                     @foreach($contingent->players as $player)
                         @if ($player->status == 3 && !empty($player->catatan))
                             <div class="modal fade" id="notePlayerModal-{{ $player->id }}" tabindex="-1" aria-hidden="true">

@@ -15,47 +15,55 @@ class adminController extends Controller
         $admin = Auth::user();
         $managedEventIds = $admin->eventRoles->pluck('event_id');
 
-        // --- Data Dashboard & "Kelola Event" Section ---
+        // --- Data for Dashboard & "Kelola Event" Section ---
         $eventsQuery = Event::whereIn('id', $managedEventIds);
         $events = (clone $eventsQuery)->withCount('players')->latest()->get();
         $activeEvents = (clone $eventsQuery)->where('status', 1)->latest()->take(5)->get();
 
-        // --- Data Verification Tables ---
+        // --- Data for Verification Tables (Pending) ---
         $contingentsForVerification = Contingent::with(['user', 'event', 'players', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 0) // 0 = Menunggu Verifikasi
             ->latest()
             ->get();
 
-        $playersForVerification = Player::with(['contingent.event', 'kelasPertandingan', 'playerInvoice'])
+        $playersForVerification = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 1) // 1 = Pending (sudah bayar, menunggu verif dokumen)
+            ->where('status', 1) // 1 = Pending
             ->latest()
             ->get();
 
-        // --- Data Approved Lists Tables ---
+        // --- Data for Approved Lists Tables ---
         $approvedContingents = Contingent::with(['user', 'event', 'players'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 1) // 1 = Disetujui
             ->latest()
             ->get();
 
-        $approvedPlayers = Player::with(['contingent.event', 'kelasPertandingan'])
+        $approvedPlayers = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 2) // 2 = Terverifikasi
             ->latest()
             ->get();
 
-        // --- Data Dashboard Cards ---
+        // --- [NEW] Data for Rejected Lists Tables ---
+        $rejectedContingents = Contingent::with(['user', 'event', 'players', 'transactions'])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('status', 2) // 2 = Ditolak
+            ->latest()
+            ->get();
+
+        $rejectedPlayers = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
+            ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
+            ->where('status', 3) // 3 = Ditolak
+            ->latest()
+            ->get();
+
+        // --- Data for Dashboard Cards ---
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
         $pendingContingentsCount = $contingentsForVerification->count();
-
-        // Calculate total contingents for the managed events
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
-
-        // Calculate total pending players for the managed events
         $pendingPlayersCount = $playersForVerification->count();
-
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -66,8 +74,10 @@ class adminController extends Controller
             'playersForVerification',
             'approvedContingents',
             'approvedPlayers',
-            'totalContingents',      // Pass new data
-            'pendingPlayersCount'    // Pass new data
+            'totalContingents',
+            'pendingPlayersCount',
+            'rejectedContingents',      // Pass new data
+            'rejectedPlayers'           // Pass new data
         ));
     }
 

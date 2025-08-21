@@ -48,6 +48,7 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::get('/history/player/{player}/edit', [historyController::class, 'editPlayer'])->name('player.edit');
     Route::put('/history/player/{player}', [historyController::class, 'updatePlayer'])->name('player.update');
     Route::delete('/history/player/{player}', [historyController::class, 'destroyPlayer'])->name('player.destroy');
+    Route::get('/history/player/{player}/print-card', [historyController::class, 'printCard'])->name('player.print.card');
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
     Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');

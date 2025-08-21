@@ -4,9 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Player;
 use App\Models\Contingent;
+use App\Models\RentangUsia;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Validation\Rule;
+use App\Models\JenisPertandingan;
+use App\Models\KelasPertandingan;
 use App\Http\Controllers\Controller;
+use App\Models\KategoriPertandingan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -84,31 +89,64 @@ class historyController extends Controller
 
     public function editPlayer(Player $player)
     {
+        // Otorisasi: pastikan user pemilik kontingen yang mengakses
         if ($player->contingent->user_id !== Auth::id()) {
             abort(403);
         }
 
-        return view('historyContingent.editPlayer', compact('player'));
+        $event = $player->contingent->event;
+
+        // Ambil semua data master untuk filter, sama seperti di halaman registrasi
+        $kategoriPertandingan = KategoriPertandingan::all();
+        $jenisPertandingan = JenisPertandingan::all();
+        $rentangUsia = RentangUsia::all();
+
+        // [FIX] Query untuk mengambil kelas yang tersedia dengan JOIN
+        $availableClasses = KelasPertandingan::where('kelas_pertandingan.event_id', $event->id)
+            ->join('kelas', 'kelas_pertandingan.kelas_id', '=', 'kelas.id')
+            ->select(
+                'kelas_pertandingan.id as kelas_pertandingan_id',
+                'kelas.nama_kelas', // Mengambil nama_kelas dari tabel 'kelas'
+                'kelas_pertandingan.gender',
+                'kelas.rentang_usia_id',
+                'kelas_pertandingan.kategori_pertandingan_id',
+                'kelas_pertandingan.jenis_pertandingan_id'
+            )
+            ->get();
+
+        return view('historyContingent.editPlayer', compact(
+            'player',
+            'event',
+            'kategoriPertandingan',
+            'jenisPertandingan',
+            'rentangUsia',
+            'availableClasses'
+        ));
     }
 
     public function updatePlayer(Request $request, Player $player)
     {
+        // Otorisasi
         if ($player->contingent->user_id !== Auth::id()) {
             abort(403);
         }
 
+        // Validasi, tambahkan kelas_pertandingan_id
         $request->validate([
             'name' => 'required|string|max:255',
             'nik' => 'required|string|size:16',
-            // Tambahkan validasi lain di sini
-            'foto_ktp' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
-            'foto_diri' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'foto_persetujuan_ortu' => 'nullable|image|mimes:jpg,jpeg,png,pdf|max:2048',
+            'gender' => 'required|string',
+            'tgl_lahir' => 'required|date',
+            'kelas_pertandingan_id' => 'required|integer|exists:kelas_pertandingan,id',
+            'foto_ktp' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'foto_diri' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'foto_persetujuan_ortu' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
         // Update data teks
         $player->update($request->except(['foto_ktp', 'foto_diri', 'foto_persetujuan_ortu']));
 
+        // Handle file uploads (jika ada file baru)
         if ($request->hasFile('foto_ktp')) {
             if ($player->foto_ktp) \Illuminate\Support\Facades\Storage::disk('public')->delete($player->foto_ktp);
             $player->foto_ktp = $request->file('foto_ktp')->store('player_documents', 'public');
@@ -124,11 +162,19 @@ class historyController extends Controller
             $player->foto_persetujuan_ortu = $request->file('foto_persetujuan_ortu')->store('player_documents', 'public');
         }
 
+        // Jika statusnya Ditolak (3), ubah kembali menjadi Pending (1) setelah diedit
         if ($player->status == 3) {
             $player->status = 1;
         }
 
         $player->save();
+
+        // Jika kontingen induknya ditolak (2), ubah juga statusnya menjadi pending (0)
+        $contingent = $player->contingent;
+        if ($contingent->status == 2) {
+            $contingent->status = 0;
+            $contingent->save();
+        }
 
         return redirect()->route('history')->with('status', 'Data peserta berhasil diperbarui.');
     }
@@ -154,5 +200,33 @@ class historyController extends Controller
         $player->delete();
 
         return redirect()->route('history')->with('status', 'Data peserta berhasil dihapus.');
+    }
+
+    public function printCard(Player $player)
+    {
+        if ($player->contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        if ($player->status != 2) {
+            return redirect('/history')->with('status', 'Tunggu sampai pemain diverifikasi terlebih dahulu!');
+        }
+
+        // Siapkan data yang akan dikirim ke view PDF
+        $data = [
+            'player' => $player
+        ];
+
+        // Muat view, kirim data, dan buat PDF
+        $pdf = Pdf::loadView('pdf.player_card', $data);
+
+        // ukuran kertas seukuran KTP potret
+        // Format: [x, y, width, height] dalam points
+        $customPaper = array(0, 0, 153.00, 242.60);
+        $pdf->setPaper($customPaper, 'portrait');
+
+        // Tampilkan PDF di browser
+        // Gunakan stream() untuk menampilkan, atau download() untuk mengunduh langsung
+        return $pdf->stream('kartu-peserta-' . $player->name . '.pdf');
     }
 }

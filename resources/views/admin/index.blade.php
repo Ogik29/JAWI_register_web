@@ -9,28 +9,37 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .modal-content { max-height: 90vh; }
+        .sub-nav-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .sub-nav-btn.active {
+            background-color: #c50000;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .sub-nav-btn:not(.active) {
+            background-color: #f3f4f6;
+            color: #4b5563;
+        }
+        .sub-nav-btn:not(.active):hover {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
     <header class="bg-white shadow-sm border-b">
         <div class="px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-4">
-                <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-lg">🥋</span>
-                </div>
-                <div>
-                    <h1 class="text-xl font-semibold text-gray-900">Admin Dashboard</h1>
-                    <p class="text-sm text-gray-500">Event Management System</p>
-                </div>
+                <div class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center"><span class="text-white font-bold text-lg">🥋</span></div>
+                <div><h1 class="text-xl font-semibold text-gray-900">Admin Dashboard</h1><p class="text-sm text-gray-500">Event Management System</p></div>
             </div>
             <div class="flex items-center space-x-4">
-                <div class="text-right">
-                    <p class="text-sm font-medium text-gray-900">{{ Auth::user()->nama_lengkap }}</p>
-                    <p class="text-xs text-gray-500">{{ Auth::user()->role->name }}</p>
-                </div>
-                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span class="text-gray-600 text-sm">👤</span>
-                </div>
+                <div class="text-right"><p class="text-sm font-medium text-gray-900">{{ Auth::user()->nama_lengkap }}</p><p class="text-xs text-gray-500">{{ Auth::user()->role->name }}</p></div>
+                <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center"><span class="text-gray-600 text-sm">👤</span></div>
             </div>
         </div>
     </header>
@@ -46,220 +55,72 @@
 
     <main class="p-6">
         <div id="dashboard" class="section">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2>
-                <p class="text-gray-600">Ringkasan aktivitas event silat Anda</p>
-            </div>
-            
-            {{-- [PERBAIKAN] Grid sekarang memiliki 4 kartu --}}
+            <div class="mb-6"><h2 class="text-2xl font-bold text-gray-900">Dashboard Overview</h2><p class="text-gray-600">Ringkasan aktivitas event silat Anda</p></div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Kontingen</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $totalContingents }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><span class="text-blue-600 text-xl">🏢</span></div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Total Atlet</p>
-                            <p class="text-2xl font-bold text-gray-900">{{ $totalPlayers }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><span class="text-green-600 text-xl">👥</span></div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Kontingen Pending</p>
-                            <p class="text-2xl font-bold text-orange-600">{{ $pendingContingentsCount }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center"><span class="text-orange-600 text-xl">⏳</span></div>
-                    </div>
-                </div>
-                <div class="bg-white p-6 rounded-xl shadow-sm border">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Atlet Pending</p>
-                            <p class="text-2xl font-bold text-yellow-600">{{ $pendingPlayersCount }}</p>
-                        </div>
-                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><span class="text-yellow-600 text-xl">🏃</span></div>
-                    </div>
-                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border"><div class="flex items-center justify-between"><div><p class="text-sm text-gray-600">Total Kontingen</p><p class="text-2xl font-bold text-gray-900">{{ $totalContingents }}</p></div><div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center"><span class="text-blue-600 text-xl">🏢</span></div></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border"><div class="flex items-center justify-between"><div><p class="text-sm text-gray-600">Total Atlet</p><p class="text-2xl font-bold text-gray-900">{{ $totalPlayers }}</p></div><div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center"><span class="text-green-600 text-xl">👥</span></div></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border"><div class="flex items-center justify-between"><div><p class="text-sm text-gray-600">Kontingen Pending</p><p class="text-2xl font-bold text-orange-600">{{ $pendingContingentsCount }}</p></div><div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center"><span class="text-orange-600 text-xl">⏳</span></div></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border"><div class="flex items-center justify-between"><div><p class="text-sm text-gray-600">Atlet Pending</p><p class="text-2xl font-bold text-yellow-600">{{ $pendingPlayersCount }}</p></div><div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center"><span class="text-yellow-600 text-xl">🏃</span></div></div></div>
             </div>
-
-            <div class="bg-white rounded-xl shadow-sm border p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Event Aktif Terbaru Anda</h3>
-                <div class="space-y-4">
-                    @forelse ($activeEvents as $event)
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div>
-                            <h4 class="font-medium text-gray-900">{{ $event->name }}</h4>
-                            <p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($event->tgl_mulai_tanding)->format('d M') }} - {{ \Carbon\Carbon::parse($event->tgl_selesai_tanding)->format('d M Y') }} • {{ $event->lokasi }}</p>
-                        </div>
-                        <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Aktif</span>
-                    </div>
-                    @empty
-                    <p class="text-sm text-gray-500">Tidak ada event yang sedang aktif.</p>
-                    @endforelse
-                </div>
-            </div>
+            <div class="bg-white rounded-xl shadow-sm border p-6"><h3 class="text-lg font-semibold text-gray-900 mb-4">Event Aktif Terbaru Anda</h3><div class="space-y-4">@forelse ($activeEvents as $event)<div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"><div><h4 class="font-medium text-gray-900">{{ $event->name }}</h4><p class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($event->tgl_mulai_tanding)->format('d M') }} - {{ \Carbon\Carbon::parse($event->tgl_selesai_tanding)->format('d M Y') }} • {{ $event->lokasi }}</p></div><span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">Aktif</span></div>@empty<p class="text-sm text-gray-500">Tidak ada event yang sedang aktif.</p>@endforelse</div></div>
         </div>
 
-        {{-- Kelola Event Section --}}
         <div id="events" class="section hidden">
-            {{-- Daftar Event Table --}}
             <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
                 <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Event Anda</h3></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Event</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Peserta</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse ($events as $event)
-                            <tr>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $event->name }}</div></td>
-                                <td class="p-3 text-sm text-gray-900">{{ \Carbon\Carbon::parse($event->tgl_mulai_tanding)->format('d M Y') }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $event->lokasi }}</td>
-                                <td class="p-3">
-                                    @if($event->status == 1) <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Aktif</span>
-                                    @elseif ($event->status == 0) <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Segera Dibuka</span>
-                                    @else <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Tutup</span> @endif
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">{{ $event->players_count }} atlet</td>
-                                <td class="p-3"><button onclick='viewEventDetail(@json($event))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="6" class="p-3 text-center text-sm text-gray-500">Tidak ada event ditemukan.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Event</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Tanggal</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Lokasi</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Peserta</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse ($events as $event)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $event->name }}</div></td><td class="p-3 text-sm text-gray-900">{{ \Carbon\Carbon::parse($event->tgl_mulai_tanding)->format('d M Y') }}</td><td class="p-3 text-sm text-gray-900">{{ $event->lokasi }}</td><td class="p-3">@if($event->status == 1) <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Aktif</span> @elseif ($event->status == 0) <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Segera Dibuka</span> @else <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">Tutup</span> @endif</td><td class="p-3 text-sm text-gray-900">{{ $event->players_count }} atlet</td><td class="p-3"><button onclick='viewEventDetail(@json($event))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td></tr>@empty<tr><td colspan="6" class="p-3 text-center text-sm text-gray-500">Tidak ada event ditemukan.</td></tr>@endforelse</tbody></table></div>
+            </div>
+            
+            <div class="mb-6 flex space-x-2 border-b pb-2">
+                <button onclick="showSubSection('pending')" class="sub-nav-btn active">Menunggu Verifikasi</button>
+                <button onclick="showSubSection('approved')" class="sub-nav-btn">Disetujui</button>
+                <button onclick="showSubSection('rejected')" class="sub-nav-btn">Ditolak</button>
+            </div>
+            
+            <div id="pending" class="sub-section">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Kontingen</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse ($contingentsForVerification as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div><div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div></td><td class="p-3 text-sm text-blue-600"><a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="hover:underline">Surat Rekomendasi</a><br>@if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)<a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>@else<span class="text-gray-500">N/A</span>@endif</td><td class="p-3"><button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button><button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada kontingen perlu diverifikasi.</td></tr>@endforelse</tbody></table></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen & Bayar</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse ($playersForVerification as $player)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3 text-sm text-blue-600">@if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP/KK</a> | @endif @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a><br>@endif @if($player->playerInvoice && $player->playerInvoice->foto_invoice)<a href="{{ Storage::url($player->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Bukti Bayar</a>@else<span class="text-gray-500 italic">Pending</span>@endif</td><td class="p-3"><button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet perlu diverifikasi.</td></tr>@endforelse</tbody></table></div>
                 </div>
             </div>
 
-            {{-- Verifikasi Kontingen Table --}}
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-                 <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Kontingen</h3></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse ($contingentsForVerification as $contingent)
-                            <tr>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div><div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div></td>
-                                <td class="p-3 text-sm text-blue-600">
-                                    <a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="hover:underline">Surat Rekomendasi</a><br>
-                                    @if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)<a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>@else<span class="text-gray-500">N/A</span>@endif
-                                </td>
-                                <td class="p-3">
-                                    <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
-                                    <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada kontingen yang perlu diverifikasi.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+            <div id="approved" class="sub-section hidden">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Disetujui</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($approvedContingents as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td><td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td><td class="p-3"><button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada kontingen yang disetujui.</td></tr>@endforelse</tbody></table></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Terverifikasi</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($approvedPlayers as $player)<tr><td class="p-3 text-sm font-medium text-gray-900">{{ $player->name }}</td><td class="p-3 text-sm text-gray-900">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3"><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada atlet yang terverifikasi.</td></tr>@endforelse</tbody></table></div>
                 </div>
             </div>
 
-            {{-- Verifikasi Atlet Table --}}
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-                <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet</h3></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen & Bayar</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
-                        <tbody class="divide-y divide-gray-200">
-                           @forelse ($playersForVerification as $player)
-                            <tr>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td>
-                                <td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td>
-                                <td class="p-3 text-sm text-blue-600">
-                                    @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP/KK</a> | @endif
-                                    @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif
-                                    @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a><br>@endif
-                                    @if($player->playerInvoice && $player->playerInvoice->foto_invoice)<a href="{{ Storage::url($player->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Bukti Bayar</a>@else<span class="text-gray-500 italic">Pending</span>@endif
-                                </td>
-                                <td class="p-3">
-                                    <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
-                                    <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
-                                </td>
-                            </tr>
-                           @empty
-                           <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet yang perlu diverifikasi.</td></tr>
-                           @endforelse
-                        </tbody>
-                    </table>
+            <div id="rejected" class="sub-section hidden">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Ditolak</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($rejectedContingents as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td><td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td><td class="p-3"><button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada kontingen yang ditolak.</td></tr>@endforelse</tbody></table></div>
                 </div>
-            </div>
-
-            {{-- [NEW] Daftar Kontingen Disetujui Table --}}
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-                <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Disetujui</h3></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse($approvedContingents as $contingent)
-                            <tr>
-                                <td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td>
-                                <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
-                                <td class="p-3"><button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td>
-                            </tr>
-                            @empty
-                            <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada kontingen yang disetujui.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {{-- [NEW] Daftar Atlet Terverifikasi Table --}}
-            <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Terverifikasi</h3></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
-                        <tbody class="divide-y divide-gray-200">
-                           @forelse($approvedPlayers as $player)
-                           <tr>
-                                <td class="p-3 text-sm font-medium text-gray-900">{{ $player->name }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td>
-                                <td class="p-3"><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td>
-                           </tr>
-                           @empty
-                           <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada atlet yang terverifikasi.</td></tr>
-                           @endforelse
-                        </tbody>
-                    </table>
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Ditolak</h3></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($rejectedPlayers as $player)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3 text-sm text-gray-700 italic">"{{ $player->catatan ?: 'Tidak ada catatan' }}"</td><td class="p-3"><button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet yang ditolak.</td></tr>@endforelse</tbody></table></div>
                 </div>
             </div>
         </div>
     </main>
     
-    {{-- [NEW] Detail Modal --}}
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl modal-content overflow-y-auto">
             <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 id="detailModalTitle" class="text-xl font-semibold text-gray-900">Detail</h3>
-                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
-                </div>
-                <div id="detailModalContent" class="text-sm"></div>
+                <div class="flex justify-between items-center mb-4"><h3 id="detailModalTitle" class="text-xl font-semibold text-gray-900">Detail</h3><button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">&times;</button></div><div id="detailModalContent" class="text-sm"></div>
             </div>
-            <div class="flex justify-end p-4 bg-gray-50 rounded-b-xl">
-                <button onclick="closeDetailModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">Tutup</button>
-            </div>
+            <div class="flex justify-end p-4 bg-gray-50 rounded-b-xl"><button onclick="closeDetailModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">Tutup</button></div>
         </div>
     </div>
     
-    {{-- Verification Modal --}}
     <div id="verificationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl w-full max-w-lg modal-content overflow-y-auto">
             <div class="p-6">
@@ -288,6 +149,13 @@
             event.currentTarget.classList.remove('border-transparent', 'text-gray-500');
         }
 
+        function showSubSection(subSectionId) {
+            document.querySelectorAll('.sub-section').forEach(section => section.classList.add('hidden'));
+            document.getElementById(subSectionId).classList.remove('hidden');
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+
         function openVerificationModal(type, id, name, actionUrl) {
             document.getElementById('verificationModalTitle').textContent = `Verifikasi ${type.charAt(0).toUpperCase() + type.slice(1)}`;
             document.getElementById('verificationItemName').textContent = name;
@@ -299,7 +167,6 @@
             document.getElementById('verificationModal').classList.add('hidden');
         }
 
-        // --- [NEW] Detail Modal Functions ---
         const detailModal = document.getElementById('detailModal');
         const detailModalTitle = document.getElementById('detailModalTitle');
         const detailModalContent = document.getElementById('detailModalContent');
@@ -310,9 +177,10 @@
 
         function viewEventDetail(event) {
             detailModalTitle.textContent = 'Detail Event: ' + event.name;
+            let statusText = event.status == 1 ? 'Aktif' : (event.status == 0 ? 'Segera Dibuka' : 'Tutup');
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><strong class="block text-gray-500">Status</strong> <p>${event.status}</p></div>
+                    <div><strong class="block text-gray-500">Status</strong> <p>${statusText}</p></div>
                     <div><strong class="block text-gray-500">Lokasi</strong> <p>${event.lokasi}</p></div>
                     <div><strong class="block text-gray-500">Tanggal Mulai</strong> <p>${new Date(event.tgl_mulai_tanding).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p></div>
                     <div><strong class="block text-gray-500">Tanggal Selesai</strong> <p>${new Date(event.tgl_selesai_tanding).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p></div>
@@ -328,10 +196,7 @@
 
         function viewContingentDetail(contingent) {
             detailModalTitle.textContent = 'Detail Kontingen: ' + contingent.name;
-            let playersList = contingent.players.length > 0
-                ? contingent.players.map(player => `<li>${player.name}</li>`).join('')
-                : '<li>Belum ada peserta terdaftar.</li>';
-
+            let playersList = contingent.players.length > 0 ? contingent.players.map(player => `<li>${player.name}</li>`).join('') : '<li>Belum ada peserta terdaftar.</li>';
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="block text-gray-500">Event</strong> <p>${contingent.event.name}</p></div>
@@ -349,16 +214,43 @@
 
         function viewPlayerDetail(player) {
             detailModalTitle.textContent = 'Detail Atlet: ' + player.name;
+            
+            // Format Rupiah Helper
+            const formatCurrency = (number) => {
+                if (number === null || typeof number === 'undefined') return 'N/A';
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
+            };
+
+            const invoiceLinkHtml = player.player_invoice?.foto_invoice 
+                ? `<a href="/storage/${player.player_invoice.foto_invoice}" target="_blank" class="text-blue-600 hover:underline">Lihat Bukti Bayar</a>`
+                : `<span class="text-gray-500 italic">Belum ada invoice</span>`;
+
+            const hargaKelasHtml = player.kelas_pertandingan 
+                ? `<span class="font-bold text-green-600">${formatCurrency(player.kelas_pertandingan.harga)}</span>`
+                : `<span class="text-gray-500 italic">N/A</span>`;
+
+            const totalInvoiceHtml = player.player_invoice
+                ? `<span class="font-bold text-blue-600">${formatCurrency(player.player_invoice.total_price)}</span>`
+                : `<span class="text-gray-500 italic">N/A</span>`;
+
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="block text-gray-500">Event</strong> <p>${player.contingent.event.name}</p></div>
                     <div><strong class="block text-gray-500">Kontingen</strong> <p>${player.contingent.name}</p></div>
                     <div><strong class="block text-gray-500">NIK</strong> <p>${player.nik}</p></div>
                     <div><strong class="block text-gray-500">Tanggal Lahir</strong> <p>${new Date(player.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p></div>
-                    <div><strong class="block text-gray-500">Email</strong> <p>${player.email}</p></div>
-                    <div><strong class="block text-gray-500">No. Telepon</strong> <p>${player.no_telp}</p></div>
+                    <div><strong class="block text-gray-500">Email</strong> <p>${player.email || '-'}</p></div>
+                    <div><strong class="block text-gray-500">No. Telepon</strong> <p>${player.no_telp || '-'}</p></div>
                     <div><strong class="block text-gray-500">Gender</strong> <p>${player.gender}</p></div>
                     <div><strong class="block text-gray-500">Kelas Tanding</strong> <p>${player.kelas_pertandingan.kelas.nama_kelas || 'N/A'}</p></div>
+                </div>
+                <div class="mt-4 pt-4 border-t">
+                    <strong class="block text-gray-600 text-base mb-2">Informasi Pembayaran</strong>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div><strong class="block text-gray-500">Harga Kelas Peserta</strong><p>${hargaKelasHtml}</p></div>
+                        <div><strong class="block text-gray-500">Total Tagihan Invoice</strong><p>${totalInvoiceHtml}</p></div>
+                        <div><strong class="block text-gray-500">Bukti Bayar</strong><p>${invoiceLinkHtml}</p></div>
+                    </div>
                 </div>
                 <div class="mt-4"><strong class="block text-gray-500">Catatan Admin</strong> <p class="whitespace-pre-wrap">${player.catatan || 'Tidak ada catatan.'}</p></div>
             `;

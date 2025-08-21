@@ -121,13 +121,17 @@ class EventController extends Controller
         return response()->json([
             'success'      => true,
             'message'      => 'Pendaftaran berhasil! Anda akan dialihkan...',
-            'redirect_url' => route('peserta.event', ['contingent_id' => $contingent->id])
+            'redirect_url' => route('history')
         ]);
     }
 
 
     public function pesertaEvent($contingent_id)
     {
+        if (Contingent::findOrFail($contingent_id)->status != 1) {
+            return redirect('/history')->with('status', 'Tunggu sampai kontingen diverifikasi terlebih dahulu!');
+        }
+
         // 1. Ambil data dasar (Kontingen dan Event)
         $contingent = Contingent::findOrFail($contingent_id);
         $event = $contingent->event;
@@ -173,7 +177,6 @@ class EventController extends Controller
 
     public function storePeserta(Request $request)
     {
-
         // return $request->all();
 
         // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
@@ -277,7 +280,7 @@ class EventController extends Controller
         }
 
         // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
-        return redirect('/history')->with('success', 'Bukti transfer dan data invoice berhasil disimpan!');
+        return redirect('/history')->with('status', 'Bukti transfer dan data invoice berhasil disimpan!');
     }
 
 
@@ -310,7 +313,7 @@ class EventController extends Controller
     public function dataPeserta()
     {
         // ambil semua data player dengan relasi2 yg dibutuhkan
-        $players = Player::with(['contingent', 'kelasPertandingan.jenisPertandingan', 'kelasPertandingan.kategoriPertandingan'])->get();
+        $players = Player::with(['contingent', 'kelasPertandingan.jenisPertandingan', 'kelasPertandingan.kategoriPertandingan'])->latest()->get();
 
         $contingents = Contingent::orderBy('name')->get();
 

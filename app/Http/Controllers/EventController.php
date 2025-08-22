@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use Illuminate\Http\Request;
 
@@ -159,7 +160,8 @@ class EventController extends Controller
                 'kelas_pertandingan.jenis_pertandingan_id',
                 'kelas.rentang_usia_id', // Data ini krusial untuk filter
                 'kelas_pertandingan.gender',
-                'kelas_pertandingan.harga'
+                'kelas_pertandingan.harga',
+                'kelas.jumlah_pemain'
             )
             ->get();
 
@@ -183,53 +185,74 @@ class EventController extends Controller
         // $processedAthletesDetails = [];
         // $totalHarga = 0;
 
-        foreach ($request->athletes as $athleteData) {
-            $player = new Player();
-            $player->name = $athleteData['namaLengkap'];
-            $player->contingent_id = $athleteData['contingent_id'];
-            $player->nik = $athleteData['nik'];
-            $player->no_telp = $athleteData['noTelepon'];
-            $player->email = $athleteData['email'];
-            $player->gender = $athleteData['jenisKelamin'];
-            $player->tgl_lahir = $athleteData['tanggalLahir'];
+         // 1. VALIDASI DATA DENGAN STRUKTUR BARU
+    $validator = Validator::make($request->all(), [
+        'registrations' => 'required|array|min:1',
+        'registrations.*.kelas_pertandingan_id' => 'required|exists:kelas_pertandingan,id',
+        'registrations.*.players' => 'required|array|min:1',
+        'registrations.*.players.*.namaLengkap' => 'required|string|max:255',
+        'registrations.*.players.*.nik' => 'required|string|digits:16',
+        'registrations.*.players.*.jenisKelamin' => 'required|in:laki-laki,perempuan',
+        'registrations.*.players.*.tanggalLahir' => 'required|date',
+        'registrations.*.players.*.uploadKTP' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        'registrations.*.players.*.uploadFoto' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        'registrations.*.players.*.uploadPersetujuan' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+    ]);
 
-            $player->kelas_pertandingan_id = $athleteData['kelas_pertandingan_id'];
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
 
-            $contingent_id = $athleteData['contingent_id'];
+    try {
+        DB::beginTransaction();
+        $contingentId = $request->input('contingent_id');
 
-            // Upload file dengan uniqid
-            if (isset($athleteData['uploadKTP']) && $athleteData['uploadKTP'] instanceof \Illuminate\Http\UploadedFile) {
-                $player->foto_ktp = $athleteData['uploadKTP']->storeAs(
-                    'uploads/ktp',
-                    uniqid() . '.' . $athleteData['uploadKTP']->getClientOriginalExtension(),
-                    'public'
-                );
+        // 2. LOGIKA PENYIMPANAN BARU
+        foreach ($request->registrations as $regIndex => $registrationData) {
+            
+            // Loop untuk setiap pemain di dalam satu pendaftaran kelas
+            foreach ($registrationData['players'] as $playerIndex => $playerData) {
+                
+                $player = new Player(); // Ganti dengan model Atlet Anda
+                $player->contingent_id = $contingentId;
+                $player->kelas_pertandingan_id = $registrationData['kelas_pertandingan_id']; // ID kelas sama untuk semua pemain di grup ini
+                
+                // Ambil data dari array 'players'
+                $player->name = $playerData['namaLengkap'];
+                $player->nik = $playerData['nik'];
+                $player->gender = $playerData['jenisKelamin'];
+                $player->tgl_lahir = $playerData['tanggalLahir'];
+                
+                // Handle File Uploads
+                $nik = $playerData['nik'];
+                $fileKtp = $request->file("registrations.$regIndex.players.$playerIndex.uploadKTP");
+                $fileFoto = $request->file("registrations.$regIndex.players.$playerIndex.uploadFoto");
+                $filePersetujuan = $request->file("registrations.$regIndex.players.$playerIndex.uploadPersetujuan");
+
+                if ($fileKtp) {
+                    $path = $fileKtp->storeAs('player-documents', "ktp-{$nik}-" . time(), 'public');
+                    $player->foto_ktp = $path;
+                }
+                if ($fileFoto) {
+                    $path = $fileFoto->storeAs('player-documents', "foto-{$nik}-" . time(), 'public');
+                    $player->foto_diri = $path;
+                }
+                if ($filePersetujuan) {
+                    $path = $filePersetujuan->storeAs('player-documents', "persetujuan-{$nik}-" . time(), 'public');
+                    $player->foto_persetujuan_ortu = $path;
+                }
+
+                $player->save();
             }
-
-            if (isset($athleteData['uploadFoto']) && $athleteData['uploadFoto'] instanceof \Illuminate\Http\UploadedFile) {
-                $player->foto_diri = $athleteData['uploadFoto']->storeAs(
-                    'uploads/foto',
-                    uniqid() . '.' . $athleteData['uploadFoto']->getClientOriginalExtension(),
-                    'public'
-                );
-            }
-
-            if (isset($athleteData['uploadPersetujuan']) && $athleteData['uploadPersetujuan'] instanceof \Illuminate\Http\UploadedFile) {
-                $player->foto_persetujuan_ortu = $athleteData['uploadPersetujuan']->storeAs(
-                    'uploads/persetujuan',
-                    uniqid() . '.' . $athleteData['uploadPersetujuan']->getClientOriginalExtension(),
-                    'public'
-                );
-            }
-
-            $player->save();
         }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Semua atlet berhasil disimpan',
-            'contingent' => $contingent_id
-        ]);
+        DB::commit();
+        return response()->json(['message' => 'Pendaftaran berhasil!', 'contingent' => $contingentId]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Gagal menyimpan pendaftaran atlet: ' . $e->getMessage());
+        return response()->json(['message' => 'Terjadi kesalahan pada server.'], 500);
+    }
     }
 
     private function uploadImage($file, $path)
@@ -286,27 +309,68 @@ class EventController extends Controller
 
     public function show_invoice($contingent_id)
     {
-        $contingent = Contingent::findOrFail($contingent_id);
-        $players = $contingent->players()->where('status', 0)->get();
+        // 1. Ambil kontingen dan semua pemainnya dengan relasi yang dibutuhkan
+        $contingent = Contingent::with('players.kelasPertandingan.kelas')->findOrFail($contingent_id);
+
+        // =================================================================
+        // LOGIKA BARU: Mengelompokkan pemain menjadi beberapa pendaftaran terpisah
+        // =================================================================
+        $invoiceItems = [];
         $totalHarga = 0;
 
-        if ($players->isEmpty()) {
-            return redirect($contingent_id . '/peserta')->with('error', 'Tidak ada pemain yang terdaftar untuk kontingen ini.');
+        // Langkah A: Kelompokkan semua pemain berdasarkan kelas_pertandingan_id mereka
+        $playersByClass = $contingent->players->groupBy('kelas_pertandingan_id');
+
+        // Langkah B: Proses setiap grup kelas satu per satu
+        foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {
+            
+            // Ambil detail kelas dari pemain pertama (semua sama dalam grup ini)
+            $firstPlayer = $playersInClass->first();
+            if (!$firstPlayer) continue; // Lewati jika grup kosong
+
+            $classDetails = $firstPlayer->kelasPertandingan;
+            $hargaPerPendaftaran = $classDetails->harga;
+            // Ambil jumlah pemain yang dibutuhkan per pendaftaran (misal: 1 untuk tunggal, 2 untuk ganda)
+            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1; // Default ke 1 jika null
+
+            // Langkah C: Hitung berapa banyak pendaftaran terpisah yang dibuat untuk kelas ini
+            $jumlahPemainTotal = $playersInClass->count();
+            // Gunakan ceil() untuk membulatkan ke atas jika ada data ganjil
+            $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran); 
+
+            // Ambil semua nama dan ID pemain untuk didistribusikan
+            $allPlayerNames = $playersInClass->pluck('name')->all();
+            $allPlayerIds = $playersInClass->pluck('id')->all();
+
+            // Langkah D: Buat satu baris invoice untuk setiap pendaftaran
+            for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                
+                // "Potong" array nama & ID untuk pendaftaran saat ini
+                $offset = $i * $pemainPerPendaftaran;
+                $pemainUntukItemIni = array_slice($allPlayerNames, $offset, $pemainPerPendaftaran);
+                $idUntukItemIni = array_slice($allPlayerIds, $offset, $pemainPerPendaftaran);
+
+                // Buat entri baru di invoice
+                $invoiceItems[] = [
+                    'nama_kelas' => $classDetails->kelas->nama_kelas,
+                    'gender' => $classDetails->gender,
+                    'harga_per_pendaftaran' => $hargaPerPendaftaran,
+                    'jumlah_pemain' => count($pemainUntukItemIni),
+                    'nama_pemain' => $pemainUntukItemIni,
+                    'player_ids' => $idUntukItemIni,
+                ];
+
+                // Tambahkan harga ke total untuk setiap pendaftaran
+                $totalHarga += $hargaPerPendaftaran;
+            }
         }
-        foreach ($players as $player) {
-            $data[] = [
-                'player_id' => $player->id,
-                'name' => $player->name,
-                'nik' => $player->nik,
-                'kelas' => $player->kelasPertandingan->kelas->nama_kelas ?? '-',
-                'harga' => $player->kelasPertandingan->harga ?? 0
-            ];
 
-            $totalHarga += $player->kelasPertandingan->harga ?? 0;
-        }
-
-
-        return view('invoice.invoice', compact('contingent', 'players', 'data', 'totalHarga'));
+        // 3. Kirim data yang sudah terstruktur dengan benar ke view
+        return view('invoice.invoice', [
+            'contingent' => $contingent,
+            'invoiceItems' => $invoiceItems,
+            'totalHarga' => $totalHarga,
+        ]);
     }
 
     // data peserta part

@@ -163,8 +163,13 @@
                         </div>
                     </div>
                     <input type="file" name="foto_invoice" id="fileInput" class="hidden" accept="image/*,.pdf" required />
-                    <div class="mt-6 text-center">
-                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Kirim Bukti Transfer</button>
+                    <div class="mt-6 text-center space-x-4">
+                        <a href="{{ route('history') }}" class="inline-block bg-yellow-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                            Kembali ke Halaman Histori Kontingen
+                        </a>
+                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                            Kirim Bukti Transfer
+                        </button>
                     </div>
                     <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
                         <svg class="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>

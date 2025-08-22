@@ -60,8 +60,15 @@
                 <div class="filter-section">
                     <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter & Pencarian Data</h5>
                     <div class="row">
-                        <div class="col-md-3 mb-3"><label class="form-label fw-bold">Pencarian</label><input type="text" class="form-control" id="searchInput" placeholder="Cari nama, kontingen, atau kontak..."></div>
+                        <div class="col-md-3 mb-3"><label class="form-label fw-bold">Pencarian</label><input type="text" class="form-control" id="searchInput" placeholder="Cari nama, kontingen..."></div>
+                        
+                        <!-- Menambahkan Filter Event -->
                         <div class="col-md-3 mb-3">
+                            <label class="form-label fw-bold">Event</label>
+                            <select class="form-select" id="filterEvent"><option value="">Semua Event</option>@foreach($events as $event)<option value="{{ $event->name }}">{{ $event->name }}</option>@endforeach</select>
+                        </div>
+                        
+                        <div class="col-md-2 mb-3">
                             <label class="form-label fw-bold">Kontingen</label>
                             <select class="form-select" id="filterKontingen"><option value="">Semua Kontingen</option>@foreach($contingents as $contingent)<option value="{{ $contingent->name }}">{{ $contingent->name }}</option>@endforeach</select>
                         </div>
@@ -69,16 +76,31 @@
                             <label class="form-label fw-bold">Jenis</label>
                             <select class="form-select" id="filterJenis"><option value="">Semua Jenis</option>@foreach($jenisPertandingan as $jenis)<option value="{{ $jenis->nama_jenis }}">{{ $jenis->nama_jenis }}</option>@endforeach</select>
                         </div>
-                        <div class="col-md-2 mb-3">
-                            <label class="form-label fw-bold">Kelas</label>
-                            <select class="form-select" id="filterKelas"><option value="">Semua Kelas</option>@foreach($kelasPertandingan as $kelas)<option value="{{ $kelas->nama_kelas }}">{{ $kelas->nama_kelas }}</option>@endforeach</select>
-                        </div>
-                        <div class="col-md-2 mb-3"><label class="form-label fw-bold">Aksi</label><div class="d-flex gap-2"><button type="button" class="btn btn-custom" onclick="applyFilters()"><i class="fas fa-search me-1"></i>Filter</button><button type="button" class="btn btn-outline-secondary" onclick="resetFilters()"><i class="fas fa-undo me-1"></i>Reset</button></div></div>
+                        <div class="col-md-2 mb-3"><label class="form-label fw-bold">Aksi</label><div class="d-flex gap-2"><button type="button" class="btn btn-outline-secondary" onclick="resetFilters()"><i class="fas fa-undo me-1"></i>Reset</button></div></div>
                     </div>
                 </div>
                 
                 <div class="table-container">
-                    <div class="table-responsive"><table class="table"><thead><tr><th style="width: 5%;">No</th><th style="width: 15%;">Nama</th><th style="width: 15%;">Kontingen</th><th style="width: 10%;">Kontak</th><th style="width: 10%;">Kategori</th><th style="width: 10%;">Jenis</th><th style="width: 10%;">Kelas</th><th style="width: 5%;">Usia</th><th style="width: 10%;">Tgl Daftar</th><th style="width: 10%;">Aksi</th></tr></thead><tbody id="participantTableBody"></tbody></table></div>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <!-- Menambahkan Kolom Event -->
+                                    <th style="width: 5%;">No</th>
+                                    <th style="width: 15%;">Nama</th>
+                                    <th style="width: 15%;">Event</th>
+                                    <th style="width: 15%;">Kontingen</th>
+                                    <th style="width: 10%;">Kontak</th>
+                                    <th style="width: 10%;">Jenis</th>
+                                    <th style="width: 10%;">Kelas</th>
+                                    <th style="width: 5%;">Usia</th>
+                                    <th style="width: 10%;">Tgl Daftar</th>
+                                    <th style="width: 5%;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="participantTableBody"></tbody>
+                        </table>
+                    </div>
                     <div class="pagination-container"><nav><ul class="pagination" id="pagination"></ul></nav></div>
                 </div>
             </div>
@@ -93,6 +115,8 @@
             return [
                 'id' => $player->id,
                 'nama' => $player->name,
+                // Menambahkan data event
+                'event' => $player->contingent->event->name ?? 'N/A',
                 'kontingen' => $player->contingent->name ?? 'N/A',
                 'email' => $player->email ?? 'N/A',
                 'telepon' => $player->no_telp ?? 'N/A',
@@ -103,6 +127,7 @@
                 'usia' => $usia,
                 'dokumenKTP' => $player->foto_ktp,
                 'dokumenFoto' => $player->foto_diri,
+                'dokumenIzin' => $player->foto_persetujuan_ortu, // Menambahkan izin
                 'tanggalDaftar' => $player->created_at->toIso8601String(),
                 'jenisKelamin' => $player->gender,
                 'nik' => $player->nik,
@@ -128,13 +153,11 @@
             const totalTanding = participantsData.filter(p => p.jenis.toLowerCase() === 'tanding').length;
             const totalSeni = participantsData.filter(p => p.jenis.toLowerCase() === 'seni').length;
             const totalJurus = participantsData.filter(p => p.jenis.toLowerCase() === 'jurus baku').length;
-            // const totalKontingen = new Set(participantsData.map(p => p.kontingen)).size;
             
             document.getElementById('totalPeserta').textContent = totalPeserta;
             document.getElementById('totalTanding').textContent = totalTanding;
             document.getElementById('totalSeni').textContent = totalSeni;
             document.getElementById('totalJurus').textContent = totalJurus;
-            // document.getElementById('totalKontingen').textContent = totalKontingen;
         }
         
         function displayParticipants() {
@@ -152,14 +175,16 @@
                 let jenisBadge = '';
                 if(p.jenis.toLowerCase() === 'tanding') jenisBadge = `<span class="badge-custom badge-tanding">Tanding</span>`;
                 else if(p.jenis.toLowerCase() === 'seni') jenisBadge = `<span class="badge-custom badge-seni">Seni</span>`;
+                else if(p.jenis.toLowerCase() === 'jurus baku') jenisBadge = `<span class="badge-custom badge-jurus">Jurus Baku</span>`;
 
+                // Menambahkan <td> untuk event
                 return `
                     <tr>
                         <td>${startIndex + index + 1}</td>
-                        <td class="text-start"><strong>${p.nama}</strong><br><small class="text-muted">NIK: ${p.nik}</small></td>
+                        <td class="text-start"><strong>${p.nama}</strong></td>
+                        <td class="text-start">${p.event}</td>
                         <td class="text-start">${p.kontingen}</td>
                         <td class="text-start"><small><i class="fas fa-envelope me-1"></i>${p.email}</small><br><small><i class="fas fa-phone me-1"></i>${p.telepon}</small></td>
-                        <td>${p.kategori}</td>
                         <td>${jenisBadge}</td>
                         <td><strong>${p.kelas.toUpperCase()}</strong></td>
                         <td>${p.usia}</td>
@@ -198,15 +223,17 @@
         
         function applyFilters() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            // Membaca nilai dari filter event
+            const filterEvent = document.getElementById('filterEvent').value;
             const filterKontingen = document.getElementById('filterKontingen').value;
             const filterJenis = document.getElementById('filterJenis').value;
-            const filterKelas = document.getElementById('filterKelas').value;
             
             filteredData = participantsData.filter(p => 
-                (!searchTerm || p.nama.toLowerCase().includes(searchTerm) || p.kontingen.toLowerCase().includes(searchTerm) || p.telepon.includes(searchTerm)) &&
+                (!searchTerm || p.nama.toLowerCase().includes(searchTerm) || p.kontingen.toLowerCase().includes(searchTerm)) &&
+                // Menambahkan kondisi filter event
+                (!filterEvent || p.event === filterEvent) &&
                 (!filterKontingen || p.kontingen === filterKontingen) &&
-                (!filterJenis || p.jenis === filterJenis) &&
-                (!filterKelas || p.kelas === filterKelas)
+                (!filterJenis || p.jenis === filterJenis)
             );
             
             currentPage = 1;
@@ -215,9 +242,10 @@
         
         function resetFilters() {
             document.getElementById('searchInput').value = '';
+            // PERUBAHAN: Mereset nilai filter event
+            document.getElementById('filterEvent').value = '';
             document.getElementById('filterKontingen').value = '';
             document.getElementById('filterJenis').value = '';
-            document.getElementById('filterKelas').value = '';
             filteredData = [...participantsData];
             currentPage = 1;
             displayParticipants();
@@ -225,22 +253,24 @@
         
         function setupEventListeners() {
             document.getElementById('searchInput').addEventListener('input', applyFilters);
+            // Menambahkan event listener untuk filter event
+            document.getElementById('filterEvent').addEventListener('change', applyFilters);
             document.getElementById('filterKontingen').addEventListener('change', applyFilters);
             document.getElementById('filterJenis').addEventListener('change', applyFilters);
-            document.getElementById('filterKelas').addEventListener('change', applyFilters);
         }
         
         function showDetail(participantId) {
             const p = participantsData.find(p => p.id === participantId);
             if (!p) return;
+            // Menambahkan info event di modal
             document.getElementById('modalBody').innerHTML = `
                 <div class="row">
                     <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Data Pribadi</h6><table class="table table-borderless"><tr><td><strong>Nama:</strong></td><td>${p.nama}</td></tr><tr><td><strong>NIK:</strong></td><td>${p.nik}</td></tr><tr><td><strong>Gender:</strong></td><td>${p.jenisKelamin}</td></tr><tr><td><strong>Tgl Lahir:</strong></td><td>${formatDate(p.tanggalLahir)} (${p.usia} thn)</td></tr></table></div>
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-address-book me-2"></i>Kontak & Kontingen</h6><table class="table table-borderless"><tr><td><strong>Email:</strong></td><td>${p.email}</td></tr><tr><td><strong>Telepon:</strong></td><td>${p.telepon}</td></tr><tr><td><strong>Kontingen:</strong></td><td>${p.kontingen}</td></tr></table></div>
+                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-address-book me-2"></i>Kontak & Tim</h6><table class="table table-borderless"><tr><td><strong>Email:</strong></td><td>${p.email}</td></tr><tr><td><strong>Telepon:</strong></td><td>${p.telepon}</td></tr><tr><td><strong>Event:</strong></td><td>${p.event}</td></tr><tr><td><strong>Kontingen:</strong></td><td>${p.kontingen}</td></tr></table></div>
                 </div><hr>
                 <div class="row">
                     <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-trophy me-2"></i>Pertandingan</h6><table class="table table-borderless"><tr><td><strong>Kategori:</strong></td><td>${p.kategori}</td></tr><tr><td><strong>Jenis:</strong></td><td>${p.jenis}</td></tr><tr><td><strong>Kelas:</strong></td><td>${p.kelas.toUpperCase()}</td></tr></table></div>
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Dokumen</h6><table class="table table-borderless"><tr><td><strong>KTP/KK:</strong></td><td>${p.dokumenKTP ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Foto Diri:</strong></td><td>${p.dokumenFoto ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Tgl Daftar:</strong></td><td>${formatDate(p.tanggalDaftar)}</td></tr></table></div>
+                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Dokumen</h6><table class="table table-borderless"><tr><td><strong>KTP/KK:</strong></td><td>${p.dokumenKTP ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Foto Diri:</strong></td><td>${p.dokumenFoto ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Izin Ortu:</strong></td><td>${p.dokumenIzin ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Tgl Daftar:</strong></td><td>${formatDate(p.tanggalDaftar)}</td></tr></table></div>
                 </div>`;
             new bootstrap.Modal(document.getElementById('detailModal')).show();
         }

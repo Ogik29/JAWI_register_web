@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice - {{ $contingent->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    {{-- PERUBAHAN: Menambahkan support untuk plugin tailwind typography --}}
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -44,9 +46,8 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h1 class="text-3xl font-bold mb-2">INVOICE</h1>
-                        <p class="text-neutral-100">Nama Penyelenggara Acara</p>
-                        <p class="text-neutral-100 text-sm">Alamat Penyelenggara</p>
-                        <p class="text-neutral-100 text-sm">Telp: (021) XXXX-XXXX</p>
+                        <p class="text-neutral-100">{{ $contingent->event->name }}</p>
+                        <p class="text-neutral-100 text-sm">{{ $contingent->event->lokasi }}</p>
                     </div>
                     <div class="text-right">
                         <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">
@@ -65,8 +66,14 @@
                         <h3 class="font-semibold text-gray-800 mb-3">Tagihan Kepada:</h3>
                         <div class="text-gray-600">
                             <p class="font-medium text-gray-800">{{ $contingent->name }}</p>
-                            <p>{{ $contingent->alamat ?? 'Alamat tidak tersedia' }}</p>
                             <p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3">Detail CP & Rek Pembayaran:</h3>
+                        {{-- Class 'prose' digunakan untuk styling otomatis konten HTML dari database --}}
+                        <div class="text-gray-600 prose prose-sm max-w-none">
+                            {!! $contingent->event->cp !!}
                         </div>
                     </div>
                 </div>
@@ -221,7 +228,7 @@
                 reader.onload = (e) => { imagePreview.src = e.target.result; showPreview(file); };
                 reader.readAsDataURL(file);
             } else {
-                imagePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQwIDhIMTJDOS43OTA4NiA4IDggOS43OTA4NiA4IDEyVjUyQzggNTQuMjA5MSA5Ljc5MDg2IDU2IDEyIDU2SDUyQzU0LjIwOTEgNTYgNTYgNTQuMjA5MSA1NiA1MlYyMEw0MCA4WiIgZmlsbD0iI0Y1NjU2NSIvPgo8cGF0aCBkPSJNNDAgOFYyMEg1NiIgZmlsbD0iI0ZCQkZCRiIvPgo8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBERjwvdGV4dD4KPC9zdmc+';
+                imagePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQwIDhIMTJDOS43OTA4NiA4IDggOS43OTA4NiA4IDEyVjUyQzggNTQuMjA5MSA5Ljc5MDg2IDU2IDEyIDU2SDUyQzU0LjIwOTEgNTYgNTYgNTQuMjA5MSA1NiA1MlYyMEw0MCA4WiIgZmlsbD0iI0Y1NjU2NSIvPgo8cGF0aCBkPSJNNDAgOFYyMEg1NiIgZmlsbD0iI0ZCQkZCRiIvPgo8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaGyPSJtaWRkbGUiPlBERjwvdGV4dD4KPC9zdmc+';
                 showPreview(file);
             }
         }

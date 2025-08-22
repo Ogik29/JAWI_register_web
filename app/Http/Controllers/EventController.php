@@ -383,8 +383,13 @@ class EventController extends Controller
     // data peserta part
     public function dataPeserta()
     {
-        // ambil semua data player dengan relasi2 yg dibutuhkan
-        $players = Player::with(['contingent', 'kelasPertandingan.jenisPertandingan', 'kelasPertandingan.kategoriPertandingan'])->latest()->get();
+        // Tambahkan 'contingent.event' untuk mengambil data event setiap pemain
+        $players = Player::with([
+            'contingent.event',
+            'kelasPertandingan.jenisPertandingan',
+            'kelasPertandingan.kategoriPertandingan',
+            'kelasPertandingan.kelas' // Pastikan relasi ke kelas juga di-load
+        ])->latest()->get();
 
         $contingents = Contingent::orderBy('name')->get();
 
@@ -395,13 +400,17 @@ class EventController extends Controller
         $jenisPertandingan = $players->pluck('kelasPertandingan.jenisPertandingan')->unique()->whereNotNull();
         $kelasPertandingan = $players->pluck('kelasPertandingan.kelas')->unique()->whereNotNull();
 
-        return view('register/datapeserta', compact(
+        // Ambil semua event yang memiliki peserta untuk dropdown filter
+        $events = Event::has('players')->orderBy('name')->get();
+
+        return view('register/dataPeserta', compact(
             'players',
             'contingents',
             'totalContingents',
             'kategoriPertandingan',
             'jenisPertandingan',
-            'kelasPertandingan'
+            'kelasPertandingan',
+            'events' // Kirim data events ke view
         ));
     }
 }

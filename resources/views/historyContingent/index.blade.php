@@ -151,8 +151,20 @@
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Daftar Peserta</h5>
                                         <div class="d-flex flex-wrap gap-2 justify-content-end">
-                                            @if ($contingent->status == 1)
+                                            {{-- ================================================================= --}}
+                                            {{-- PERUBAHAN: Kondisi untuk menampilkan/menyembunyikan tombol --}}
+                                            {{-- ================================================================= --}}
+                                            @if ($contingent->status == 1 && $contingent->players->where('status', 1)->count() == 0)
+                                                {{-- Tampilkan tombol jika kontingen aktif DAN tidak ada player yang statusnya pending --}}
                                                 <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
+                                            @elseif ($contingent->status == 1)
+                                                {{-- Tampilkan tombol disabled jika kontingen aktif TAPI ADA player yang statusnya pending --}}
+                                                <div class="text-end">
+                                                    <button class="btn btn-info" disabled title="Selesaikan verifikasi atlet yang ada terlebih dahulu.">
+                                                        <i class="bi bi-plus-circle"></i> Tambah Peserta
+                                                    </button>
+                                                    <small class="d-block text-muted mt-1">Tunggu sampai atlet yang sebelumnya ditambah tidak pending</small>
+                                                </div>
                                             @endif
                                         </div>
                                     </div>
@@ -160,9 +172,6 @@
                                         <table class="table table-striped table-bordered table-hover">
                                             <thead class="table-dark"><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
                                             <tbody>
-                                                {{-- ================================================================= --}}
-                                                {{-- PERUBAHAN UTAMA: LOOPING DATA YANG SUDAH DI-GROUP --}}
-                                                {{-- ================================================================= --}}
                                                 @forelse ($contingent->displayPlayers as $registration)
                                                     <tr>
                                                         <th>{{ $loop->iteration }}</th>
@@ -180,10 +189,8 @@
                                                             @endif
                                                         </td>
                                                         <td>
-                                                            {{-- Tampilkan aksi untuk setiap pemain di dalam grup --}}
                                                             @foreach($registration['player_instances'] as $player)
                                                                 <div class="d-flex flex-nowrap gap-2 mb-1">
-                                                                    {{-- <span class="me-auto" style="min-width: 100px;">{{ Str::limit($player->name, 15) }}</span> --}}
                                                                     @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
                                                                         <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
                                                                     @endif
@@ -244,7 +251,7 @@
                         </div>
                     </div>
 
-                    {{-- [BARU] Modal untuk Upload Ulang Invoice Peserta --}}
+                    {{-- Modal untuk Upload Ulang Invoice Peserta --}}
                     <div class="modal fade" id="uploadInvoiceModal-{{ $contingent->id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">

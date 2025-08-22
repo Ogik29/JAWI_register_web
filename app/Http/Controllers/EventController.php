@@ -311,17 +311,22 @@ class EventController extends Controller
 
     public function show_invoice($contingent_id)
     {
-        // 1. Ambil kontingen dan semua pemainnya dengan relasi yang dibutuhkan
-        $contingent = Contingent::with('players.kelasPertandingan.kelas')->findOrFail($contingent_id);
+        // 1. Ambil kontingen dan relasinya yang dibutuhkan
+        $contingent = Contingent::findOrFail($contingent_id);
 
         // =================================================================
-        // LOGIKA BARU: Mengelompokkan pemain menjadi beberapa pendaftaran terpisah
+        // PERUBAHAN UTAMA: Filter pemain agar hanya yang berstatus 0 (Belum Bayar)
         // =================================================================
+        $unpaidPlayers = $contingent->players()
+            ->where('status', 0)
+            ->with('kelasPertandingan.kelas')
+            ->get();
+
         $invoiceItems = [];
         $totalHarga = 0;
 
-        // Langkah A: Kelompokkan semua pemain berdasarkan kelas_pertandingan_id mereka
-        $playersByClass = $contingent->players->groupBy('kelas_pertandingan_id');
+        // Langkah A: Kelompokkan pemain yang BELUM BAYAR berdasarkan kelas_pertandingan_id mereka
+        $playersByClass = $unpaidPlayers->groupBy('kelas_pertandingan_id');
 
         // Langkah B: Proses setiap grup kelas satu per satu
         foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {

@@ -99,7 +99,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data pendaftaran yang ditemukan.</td>
+                                <td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data pendaftaran yang perlu dibayar.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -125,19 +125,16 @@
             </div>
 
             <!-- Payment Proof Upload Section -->
+            @if(count($invoiceItems) > 0)
             <div class="bg-gray-50 p-8 border-t border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
                 
-                <!-- ================================================================= -->
-                <!-- FORM YANG DIPERBAIKI -->
-                <!-- ================================================================= -->
                 <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
                     @csrf
                     
                     <input type="hidden" name="total_price" value="{{ $grandTotal }}">
                     <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">
 
-                    <!-- PERBAIKAN UTAMA: Struktur Input Pemain Disesuaikan -->
                     @php $playerIndex = 0; @endphp
                     @foreach ($invoiceItems as $item)
                         @foreach ($item['player_ids'] as $playerId)
@@ -146,7 +143,6 @@
                             @php $playerIndex++; @endphp
                         @endforeach
                     @endforeach
-                    <!-- AKHIR PERBAIKAN -->
 
                     <!-- Upload Area (Visual) -->
                     <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
@@ -169,6 +165,7 @@
                     </div>
                 </form>
             </div>
+            @endif
 
             <!-- Footer -->
             <div class="bg-gray-800 text-white p-6 text-center rounded-b-lg">
@@ -190,22 +187,24 @@
         const submitProof = document.getElementById('submitProof');
         const form = submitProof.closest('form');
 
-        uploadArea.addEventListener('click', () => fileInput.click());
+        if(uploadArea) {
+            uploadArea.addEventListener('click', () => fileInput.click());
+            ['dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); });
+            });
+            uploadArea.addEventListener('dragover', () => uploadArea.classList.add('dragover'));
+            uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+            uploadArea.addEventListener('drop', (e) => {
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) handleFile(files[0]);
+            });
 
-        ['dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); });
-        });
-        uploadArea.addEventListener('dragover', () => uploadArea.classList.add('dragover'));
-        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
-        uploadArea.addEventListener('drop', (e) => {
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) handleFile(files[0]);
-        });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) handleFile(e.target.files[0]);
+            });
+        }
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleFile(e.target.files[0]);
-        });
 
         function handleFile(file) {
             if (file.size > 5 * 1024 * 1024) {
@@ -235,18 +234,22 @@
             submitProof.disabled = false;
         }
 
-        removeFile.addEventListener('click', (e) => {
-            e.stopPropagation();
-            fileInput.value = '';
-            uploadContent.classList.remove('hidden');
-            previewArea.classList.add('hidden');
-            submitProof.disabled = true;
-        });
+        if(removeFile) {
+            removeFile.addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.value = '';
+                uploadContent.classList.remove('hidden');
+                previewArea.classList.add('hidden');
+                submitProof.disabled = true;
+            });
+        }
 
-        form.addEventListener('submit', function(e) {
-            submitProof.disabled = true;
-            submitProof.textContent = 'Mengirim...';
-        });
+        if(form) {
+            form.addEventListener('submit', function(e) {
+                submitProof.disabled = true;
+                submitProof.textContent = 'Mengirim...';
+            });
+        }
     </script>
 </body>
 </html>

@@ -74,7 +74,7 @@
             <div class="col-md-6 mb-3"><label class="form-label">NIK</label><input type="text" class="form-control" name="nik" pattern="[0-9]{16}" maxlength="16" required></div>
             <div class="col-md-6 mb-3"><label class="form-label">No.Telp</label><input type="tel" class="form-control" name="noTelepon" required></div>
             <div class="col-md-6 mb-3"><label class="form-label">Email</label><input type="email" class="form-control" name="email" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Jenis Kelamin</label><select class="form-select" name="jenisKelamin" required><option value="" selected disabled>Otomatis terisi</option></select></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Jenis Kelamin</label><select class="form-select" name="jenisKelamin" required><option value="" selected disabled>Otomatis terisi</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select></div>
             <div class="col-md-6 mb-3"><label class="form-label">Tanggal Lahir</label><input type="date" class="form-control" name="tanggalLahir" required></div>
         </div>
         <h6 class="fw-bold text-dark mt-2">Dokumen Atlet __SUB_COUNT__</h6>
@@ -113,32 +113,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const newCard = clone.querySelector('.athlete-card');
         newCard.dataset.cardId = uniqueId;
         newCard.querySelector('.athlete-title').textContent = `Pendaftaran Kelas #${athletesContainer.children.length + 1}`;
-        
         buildRadioGroup(RENTANG_USIA_DATA, 'rentang_usia', 'rentang_usia', newCard.querySelector('.rentang-usia-options'), uniqueId);
         buildRadioGroup(KATEGORI_DATA, 'kategori', 'nama_kategori', newCard.querySelector('.kategori-options'), uniqueId);
         buildRadioGroup(JENIS_DATA, 'jenis', 'nama_jenis', newCard.querySelector('.jenis-options'), uniqueId);
         buildRadioGroup(GENDER_DATA, 'gender', 'name', newCard.querySelector('.gender-options'), uniqueId);
-
         athletesContainer.appendChild(clone);
     };
 
     const buildRadioGroup = (data, name, labelKey, container, id) => {
         data.forEach(item => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'form-check';
+            const wrapper = document.createElement('div'); wrapper.className = 'form-check';
             const input = document.createElement('input');
-            input.type = 'radio';
-            input.className = 'form-check-input';
-            input.name = `${name}_${id}`;
-            input.value = item.id;
-            input.id = `${name}_${item.id}_${id}`;
+            input.type = 'radio'; input.className = 'form-check-input'; input.name = `${name}_${id}`; input.value = item.id; input.id = `${name}_${item.id}_${id}`;
             const label = document.createElement('label');
-            label.className = 'form-check-label';
-            label.htmlFor = input.id;
-            label.textContent = item[labelKey];
-            wrapper.appendChild(input);
-            wrapper.appendChild(label);
-            container.appendChild(wrapper);
+            label.className = 'form-check-label'; label.htmlFor = input.id; label.textContent = item[labelKey];
+            wrapper.appendChild(input); wrapper.appendChild(label); container.appendChild(wrapper);
         });
     };
 
@@ -149,21 +138,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedJenis = card.querySelector(`input[name="jenis_${uniqueId}"]:checked`)?.value;
         const selectedGender = card.querySelector(`input[name="gender_${uniqueId}"]:checked`)?.value;
         const kelasSelect = card.querySelector('select[name="kelas_pertandingan_id"]');
-        
         kelasSelect.innerHTML = '<option value="">Pilih...</option>';
-        
         if (!selectedRentang || !selectedKategori || !selectedJenis || !selectedGender) {
             kelasSelect.firstElementChild.textContent = "Lengkapi semua filter di atas";
             return;
         }
-
         const filteredClasses = KELAS_PERTANDINGAN_DATA.filter(k => 
             k.rentang_usia_id == selectedRentang &&
             k.kategori_pertandingan_id == selectedKategori &&
             k.jenis_pertandingan_id == selectedJenis &&
             (k.gender.toLowerCase() === selectedGender.toLowerCase() || k.gender === 'Campuran')
         );
-
         if (filteredClasses.length > 0) {
             filteredClasses.forEach(k => {
                 const option = document.createElement('option');
@@ -179,29 +164,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const generateSubAthleteForms = (card, playerCount, gender) => {
         const subContainer = card.querySelector('.sub-athlete-container');
         subContainer.innerHTML = '';
-
         for (let i = 1; i <= playerCount; i++) {
             const clone = subAthleteTemplate.content.cloneNode(true);
             clone.querySelectorAll('.sub-athlete-form h6').forEach(h6 => h6.textContent = h6.textContent.replace('__SUB_COUNT__', i));
             clone.querySelectorAll('input, select').forEach(input => input.name = `${input.name}_${i-1}`);
-            
-            // Set value for gender dropdown
             const genderSelect = clone.querySelector('select[name^="jenisKelamin"]');
             if(genderSelect) {
-                // Hapus opsi default
-                genderSelect.innerHTML = '';
-                // Tambahkan opsi yang sesuai dan pilih
-                const option = document.createElement('option');
-                option.value = gender;
-                option.textContent = gender;
-                option.selected = true;
-                genderSelect.appendChild(option);
-                // Buat readonly jika hanya ada 1 pilihan
-                if (gender !== 'Campuran') {
-                    genderSelect.disabled = true;
+                // PERBAIKAN KUNCI ADA DI SINI
+                // Langsung atur nilainya, jangan hapus opsi yang ada di template
+                genderSelect.value = gender.toLowerCase();
+                
+                if (gender.toLowerCase() !== 'campuran') {
+                    genderSelect.disabled = true; // Kunci pilihan jika bukan 'Campuran'
+                } else {
+                    genderSelect.disabled = false; // Boleh diubah jika 'Campuran'
                 }
             }
-            
             subContainer.appendChild(clone);
         }
     };
@@ -212,9 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const kelasId = card.querySelector('select[name="kelas_pertandingan_id"]').value;
             if (kelasId) {
                 const selectedClass = KELAS_PERTANDINGAN_DATA.find(k => k.kelas_pertandingan_id == kelasId);
-                if (selectedClass) {
-                    total += selectedClass.harga;
-                }
+                if (selectedClass) { total += selectedClass.harga; }
             }
         });
         totalPriceDisplay.textContent = `Rp ${total.toLocaleString('id-ID')}`;
@@ -223,20 +199,17 @@ document.addEventListener('DOMContentLoaded', function () {
     athletesContainer.addEventListener('change', (e) => {
         const card = e.target.closest('.athlete-card');
         if (!card) return;
-
         if (e.target.type === 'radio') {
             updateAvailableClasses(card);
             card.querySelector('.sub-athlete-container').innerHTML = '';
             updateTotalPrice();
         }
-
         if (e.target.name === 'kelas_pertandingan_id') {
             const kelasId = e.target.value;
             if (kelasId) {
                 const selectedClassData = KELAS_PERTANDINGAN_DATA.find(k => k.kelas_pertandingan_id == kelasId);
                 const selectedGenderFilter = card.querySelector(`input[name^="gender_"]:checked`)?.value;
                 if (selectedClassData && selectedGenderFilter) {
-                    // Jika kelasnya Campuran, gunakan filter. Jika tidak, gunakan gender dari kelas itu sendiri.
                     const genderForForm = selectedClassData.gender === 'Campuran' ? selectedGenderFilter : selectedClassData.gender;
                     generateSubAthleteForms(card, selectedClassData.jumlah_pemain || 1, genderForForm);
                 }
@@ -245,7 +218,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             updateTotalPrice();
         }
-        
         if (e.target.type === 'file') {
             const infoDiv = e.target.closest('.upload-area').nextElementSibling;
             const file = e.target.files[0];
@@ -260,9 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (e.target.closest('.remove-card-btn')) {
             if (athletesContainer.children.length > 1) {
                 e.target.closest('.athlete-card').remove();
-                document.querySelectorAll('.athlete-title').forEach((title, index) => {
-                    title.textContent = `Pendaftaran Kelas #${index + 1}`;
-                });
+                document.querySelectorAll('.athlete-title').forEach((title, index) => { title.textContent = `Pendaftaran Kelas #${index + 1}`; });
                 updateTotalPrice();
             } else {
                 showAlert('Minimal harus ada satu pendaftaran kelas.', 'warning');
@@ -285,15 +255,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 showAlert(`Pendaftaran #${cardIndex + 1} belum memilih Kelas Pertandingan.`, 'danger');
                 hasError = true;
             }
+            formData.append(`registrations[${cardIndex}][kelas_pertandingan_id]`, kelasId);
             
             card.querySelectorAll('.sub-athlete-form').forEach((subForm, subIndex) => {
                 const prefix = `registrations[${cardIndex}][players][${subIndex}]`;
-                formData.append(`${prefix}[kelas_pertandingan_id]`, kelasId); // Kirim kelas_id untuk setiap pemain
                 formData.append(`${prefix}[namaLengkap]`, subForm.querySelector(`input[name="namaLengkap_${subIndex}"]`).value);
                 formData.append(`${prefix}[nik]`, subForm.querySelector(`input[name="nik_${subIndex}"]`).value);
                 formData.append(`${prefix}[noTelepon]`, subForm.querySelector(`input[name="noTelepon_${subIndex}"]`).value);
                 formData.append(`${prefix}[email]`, subForm.querySelector(`input[name="email_${subIndex}"]`).value);
-                formData.append(`${prefix}[jenisKelamin]`, subForm.querySelector(`select[name^="jenisKelamin"]`).value);
+                
+                const genderSelect = subForm.querySelector(`select[name^="jenisKelamin"]`);
+                genderSelect.disabled = false;
+                formData.append(`${prefix}[jenisKelamin]`, genderSelect.value);
+
                 formData.append(`${prefix}[tanggalLahir]`, subForm.querySelector(`input[name="tanggalLahir_${subIndex}"]`).value);
                 formData.append(`${prefix}[uploadKTP]`, subForm.querySelector(`input[name="uploadKTP_${subIndex}"]`).files[0]);
                 formData.append(`${prefix}[uploadFoto]`, subForm.querySelector(`input[name="uploadFoto_${subIndex}"]`).files[0]);

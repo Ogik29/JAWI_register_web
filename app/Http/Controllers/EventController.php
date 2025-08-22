@@ -192,7 +192,7 @@ class EventController extends Controller
         'registrations.*.players' => 'required|array|min:1',
         'registrations.*.players.*.namaLengkap' => 'required|string|max:255',
         'registrations.*.players.*.nik' => 'required|string|digits:16',
-        'registrations.*.players.*.jenisKelamin' => 'required|in:laki-laki,perempuan',
+        'registrations.*.players.*.jenisKelamin' => 'required|in:Laki-laki,Perempuan',
         'registrations.*.players.*.tanggalLahir' => 'required|date',
         'registrations.*.players.*.uploadKTP' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
         'registrations.*.players.*.uploadFoto' => 'required|file|mimes:jpg,jpeg,png|max:2048',

@@ -110,17 +110,14 @@
                 <div class="mt-8 flex justify-end">
                     <div class="w-full max-w-sm">
                         @php
-                            $ppn = $totalHarga * 0.11;
-                            $grandTotal = $totalHarga + $ppn;
+                            // Kalkulasi PPN dihapus
+                            $grandTotal = $totalHarga;
                         @endphp
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
                         </div>
-                        <div class="flex justify-between py-2 border-b border-gray-200">
-                            <span class="text-gray-600">PPN (11%):</span>
-                            <span class="font-medium">Rp {{ number_format($ppn, 0, ',', '.') }}</span>
-                        </div>
+                        {{-- Baris PPN (11%) telah dihapus dari sini --}}
                         <div class="flex justify-between py-3 border-b-2 border-gray-300">
                             <span class="text-lg font-semibold text-gray-800">Total:</span>
                             <span class="text-lg font-bold text-neutral-600">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
@@ -135,8 +132,8 @@
                 <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
                     @csrf
                     @php
-                        $ppn = $totalHarga * 0.11;
-                        $grandTotal = $totalHarga + $ppn;
+                        // Kalkulasi PPN dihapus dari hidden input juga
+                        $grandTotal = $totalHarga;
                     @endphp
                     <input type="hidden" name="total_price" value="{{ $grandTotal }}">
                     <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">

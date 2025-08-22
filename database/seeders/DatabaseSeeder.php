@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             JenisPertandinganSeeder::class,
             RentangUsiaSeeder::class,
             KelasSeeder::class,
-            // KelasPertandinganSeeder::class,
+            KelasPertandinganSeeder::class,
             // PlayerSeeder::class,
             // TransactionSeeder::class,
             // TransactionDetailSeeder::class,

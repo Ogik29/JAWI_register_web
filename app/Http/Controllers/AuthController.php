@@ -71,7 +71,7 @@ class AuthController extends Controller
             'tanggal_lahir' => $request->tanggal_lahir,
             'negara' => $request->negara,
             'no_telp' => $request->no_telp,
-            'role_id' => 2,
+            'role_id' => 3,
             'status' => 0, // <-- Status awal adalah 0
         ]);
 

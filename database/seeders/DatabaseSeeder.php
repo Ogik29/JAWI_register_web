@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
-            // EventSeeder::class,
+            EventSeeder::class,
             // ClassCategorySeeder::class,
             // PlayerCategorySeeder::class,
-            // ContingentSeeder::class,
+            ContingentSeeder::class,
             KategoriPertandinganSeeder::class,
             JenisPertandinganSeeder::class,
             RentangUsiaSeeder::class,

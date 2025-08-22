@@ -57,7 +57,7 @@ class KelasSeeder extends Seeder
         }
 
         // DATA KELAS SENI PEMASALAN
-        $seniPemasalanKelas = ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Beregu Jurus 1 - 6', 'Tunggal Bebas Kosongan', 'Tunggal Bebas Bersenjata', 'Berpasangan Jurus Baku SD A - SD B', 'Berkelompok Jurus Baku TK'];
+        $seniPemasalanKelas = ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Beregu Jurus 1 - 6', 'Beregu Jurus 7 - 12', 'Tunggal Bebas Kosongan', 'Tunggal Bebas Bersenjata', 'Berpasangan Jurus Baku SD A - SD B', 'Berkelompok Jurus Baku TK'];
         $seniPemasalanUsia = ['Usia Dini 1 (5-8 Tahun)', 'Usia Dini 2 (8-11 Tahun)', 'Pra Remaja (11-14 Tahun)'];
 
         foreach ($seniPemasalanKelas as $namaKelas) {
@@ -85,6 +85,19 @@ class KelasSeeder extends Seeder
             $data['created_at'] = now();
             $data['updated_at'] = now();
         }
+
+        foreach ($dataToInsert as &$data) {
+    $data['jumlah_pemain'] = 1; // default
+
+    if (stripos($data['nama_kelas'], 'Ganda') !== false) {
+        $data['jumlah_pemain'] = 2;
+    } elseif (stripos($data['nama_kelas'], 'Beregu') !== false) {
+        $data['jumlah_pemain'] = 3;
+    }
+
+    $data['created_at'] = now();
+    $data['updated_at'] = now();
+}
 
         // Masukkan semua data yang sudah disiapkan ke database
         DB::table('kelas')->insert($dataToInsert);

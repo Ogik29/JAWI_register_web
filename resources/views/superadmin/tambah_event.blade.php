@@ -70,7 +70,7 @@
                 @foreach($oldGrups as $index => $grup)
                 <div class="card mb-3 grup-item">
                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">Grup Aturan #<span class="grup-index">{{ $index + 1 }}</span></h6>
+                        <h6 class="mb-0">Kategori Usia #<span class="grup-index">{{ $index + 1 }}</span></h6>
                         @if($index > 0) <button type="button" class="btn btn-danger btn-sm remove-grup-btn"><i class="bi bi-trash"></i> Hapus Grup</button> @endif
                     </div>
                     <div class="card-body">
@@ -136,7 +136,7 @@
 
 <template id="grup-item-template">
     <div class="card mb-3 grup-item">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center"><h6 class="mb-0">Grup Aturan #<span class="grup-index"></span></h6><button type="button" class="btn btn-danger btn-sm remove-grup-btn"><i class="bi bi-trash"></i> Hapus Grup</button></div>
+        <div class="card-header bg-light d-flex justify-content-between align-items-center"><h6 class="mb-0">Kategori Usia #<span class="grup-index"></span></h6><button type="button" class="btn btn-danger btn-sm remove-grup-btn"><i class="bi bi-trash"></i> Hapus Grup</button></div>
         <div class="card-body">
             <div class="mb-3"><label class="form-label fw-bold">1. Pilih Rentang Usia untuk Grup Ini</label><div class="d-flex flex-wrap" style="gap: 1rem;">@foreach ($daftar_rentang_usia as $usia)<div class="form-check"><input class="form-check-input rentang-usia-radio" type="radio" name="groups[__INDEX__][rentang_usia_id]" id="rentang___INDEX___{{ $usia->id }}" value="{{ $usia->id }}" required><label class="form-check-label" for="rentang___INDEX___{{ $usia->id }}">{{ $usia->rentang_usia }}</label></div>@endforeach</div></div>
             <hr>

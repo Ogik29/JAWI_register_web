@@ -222,6 +222,8 @@ class EventController extends Controller
                 $player->nik = $playerData['nik'];
                 $player->gender = $playerData['jenisKelamin'];
                 $player->tgl_lahir = $playerData['tanggalLahir'];
+                $player->no_telp = $playerData['noTelepon'] ?? null; // Optional
+                $player->email = $playerData['email'] ?? null; // Optional
                 
                 // Handle File Uploads
                 $nik = $playerData['nik'];

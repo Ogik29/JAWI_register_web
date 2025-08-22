@@ -151,13 +151,6 @@
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Daftar Peserta</h5>
                                         <div class="d-flex flex-wrap gap-2 justify-content-end">
-                                            {{-- [PERUBAHAN DI SINI] Tombol Upload Ulang Invoice --}}
-                                            {{-- @if ($contingent->players->where('status', 3)->count() > 0)
-                                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadInvoiceModal-{{ $contingent->id }}">
-                                                    <i class="bi bi-upload"></i> Upload Ulang Invoice (jika alasan ditolak terkait bukti bayar)
-                                                </button>
-                                            @endif --}}
-                                            
                                             @if ($contingent->status == 1)
                                                 <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
                                             @endif
@@ -167,35 +160,45 @@
                                         <table class="table table-striped table-bordered table-hover">
                                             <thead class="table-dark"><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
                                             <tbody>
-                                                @forelse ($contingent->players as $player)
+                                                {{-- ================================================================= --}}
+                                                {{-- PERUBAHAN UTAMA: LOOPING DATA YANG SUDAH DI-GROUP --}}
+                                                {{-- ================================================================= --}}
+                                                @forelse ($contingent->displayPlayers as $registration)
                                                     <tr>
                                                         <th>{{ $loop->iteration }}</th>
-                                                        <td>{{ $player->name }}</td>
-                                                        <td>{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td>
+                                                        <td>{{ $registration['player_names'] }}</td>
+                                                        <td>{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</td>
                                                         <td>
-                                                            @if ($player->status == 1) <span class="badge bg-warning text-dark">Pending</span>
-                                                            @elseif ($player->status == 2) <span class="badge bg-success">Terverifikasi</span>
-                                                            @elseif ($player->status == 0) <span class="badge bg-secondary">Belum Bayar</span>
+                                                            @if ($registration['status'] == 1) <span class="badge bg-warning text-dark">Pending</span>
+                                                            @elseif ($registration['status'] == 2) <span class="badge bg-success">Terverifikasi</span>
+                                                            @elseif ($registration['status'] == 0) <span class="badge bg-secondary">Belum Bayar</span>
                                                             @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
-                                                            @if ($player->status == 3 && !empty($player->catatan))
-                                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $player->id }}"><i class="bi bi-info-circle-fill"></i></button>
+                                                            
+                                                            @if ($registration['note_player'])
+                                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $registration['note_player']->id }}"><i class="bi bi-info-circle-fill"></i></button>
                                                             @endif
                                                         </td>
-                                                        <td class="d-flex flex-wrap gap-2">
-                                                            @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
-                                                                <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm"><i class="bi bi-pencil-square"></i> Edit</a>
-                                                            @endif
-                                                            @if ($player->status == 0)    
-                                                                <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta ini?');">
-                                                                    @csrf
-                                                                    @method('DELETE')
-                                                                    <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i> Hapus</button>
-                                                                </form>
-                                                            @endif
-                                                            @if ($player->status == 2)
-                                                                <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm"><i class="bi bi-printer"></i> Kartu Peserta</a>
-                                                            @endif
+                                                        <td>
+                                                            {{-- Tampilkan aksi untuk setiap pemain di dalam grup --}}
+                                                            @foreach($registration['player_instances'] as $player)
+                                                                <div class="d-flex flex-nowrap gap-2 mb-1">
+                                                                    {{-- <span class="me-auto" style="min-width: 100px;">{{ Str::limit($player->name, 15) }}</span> --}}
+                                                                    @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
+                                                                        <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
+                                                                    @endif
+                                                                    @if ($player->status == 0)    
+                                                                        <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta {{ $player->name }}?');">
+                                                                            @csrf
+                                                                            @method('DELETE')
+                                                                            <button type="submit" class="btn btn-danger btn-sm" title="Hapus {{ $player->name }}"><i class="bi bi-trash"></i></button>
+                                                                        </form>
+                                                                    @endif
+                                                                    @if ($player->status == 2)
+                                                                        <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm" title="Cetak Kartu {{ $player->name }}"><i class="bi bi-printer"></i></a>
+                                                                    @endif
+                                                                </div>
+                                                            @endforeach
                                                         </td>
                                                     </tr>
                                                 @empty

@@ -14,16 +14,65 @@ use App\Http\Controllers\Controller;
 use App\Models\KategoriPertandingan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
 
 class historyController extends Controller
 {
     public function index()
     {
         $userId = Auth::id();
-        $contingents = Contingent::with(['event', 'user', 'players.kelasPertandingan'])
+        $contingents = Contingent::with(['event', 'user', 'players.kelasPertandingan.kelas'])
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // =================================================================
+        // LOGIKA BARU: Mengelompokkan pemain untuk setiap kontingen
+        // =================================================================
+        foreach ($contingents as $contingent) {
+            $groupedPlayers = [];
+
+            // Kelompokkan pemain berdasarkan kelas_pertandingan_id mereka
+            $playersByClass = $contingent->players->groupBy('kelas_pertandingan_id');
+
+            foreach ($playersByClass as $playersInClass) {
+                $firstPlayer = $playersInClass->first();
+                if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) continue;
+
+                $classDetails = $firstPlayer->kelasPertandingan;
+                $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+                $jumlahPendaftaran = ceil($playersInClass->count() / $pemainPerPendaftaran);
+
+                // Buat "irisan" dari koleksi pemain untuk setiap pendaftaran
+                for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                    $pemainUntukItemIni = $playersInClass->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+
+                    if ($pemainUntukItemIni->isEmpty()) continue;
+
+                    // Tentukan status grup (prioritas: Ditolak > Belum Bayar > Pending > Terverifikasi)
+                    $status = 2; // Default Terverifikasi
+                    if ($pemainUntukItemIni->contains('status', 3)) $status = 3; // Ditolak
+                    elseif ($pemainUntukItemIni->contains('status', 0)) $status = 0; // Belum Bayar
+                    elseif ($pemainUntukItemIni->contains('status', 1)) $status = 1; // Pending
+
+                    // Cari pemain yang memiliki catatan (jika ada) untuk menampilkan ikon info
+                    $playerWithNote = $pemainUntukItemIni->firstWhere('status', 3);
+
+                    $groupedPlayers[] = [
+                        'player_instances' => $pemainUntukItemIni,
+                        'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
+                        'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
+                        'gender' => $classDetails->gender,
+                        'status' => $status,
+                        'note_player' => $playerWithNote, // Kirim instance player yang punya catatan
+                    ];
+                }
+            }
+            // Tambahkan hasil pengelompokan ke objek kontingen
+            $contingent->displayPlayers = $groupedPlayers;
+        }
+
 
         return view('historyContingent.index', [
             'contingents' => $contingents
@@ -114,13 +163,22 @@ class historyController extends Controller
             )
             ->get();
 
+        // =================================================================
+        // LOGIKA BARU: Cari rekan satu tim
+        // =================================================================
+        $teammates = Player::where('contingent_id', $player->contingent_id)
+            ->where('kelas_pertandingan_id', $player->kelas_pertandingan_id)
+            ->where('id', '!=', $player->id)
+            ->get();
+
         return view('historyContingent.editPlayer', compact(
             'player',
             'event',
             'kategoriPertandingan',
             'jenisPertandingan',
             'rentangUsia',
-            'availableClasses'
+            'availableClasses',
+            'teammates' // <-- Kirim data teammates ke view
         ));
     }
 

@@ -17,6 +17,14 @@
 <body class="bg-gray-50 min-h-screen py-8">
     <div class="max-w-4xl mx-auto px-4">
 
+        <!-- Tombol Kembali ke Riwayat -->
+        <div class="mb-4 text-right">
+            <a href="{{ route('history') }}" class="inline-block bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-sm font-medium">
+                &larr; Kembali ke Riwayat
+            </a>
+        </div>
+
+
         @if (session('success'))
             <div id="alert-success" class="flex items-center p-4 mb-4 text-green-800 rounded-lg bg-green-100 border border-green-400" role="alert">
                 <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/></svg>
@@ -61,14 +69,6 @@
                             <p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p>
                         </div>
                     </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800 mb-3">Detail Pembayaran:</h3>
-                        <div class="text-gray-600">
-                            <p><span class="font-medium">Bank:</span> BCA</p>
-                            <p><span class="font-medium">No. Rekening:</span> 1234567890</p>
-                            <p><span class="font-medium">Atas Nama:</span> Nama Penyelenggara Acara</p>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -110,14 +110,12 @@
                 <div class="mt-8 flex justify-end">
                     <div class="w-full max-w-sm">
                         @php
-                            // Kalkulasi PPN dihapus
                             $grandTotal = $totalHarga;
                         @endphp
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
                         </div>
-                        {{-- Baris PPN (11%) telah dihapus dari sini --}}
                         <div class="flex justify-between py-3 border-b-2 border-gray-300">
                             <span class="text-lg font-semibold text-gray-800">Total:</span>
                             <span class="text-lg font-bold text-neutral-600">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
@@ -129,20 +127,26 @@
             <!-- Payment Proof Upload Section -->
             <div class="bg-gray-50 p-8 border-t border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
+                
+                <!-- ================================================================= -->
+                <!-- FORM YANG DIPERBAIKI -->
+                <!-- ================================================================= -->
                 <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
                     @csrf
-                    @php
-                        // Kalkulasi PPN dihapus dari hidden input juga
-                        $grandTotal = $totalHarga;
-                    @endphp
+                    
                     <input type="hidden" name="total_price" value="{{ $grandTotal }}">
                     <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">
 
+                    <!-- PERBAIKAN UTAMA: Struktur Input Pemain Disesuaikan -->
+                    @php $playerIndex = 0; @endphp
                     @foreach ($invoiceItems as $item)
                         @foreach ($item['player_ids'] as $playerId)
-                            <input type="hidden" name="pemain[]" value="{{ $playerId }}">
+                            <input type="hidden" name="pemain[{{ $playerIndex }}][player_id]" value="{{ $playerId }}">
+                            <input type="hidden" name="pemain[{{ $playerIndex }}][price]" value="{{ $item['harga_per_pendaftaran'] }}">
+                            @php $playerIndex++; @endphp
                         @endforeach
                     @endforeach
+                    <!-- AKHIR PERBAIKAN -->
 
                     <!-- Upload Area (Visual) -->
                     <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
@@ -160,17 +164,8 @@
                         </div>
                     </div>
                     <input type="file" name="foto_invoice" id="fileInput" class="hidden" accept="image/*,.pdf" required />
-                    <div class="mt-6 text-center space-x-4">
-                        <a href="{{ route('history') }}" class="inline-block bg-yellow-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors focus:outline-none focus:ring-4 focus:ring-yellow-300">
-                            Kembali ke Halaman Histori Kontingen
-                        </a>
-                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                            Kirim Bukti Transfer
-                        </button>
-                    </div>
-                    <div id="successMessage" class="hidden mt-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg text-center">
-                        <svg class="inline w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                        Bukti transfer berhasil dikirim! Kami akan memverifikasi pembayaran Anda dalam 1x24 jam.
+                    <div class="mt-6 text-center">
+                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Kirim Bukti Transfer</button>
                     </div>
                 </form>
             </div>
@@ -193,7 +188,6 @@
         const fileSize = document.getElementById('fileSize');
         const removeFile = document.getElementById('removeFile');
         const submitProof = document.getElementById('submitProof');
-        const successMessage = document.getElementById('successMessage');
         const form = submitProof.closest('form');
 
         uploadArea.addEventListener('click', () => fileInput.click());
@@ -247,7 +241,6 @@
             uploadContent.classList.remove('hidden');
             previewArea.classList.add('hidden');
             submitProof.disabled = true;
-            successMessage.classList.add('hidden');
         });
 
         form.addEventListener('submit', function(e) {

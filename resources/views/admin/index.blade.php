@@ -82,9 +82,50 @@
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Kontingen</h3></div>
                     <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse ($contingentsForVerification as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div><div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div></td><td class="p-3 text-sm text-blue-600"><a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="hover:underline">Surat Rekomendasi</a><br>@if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)<a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>@else<span class="text-gray-500">N/A</span>@endif</td><td class="p-3"><button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button><button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada kontingen perlu diverifikasi.</td></tr>@endforelse</tbody></table></div>
                 </div>
+                
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet</h3></div>
-                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen & Bayar</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse ($playersForVerification as $player)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3 text-sm text-blue-600">@if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP/KK</a> | @endif @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a><br>@endif @if($player->playerInvoice && $player->playerInvoice->foto_invoice)<a href="{{ Storage::url($player->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Bukti Bayar</a>@else<span class="text-gray-500 italic">Pending</span>@endif</td><td class="p-3"><button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet perlu diverifikasi.</td></tr>@endforelse</tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen & Dokumen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse ($groupedPlayersForVerification as $registration)
+                        @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                        <tr>
+                            <td class="p-3">
+                                <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
+                                <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
+                            </td>
+                            <td class="p-3 text-sm text-gray-900">
+                                <div>{{ $firstPlayer->contingent->name }}</div>
+                                @foreach($registration['player_instances'] as $player)
+                                <div class="text-xs text-blue-600">
+                                    {{ $player->name }}: 
+                                    @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP</a> | @endif
+                                    @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif
+                                    @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a> @endif
+                                </div>
+                                @endforeach
+                            </td>
+                            <td class="p-3 text-sm text-blue-600">
+                                @if($firstPlayer->playerInvoice && $firstPlayer->playerInvoice->foto_invoice)
+                                    <a href="{{ Storage::url($firstPlayer->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Lihat Bukti Bayar</a>
+                                @else
+                                    <span class="text-gray-500 italic">Belum Dibayar</span>
+                                @endif
+                            </td>
+                            <td class="p-3 align-top">
+                                @foreach($registration['player_instances'] as $player)
+                                <div class="flex items-center space-x-2 mb-1">
+                                    <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 w-20 text-center">Verifikasi</button>
+                                    <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                    <span class="text-gray-600 text-xs truncate" title="{{ $player->name }}">{{ \Illuminate\Support\Str::limit($player->name, 15) }}</span>
+                                </div>
+                                @endforeach
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet perlu diverifikasi.</td></tr>
+                        @endforelse
+                    </tbody></table></div>
                 </div>
             </div>
 
@@ -93,9 +134,27 @@
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Disetujui</h3></div>
                     <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($approvedContingents as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td><td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td><td class="p-3"><button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada kontingen yang disetujui.</td></tr>@endforelse</tbody></table></div>
                 </div>
+                
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Terverifikasi</h3></div>
-                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($approvedPlayers as $player)<tr><td class="p-3 text-sm font-medium text-gray-900">{{ $player->name }}</td><td class="p-3 text-sm text-gray-900">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3"><button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada atlet yang terverifikasi.</td></tr>@endforelse</tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kelas</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($groupedApprovedPlayers as $registration)
+                        @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                        <tr>
+                            <td class="p-3 text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</td>
+                            <td class="p-3 text-sm text-gray-900">{{ $registration['nama_kelas'] }}</td>
+                            <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
+                            <td class="p-3">
+                                @foreach($registration['player_instances'] as $player)
+                                <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-2">Detail {{ \Illuminate\Support\Str::limit($player->name, 10) }}</button>
+                                @endforeach
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Belum ada atlet yang terverifikasi.</td></tr>
+                        @endforelse
+                    </tbody></table></div>
                 </div>
             </div>
 
@@ -104,9 +163,34 @@
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Ditolak</h3></div>
                     <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($rejectedContingents as $contingent)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div><div class="text-sm text-gray-500">{{ $contingent->event->name }}</div></td><td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td><td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td><td class="p-3"><button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada kontingen yang ditolak.</td></tr>@endforelse</tbody></table></div>
                 </div>
+                
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                     <div class="px-6 py-4 border-b"><h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Ditolak</h3></div>
-                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead><tbody class="divide-y divide-gray-200">@forelse($rejectedPlayers as $player)<tr><td class="p-3"><div class="text-sm font-medium text-gray-900">{{ $player->name }}</div><div class="text-sm text-gray-500">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</div></td><td class="p-3 text-sm text-gray-900">{{ $player->contingent->name }}</td><td class="p-3 text-sm text-gray-700 italic">"{{ $player->catatan ?: 'Tidak ada catatan' }}"</td><td class="p-3"><button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button></td></tr>@empty<tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet yang ditolak.</td></tr>@endforelse</tbody></table></div>
+                    <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50"><tr><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th><th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th></tr></thead>
+                    <tbody class="divide-y divide-gray-200">
+                        @forelse($groupedRejectedPlayers as $registration)
+                        @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                        <tr>
+                            <td class="p-3">
+                                <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
+                                <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }}</div>
+                            </td>
+                            <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
+                            <td class="p-3 text-sm text-gray-700 italic">
+                                "{{ $firstPlayer->catatan ?: 'Tidak ada catatan spesifik.' }}"
+                            </td>
+                            <td class="p-3">
+                                @foreach($registration['player_instances'] as $player)
+                                <div class="mb-1">
+                                    <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang {{ \Illuminate\Support\Str::limit($player->name, 10) }}</button>
+                                </div>
+                                @endforeach
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="p-3 text-center text-sm text-gray-500">Tidak ada atlet yang ditolak.</td></tr>
+                        @endforelse
+                    </tbody></table></div>
                 </div>
             </div>
         </div>
@@ -215,7 +299,6 @@
         function viewPlayerDetail(player) {
             detailModalTitle.textContent = 'Detail Atlet: ' + player.name;
             
-            // Format Rupiah Helper
             const formatCurrency = (number) => {
                 if (number === null || typeof number === 'undefined') return 'N/A';
                 return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number);
@@ -258,4 +341,4 @@
         }
     </script>
 </body>
-</html>
+</html>```

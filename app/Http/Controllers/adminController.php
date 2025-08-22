@@ -10,6 +10,48 @@ use Illuminate\Support\Facades\Auth;
 
 class adminController extends Controller
 {
+    /**
+     * Helper function to group players into their respective teams (ganda, regu, etc.).
+     */
+    private function groupPlayers($players)
+    {
+        $groupedRegistrations = [];
+
+        // Group players by a unique team identifier: "contingentId-classId"
+        $playersByTeam = $players->groupBy(function ($player) {
+            return $player->contingent_id . '-' . $player->kelas_pertandingan_id;
+        });
+
+        foreach ($playersByTeam as $playersInTeam) {
+            $firstPlayer = $playersInTeam->first();
+            if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
+                continue;
+            }
+
+            $classDetails = $firstPlayer->kelasPertandingan;
+            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+            $jumlahPendaftaran = ceil($playersInTeam->count() / $pemainPerPendaftaran);
+
+            for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                $pemainUntukItemIni = $playersInTeam->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+
+                if ($pemainUntukItemIni->isEmpty()) {
+                    continue;
+                }
+
+                $groupedRegistrations[] = [
+                    'player_instances' => $pemainUntukItemIni,
+                    'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
+                    'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
+                    'gender' => $classDetails->gender,
+                    // We can take the status from the first player as it's the same for the whole query set
+                    'status' => $firstPlayer->status,
+                ];
+            }
+        }
+        return $groupedRegistrations;
+    }
+
     public function index()
     {
         $admin = Auth::user();
@@ -34,19 +76,19 @@ class adminController extends Controller
             ->get();
 
         // --- Data for Approved Lists Tables ---
-        $approvedContingents = Contingent::with(['user', 'event', 'players'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 1) // 1 = Disetujui
-            ->latest()
-            ->get();
-
         $approvedPlayers = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 2) // 2 = Terverifikasi
             ->latest()
             ->get();
 
-        // --- [NEW] Data for Rejected Lists Tables ---
+        $approvedContingents = Contingent::with(['user', 'event', 'players'])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('status', 1) // 1 = Disetujui
+            ->latest()
+            ->get();
+
+        // --- Data for Rejected Lists Tables ---
         $rejectedContingents = Contingent::with(['user', 'event', 'players', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 2) // 2 = Ditolak
@@ -59,11 +101,19 @@ class adminController extends Controller
             ->latest()
             ->get();
 
+        // =================================================================
+        // LOGIKA BARU: MENGELOMPOKKAN SEMUA DATA PEMAIN
+        // =================================================================
+        $groupedPlayersForVerification = $this->groupPlayers($playersForVerification);
+        $groupedApprovedPlayers = $this->groupPlayers($approvedPlayers);
+        $groupedRejectedPlayers = $this->groupPlayers($rejectedPlayers);
+
+
         // --- Data for Dashboard Cards ---
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
         $pendingContingentsCount = $contingentsForVerification->count();
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
-        $pendingPlayersCount = $playersForVerification->count();
+        $pendingPlayersCount = $playersForVerification->count(); // Count original players, not groups
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -71,13 +121,14 @@ class adminController extends Controller
             'activeEvents',
             'events',
             'contingentsForVerification',
-            'playersForVerification',
             'approvedContingents',
-            'approvedPlayers',
             'totalContingents',
             'pendingPlayersCount',
-            'rejectedContingents',      // Pass new data
-            'rejectedPlayers'           // Pass new data
+            'rejectedContingents',
+            // --- KIRIM DATA YANG SUDAH DI-GROUP ---
+            'groupedPlayersForVerification',
+            'groupedApprovedPlayers',
+            'groupedRejectedPlayers'
         ));
     }
 

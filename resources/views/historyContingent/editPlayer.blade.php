@@ -30,6 +30,17 @@
             </div>
 
             <div class="p-4 p-md-5">
+
+                @if($teammates->isNotEmpty())
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="fas fa-users fa-2x me-3"></i>
+                        <div>
+                            <h5 class="alert-heading mb-1">Informasi Tim</h5>
+                            Anda terdaftar dalam satu tim bersama: <strong>{{ $teammates->pluck('name')->implode(', ') }}</strong>.
+                        </div>
+                    </div>
+                @endif
+
                 <form id="editForm" method="POST" action="{{ route('player.update', $player->id) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
@@ -43,17 +54,49 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Nama Lengkap</label><input type="text" class="form-control" name="name" value="{{ old('name', $player->name) }}" required></div>
                                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">NIK</label><input type="text" class="form-control" name="nik" value="{{ old('nik', $player->nik) }}" pattern="[0-9]{16}" maxlength="16" required></div>
-                                <div class="col-md-6 mb-3"><label class="form-label fw-bold">Jenis Kelamin</label><select class="form-select" name="gender" required><option value="" disabled>Pilih...</option><option value="Laki-laki" {{ old('gender', $player->gender) == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option><option value="Perempuan" {{ old('gender', $player->gender) == 'Perempuan' ? 'selected' : '' }}>Perempuan</option></select></div>
+                                
+                                {{-- ================================================================= --}}
+                                {{-- PERUBAHAN: MENONAKTIFKAN FIELD GENDER --}}
+                                {{-- ================================================================= --}}
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Jenis Kelamin</label>
+                                    <select class="form-select" name="gender" required disabled>
+                                        <option value="" disabled>Pilih...</option>
+                                        <option value="Laki-laki" {{ old('gender', $player->gender) == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                        <option value="Perempuan" {{ old('gender', $player->gender) == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                    </select>
+                                    {{-- Hidden input to make sure the value is submitted --}}
+                                    <input type="hidden" name="gender" value="{{ $player->gender }}" />
+                                </div>
+
                                 <div class="col-md-6 mb-3"><label class="form-label fw-bold">Tanggal Lahir</label><input type="date" class="form-control" name="tgl_lahir" value="{{ old('tgl_lahir', $player->tgl_lahir) }}" required></div>
                             </div>
                             <hr>
+
+                            {{-- ================================================================= --}}
+                            {{-- PERUBAHAN: MENONAKTIFKAN SELURUH BLOK KELAS PERTANDINGAN --}}
+                            {{-- ================================================================= --}}
                             <h5 class="text-danger mb-3">Pilihan Kelas Pertandingan</h5>
-                            <div class="row filter-controls">
-                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">1. Pilih Rentang Usia</label><div class="rentang-usia-options"></div></div>
-                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">2. Pilih Kategori</label><div class="kategori-options"></div></div>
-                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">3. Pilih Jenis</label><div class="jenis-options"></div></div>
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-lock me-2"></i>
+                                Kelas pertandingan tidak dapat diubah. Untuk mengganti kelas, silakan hapus peserta ini dan daftarkan kembali dengan kelas yang benar.
                             </div>
-                            <div class="row"><div class="col-12 mb-3"><label class="form-label fw-bold">4. Pilih Kelas Pertandingan</label><select class="form-select" name="kelas_pertandingan_id" required><option value="">Lengkapi filter di atas</option></select></div></div>
+                            <div class="row filter-controls">
+                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">1. Rentang Usia</label><div class="rentang-usia-options"></div></div>
+                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">2. Kategori</label><div class="kategori-options"></div></div>
+                                <div class="col-md-4 mb-3"><label class="form-label fw-bold">3. Jenis</label><div class="jenis-options"></div></div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 mb-3">
+                                    <label class="form-label fw-bold">4. Kelas Pertandingan</label>
+                                    <select class="form-select" name="kelas_pertandingan_id" required disabled>
+                                        <option value="">Lengkapi filter di atas</option>
+                                    </select>
+                                    {{-- Hidden input to make sure the value is submitted --}}
+                                    <input type="hidden" name="kelas_pertandingan_id" value="{{ $player->kelas_pertandingan_id }}" />
+                                </div>
+                            </div>
+
                             <hr>
                             <h5 class="text-danger mb-3">Upload Dokumen</h5>
                             <div class="row">
@@ -91,6 +134,9 @@
         const KELAS_PERTANDINGAN_DATA = @json($availableClasses);
         const card = document.getElementById('athleteCard');
 
+        // =================================================================
+        // PERUBAHAN: Menambahkan 'disabled = true' pada input radio
+        // =================================================================
         const buildRadioGroup = (data, name, labelKey, container, selectedValue = null) => {
             data.forEach(item => {
                 const wrapper = document.createElement('div');
@@ -101,6 +147,7 @@
                 input.name = `filter_${name}`;
                 input.value = item.id;
                 input.id = `${name}_${item.id}`;
+                input.disabled = true; // Make the radio button disabled
                 if (item.id == selectedValue) {
                     input.checked = true;
                 }
@@ -160,12 +207,7 @@
         // Panggil updateAvailableClasses() sekali di awal untuk mengisi dropdown kelas
         updateAvailableClasses();
 
-        // Tambahkan event listener
-        card.addEventListener('change', (e) => {
-            if (e.target.closest('.filter-controls') || e.target.name === 'gender') {
-                updateAvailableClasses();
-            }
-        });
+        // Event listener tidak lagi dibutuhkan karena field dinonaktifkan
     });
     </script>
 </body>

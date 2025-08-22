@@ -185,76 +185,76 @@ class EventController extends Controller
         // $processedAthletesDetails = [];
         // $totalHarga = 0;
 
-         // 1. VALIDASI DATA DENGAN STRUKTUR BARU
-    $validator = Validator::make($request->all(), [
-        'registrations' => 'required|array|min:1',
-        'registrations.*.kelas_pertandingan_id' => 'required|exists:kelas_pertandingan,id',
-        'registrations.*.players' => 'required|array|min:1',
-        'registrations.*.players.*.namaLengkap' => 'required|string|max:255',
-        'registrations.*.players.*.nik' => 'required|string|digits:16',
-        'registrations.*.players.*.jenisKelamin' => 'required|in:Laki-laki,Perempuan',
-        'registrations.*.players.*.tanggalLahir' => 'required|date',
-        'registrations.*.players.*.uploadKTP' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-        'registrations.*.players.*.uploadFoto' => 'required|file|mimes:jpg,jpeg,png|max:2048',
-        'registrations.*.players.*.uploadPersetujuan' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
-    ]);
+        // 1. VALIDASI DATA DENGAN STRUKTUR BARU
+        $validator = Validator::make($request->all(), [
+            'registrations' => 'required|array|min:1',
+            'registrations.*.kelas_pertandingan_id' => 'required|exists:kelas_pertandingan,id',
+            'registrations.*.players' => 'required|array|min:1',
+            'registrations.*.players.*.namaLengkap' => 'required|string|max:255',
+            'registrations.*.players.*.nik' => 'required|string|digits:16',
+            'registrations.*.players.*.jenisKelamin' => 'required|in:Laki-laki,Perempuan',
+            'registrations.*.players.*.tanggalLahir' => 'required|date',
+            'registrations.*.players.*.uploadKTP' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'registrations.*.players.*.uploadFoto' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'registrations.*.players.*.uploadPersetujuan' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
 
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
-
-    try {
-        DB::beginTransaction();
-        $contingentId = $request->input('contingent_id');
-
-        // 2. LOGIKA PENYIMPANAN BARU
-        foreach ($request->registrations as $regIndex => $registrationData) {
-            
-            // Loop untuk setiap pemain di dalam satu pendaftaran kelas
-            foreach ($registrationData['players'] as $playerIndex => $playerData) {
-                
-                $player = new Player(); // Ganti dengan model Atlet Anda
-                $player->contingent_id = $contingentId;
-                $player->kelas_pertandingan_id = $registrationData['kelas_pertandingan_id']; // ID kelas sama untuk semua pemain di grup ini
-                
-                // Ambil data dari array 'players'
-                $player->name = $playerData['namaLengkap'];
-                $player->nik = $playerData['nik'];
-                $player->gender = $playerData['jenisKelamin'];
-                $player->tgl_lahir = $playerData['tanggalLahir'];
-                $player->no_telp = $playerData['noTelepon'] ?? null; // Optional
-                $player->email = $playerData['email'] ?? null; // Optional
-                
-                // Handle File Uploads
-                $nik = $playerData['nik'];
-                $fileKtp = $request->file("registrations.$regIndex.players.$playerIndex.uploadKTP");
-                $fileFoto = $request->file("registrations.$regIndex.players.$playerIndex.uploadFoto");
-                $filePersetujuan = $request->file("registrations.$regIndex.players.$playerIndex.uploadPersetujuan");
-
-                if ($fileKtp) {
-                    $path = $fileKtp->storeAs('player-documents', "ktp-{$nik}-" . time(), 'public');
-                    $player->foto_ktp = $path;
-                }
-                if ($fileFoto) {
-                    $path = $fileFoto->storeAs('player-documents', "foto-{$nik}-" . time(), 'public');
-                    $player->foto_diri = $path;
-                }
-                if ($filePersetujuan) {
-                    $path = $filePersetujuan->storeAs('player-documents', "persetujuan-{$nik}-" . time(), 'public');
-                    $player->foto_persetujuan_ortu = $path;
-                }
-
-                $player->save();
-            }
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        DB::commit();
-        return response()->json(['message' => 'Pendaftaran berhasil!', 'contingent' => $contingentId]);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Gagal menyimpan pendaftaran atlet: ' . $e->getMessage());
-        return response()->json(['message' => 'Terjadi kesalahan pada server.'], 500);
-    }
+        try {
+            DB::beginTransaction();
+            $contingentId = $request->input('contingent_id');
+
+            // 2. LOGIKA PENYIMPANAN BARU
+            foreach ($request->registrations as $regIndex => $registrationData) {
+
+                // Loop untuk setiap pemain di dalam satu pendaftaran kelas
+                foreach ($registrationData['players'] as $playerIndex => $playerData) {
+
+                    $player = new Player(); // Ganti dengan model Atlet Anda
+                    $player->contingent_id = $contingentId;
+                    $player->kelas_pertandingan_id = $registrationData['kelas_pertandingan_id']; // ID kelas sama untuk semua pemain di grup ini
+
+                    // Ambil data dari array 'players'
+                    $player->name = $playerData['namaLengkap'];
+                    $player->nik = $playerData['nik'];
+                    $player->gender = $playerData['jenisKelamin'];
+                    $player->tgl_lahir = $playerData['tanggalLahir'];
+                    $player->no_telp = $playerData['noTelepon'] ?? null; // Optional
+                    $player->email = $playerData['email'] ?? null; // Optional
+
+                    // Handle File Uploads
+                    $nik = $playerData['nik'];
+                    $fileKtp = $request->file("registrations.$regIndex.players.$playerIndex.uploadKTP");
+                    $fileFoto = $request->file("registrations.$regIndex.players.$playerIndex.uploadFoto");
+                    $filePersetujuan = $request->file("registrations.$regIndex.players.$playerIndex.uploadPersetujuan");
+
+                    if ($fileKtp) {
+                        $path = $fileKtp->storeAs('player-documents', "ktp-{$nik}-" . time(), 'public');
+                        $player->foto_ktp = $path;
+                    }
+                    if ($fileFoto) {
+                        $path = $fileFoto->storeAs('player-documents', "foto-{$nik}-" . time(), 'public');
+                        $player->foto_diri = $path;
+                    }
+                    if ($filePersetujuan) {
+                        $path = $filePersetujuan->storeAs('player-documents', "persetujuan-{$nik}-" . time(), 'public');
+                        $player->foto_persetujuan_ortu = $path;
+                    }
+
+                    $player->save();
+                }
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Pendaftaran berhasil!', 'contingent' => $contingentId]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal menyimpan pendaftaran atlet: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan pada server.'], 500);
+        }
     }
 
     private function uploadImage($file, $path)
@@ -325,7 +325,7 @@ class EventController extends Controller
 
         // Langkah B: Proses setiap grup kelas satu per satu
         foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {
-            
+
             // Ambil detail kelas dari pemain pertama (semua sama dalam grup ini)
             $firstPlayer = $playersInClass->first();
             if (!$firstPlayer) continue; // Lewati jika grup kosong
@@ -338,7 +338,7 @@ class EventController extends Controller
             // Langkah C: Hitung berapa banyak pendaftaran terpisah yang dibuat untuk kelas ini
             $jumlahPemainTotal = $playersInClass->count();
             // Gunakan ceil() untuk membulatkan ke atas jika ada data ganjil
-            $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran); 
+            $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran);
 
             // Ambil semua nama dan ID pemain untuk didistribusikan
             $allPlayerNames = $playersInClass->pluck('name')->all();
@@ -346,7 +346,7 @@ class EventController extends Controller
 
             // Langkah D: Buat satu baris invoice untuk setiap pendaftaran
             for ($i = 0; $i < $jumlahPendaftaran; $i++) {
-                
+
                 // "Potong" array nama & ID untuk pendaftaran saat ini
                 $offset = $i * $pemainPerPendaftaran;
                 $pemainUntukItemIni = array_slice($allPlayerNames, $offset, $pemainPerPendaftaran);

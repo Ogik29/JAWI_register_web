@@ -26,10 +26,7 @@
 <body>
     <div class="container-fluid">
         <div class="main-container">
-            <div class="header">
-                <h1><i class="fas fa-fist-raised me-3"></i>Pendaftaran Kejuaraan: {{ $event->name }}</h1>
-                <p class="mb-0">Sistem Pendaftaran Atlet Pencak Silat Indonesia</p>
-            </div>
+            <div class="header"><h1><i class="fas fa-fist-raised me-3"></i>Pendaftaran Kejuaraan: {{ $event->name }}</h1><p class="mb-0">Sistem Pendaftaran Atlet Pencak Silat Indonesia</p></div>
             <div class="p-4">
                 <div id="alert-container"></div>
                 <form id="registrationForm">
@@ -89,6 +86,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // --- DATA DARI CONTROLLER ---
     const CONTINGENT_ID = {{ $contingent->id }};
     const RENTANG_USIA_DATA = @json($rentangUsia);
     const KATEGORI_DATA = @json($kategoriPertandingan);
@@ -96,6 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const KELAS_PERTANDINGAN_DATA = @json($availableClasses);
     const GENDER_DATA = [ {id: 'Laki-laki', name: 'Laki-laki'}, {id: 'Perempuan', name: 'Perempuan'} ];
 
+    // --- ELEMENT REFERENCES ---
     const athletesContainer = document.getElementById('athletesContainer');
     const addAthleteBtn = document.getElementById('addAthleteBtn');
     const registrationForm = document.getElementById('registrationForm');
@@ -122,12 +121,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const buildRadioGroup = (data, name, labelKey, container, id) => {
         data.forEach(item => {
-            const wrapper = document.createElement('div'); wrapper.className = 'form-check';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'form-check';
             const input = document.createElement('input');
-            input.type = 'radio'; input.className = 'form-check-input'; input.name = `${name}_${id}`; input.value = item.id; input.id = `${name}_${item.id}_${id}`;
+            input.type = 'radio';
+            input.className = 'form-check-input';
+            input.name = `${name}_${id}`;
+            input.value = item.id;
+            input.id = `${name}_${item.id}_${id}`;
             const label = document.createElement('label');
-            label.className = 'form-check-label'; label.htmlFor = input.id; label.textContent = item[labelKey];
-            wrapper.appendChild(input); wrapper.appendChild(label); container.appendChild(wrapper);
+            label.className = 'form-check-label';
+            label.htmlFor = input.id;
+            label.textContent = item[labelKey];
+            wrapper.appendChild(input);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
         });
     };
 
@@ -138,17 +146,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedJenis = card.querySelector(`input[name="jenis_${uniqueId}"]:checked`)?.value;
         const selectedGender = card.querySelector(`input[name="gender_${uniqueId}"]:checked`)?.value;
         const kelasSelect = card.querySelector('select[name="kelas_pertandingan_id"]');
+        
         kelasSelect.innerHTML = '<option value="">Pilih...</option>';
         if (!selectedRentang || !selectedKategori || !selectedJenis || !selectedGender) {
             kelasSelect.firstElementChild.textContent = "Lengkapi semua filter di atas";
             return;
         }
+
         const filteredClasses = KELAS_PERTANDINGAN_DATA.filter(k => 
             k.rentang_usia_id == selectedRentang &&
             k.kategori_pertandingan_id == selectedKategori &&
             k.jenis_pertandingan_id == selectedJenis &&
-            (k.gender.toLowerCase() === selectedGender.toLowerCase() || k.gender === 'Campuran')
+            (k.gender === selectedGender || k.gender === 'Campuran')
         );
+
         if (filteredClasses.length > 0) {
             filteredClasses.forEach(k => {
                 const option = document.createElement('option');
@@ -168,16 +179,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const clone = subAthleteTemplate.content.cloneNode(true);
             clone.querySelectorAll('.sub-athlete-form h6').forEach(h6 => h6.textContent = h6.textContent.replace('__SUB_COUNT__', i));
             clone.querySelectorAll('input, select').forEach(input => input.name = `${input.name}_${i-1}`);
+            
             const genderSelect = clone.querySelector('select[name^="jenisKelamin"]');
             if(genderSelect) {
-                // PERBAIKAN KUNCI ADA DI SINI
-                // Langsung atur nilainya, jangan hapus opsi yang ada di template
-                genderSelect.value = gender.toLowerCase();
-                
-                if (gender.toLowerCase() !== 'campuran') {
-                    genderSelect.disabled = true; // Kunci pilihan jika bukan 'Campuran'
+                genderSelect.value = gender;
+                if (gender !== 'Campuran') {
+                    genderSelect.disabled = true;
                 } else {
-                    genderSelect.disabled = false; // Boleh diubah jika 'Campuran'
+                    genderSelect.disabled = false;
                 }
             }
             subContainer.appendChild(clone);
@@ -255,10 +264,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 showAlert(`Pendaftaran #${cardIndex + 1} belum memilih Kelas Pertandingan.`, 'danger');
                 hasError = true;
             }
+            
+            // Mengirim kelas_pertandingan_id di level registrasi
             formData.append(`registrations[${cardIndex}][kelas_pertandingan_id]`, kelasId);
             
             card.querySelectorAll('.sub-athlete-form').forEach((subForm, subIndex) => {
                 const prefix = `registrations[${cardIndex}][players][${subIndex}]`;
+                
                 formData.append(`${prefix}[namaLengkap]`, subForm.querySelector(`input[name="namaLengkap_${subIndex}"]`).value);
                 formData.append(`${prefix}[nik]`, subForm.querySelector(`input[name="nik_${subIndex}"]`).value);
                 formData.append(`${prefix}[noTelepon]`, subForm.querySelector(`input[name="noTelepon_${subIndex}"]`).value);
@@ -320,5 +332,3 @@ document.addEventListener('DOMContentLoaded', function () {
     addRegistrationCard();
 });
 </script>
-</body>
-</html>

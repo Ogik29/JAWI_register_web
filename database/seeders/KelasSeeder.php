@@ -14,93 +14,68 @@ class KelasSeeder extends Seeder
         DB::table('kelas_pertandingan')->truncate();
         DB::table('kelas')->truncate();
         Schema::enableForeignKeyConstraints();
-        
+
         $usiaIds = DB::table('rentang_usia')->pluck('id', 'rentang_usia');
         $dataToInsert = [];
 
-        // =================================================================
-        // DEFINISI DATA LENGKAP DARI SEMUA DOKUMEN
-        // =================================================================
-        $dataLengkap = [
-            'Pra Usia Dini (<= 5 tahun)' => [
-                'jurus' => ['Jurus Tunggal Bebas']
-            ],
-            'Usia Dini 1 (> 5 s.d 8 tahun)' => [
-                'jurus' => [
-                    'Jurus Tunggal Tangan Kosong',
-                    'Jurus Tunggal Senjata (Toya dan Golok)',
-                    'Jurus Tunggal Bebas'
-                ]
-            ],
-            'Usia Dini 2 (> 8 s.d 11 tahun)' => [
-                'tanding_putra' => ['Kelas A (diatas 26 kg sampai 28 kg)', 'Kelas B (diatas 28 kg sampai 30 kg)', 'Kelas C (diatas 30 kg sampai 32 kg)', 'Kelas D (diatas 32 kg sampai 34 kg)', 'Kelas E (diatas 34 kg sampai 36 kg)', 'Kelas F (diatas 36 kg sampai 38 kg)', 'Kelas G (diatas 38 kg sampai 40 kg)', 'Kelas H (diatas 40 kg sampai 42 kg)', 'Kelas I (diatas 42 kg sampai 44 kg)', 'Kelas J (diatas 44 kg sampai 46 kg)', 'Kelas K (diatas 46 kg sampai 48 kg)', 'Kelas L (diatas 48 kg sampai 50 kg)', 'Kelas M (diatas 50 kg sampai 52 kg)', 'Kelas N (diatas 52 kg sampai 54 kg)', 'Kelas O (diatas 54 kg sampai 56 kg)', 'Kelas P (diatas 56 kg sampai 58 kg)', 'Kelas Q (diatas 58 kg sampai 60 kg)', 'Kelas R (diatas 60 kg sampai 62 kg)', 'Kelas S (diatas 62 kg sampai 64 kg)', 'Open (diatas 64 kg sampai 68 kg)'],
-                'tanding_putri' => ['Kelas A (diatas 26 kg sampai 28 kg)', 'Kelas B (diatas 28 kg sampai 30 kg)', 'Kelas C (diatas 30 kg sampai 32 kg)', 'Kelas D (diatas 32 kg sampai 34 kg)', 'Kelas E (diatas 34 kg sampai 36 kg)', 'Kelas F (diatas 36 kg sampai 38 kg)', 'Kelas G (diatas 38 kg sampai 40 kg)', 'Kelas H (diatas 40 kg sampai 42 kg)', 'Kelas I (diatas 42 kg sampai 44 kg)', 'Kelas J (diatas 44 kg sampai 46 kg)', 'Kelas K (diatas 46 kg sampai 48 kg)', 'Kelas L (diatas 48 kg sampai 50 kg)', 'Kelas M (diatas 50 kg sampai 52 kg)', 'Kelas N (diatas 52 kg sampai 54 kg)', 'Kelas O (diatas 54 kg sampai 56 kg)', 'Kelas P (diatas 56 kg sampai 58 kg)', 'Kelas Q (diatas 58 kg sampai 60 kg)', 'Kelas R (diatas 60 kg sampai 62 kg)', 'Kelas S (diatas 62 kg sampai 64 kg)', 'Open (diatas 64 kg sampai 68 kg)'],
-                'jurus' => ['Jurus Tunggal Tangan Kosong', 'Jurus Tunggal Senjata (Toya dan Golok)', 'Jurus Tunggal Bebas', 'Jurus Ganda Tangan Kosong', 'Jurus Ganda Senjata', 'Jurus Regu A 1 - 6']
-            ],
-            'Pra Remaja (> 11 s.d 14 tahun)' => [
-                'tanding_putra' => ['Kelas A (diatas 30 kg sampai 33 kg)', 'Kelas B (diatas 33 kg sampai 36 kg)', 'Kelas C (diatas 36 kg sampai 39 kg)', 'Kelas D (diatas 39 kg sampai 42 kg)', 'Kelas E (diatas 42 kg sampai 45 kg)', 'Kelas F (diatas 45 kg sampai 48 kg)', 'Kelas G (diatas 48 kg sampai 51 kg)', 'Kelas H (diatas 51 kg sampai 54 kg)', 'Kelas I (diatas 54 kg sampai 57 kg)', 'Kelas J (diatas 57 kg sampai 60 kg)', 'Kelas K (diatas 60 kg sampai 63 kg)', 'Kelas L (diatas 63 kg sampai 66 kg)', 'Kelas M (diatas 66 kg sampai 69 kg)', 'Kelas N (diatas 69 kg sampai 72 kg)', 'Kelas O (diatas 72 kg sampai 75 kg)', 'Kelas P (diatas 75 kg sampai 78 kg)', 'Open (diatas 78 kg sampai 84 kg)'],
-                'tanding_putri' => ['Kelas A (diatas 30 kg sampai 33 kg)', 'Kelas B (diatas 33 kg sampai 36 kg)', 'Kelas C (diatas 36 kg sampai 39 kg)', 'Kelas D (diatas 39 kg sampai 42 kg)', 'Kelas E (diatas 42 kg sampai 45 kg)', 'Kelas F (diatas 45 kg sampai 48 kg)', 'Kelas G (diatas 48 kg sampai 51 kg)', 'Kelas H (diatas 51 kg sampai 54 kg)', 'Kelas I (diatas 54 kg sampai 57 kg)', 'Kelas J (diatas 57 kg sampai 60 kg)', 'Kelas K (diatas 60 kg sampai 63 kg)', 'Kelas L (diatas 63 kg sampai 66 kg)', 'Kelas M (diatas 66 kg sampai 69 kg)', 'Kelas N (diatas 69 kg sampai 72 kg)', 'Kelas O (diatas 72 kg sampai 75 kg)', 'Kelas P (diatas 75 kg sampai 78 kg)', 'Open (diatas 78 kg sampai 84 kg)'],
-                'jurus' => ['Jurus Tunggal Tangan Kosong', 'Jurus Tunggal Senjata (Toya dan Golok)', 'Jurus Tunggal Bebas', 'Jurus Ganda Tangan Kosong', 'Jurus Ganda Senjata', 'Jurus Regu B (7 - 12)']
-            ],
-            'Remaja (> 14 s.d 17 tahun)' => [
-                'tanding_putra' => ['Kelas <39 (Dibawah 39 kg)', 'Kelas A (39 kg sampai 43 kg)', 'Kelas B (43 kg sampai 47 kg)', 'Kelas C (47 kg sampai 51 kg)', 'Kelas D (51 kg sampai 55 kg)', 'Kelas E (55 kg sampai 59 kg)', 'Kelas F (59 kg sampai 63 kg)', 'Kelas G (63 kg sampai 67 kg)', 'Kelas H (67 kg sampai 71 kg)', 'Kelas I (71 kg sampai 75 kg)', 'Kelas J (75 kg sampai 79 kg)', 'Kelas K (79 kg sampai 83 kg)', 'Kelas L (83 kg sampai 87 kg)', 'Open 1 (diatas 87 kg sampai 100 kg)', 'Open 2 (diatas 100 kg)'],
-                'tanding_putri' => ['Kelas <39 (Dibawah 39 kg)', 'Kelas A (39 kg sampai 43 kg)', 'Kelas B (43 kg sampai 47 kg)', 'Kelas C (47 kg sampai 51 kg)', 'Kelas D (51 kg sampai 55 kg)', 'Kelas E (55 kg sampai 59 kg)', 'Kelas F (59 kg sampai 63 kg)', 'Kelas G (63 kg sampai 67 kg)', 'Kelas H (67 kg sampai 71 kg)', 'Kelas I (71 kg sampai 75 kg)', 'Kelas J (75 kg sampai 79 kg)', 'Open 1 (diatas 79 kg sampai 92 kg)', 'Open 2 (diatas 92 kg)'],
-                'jurus' => ['Jurus Tunggal', 'Jurus Tunggal Bebas', 'Jurus Ganda', 'Jurus Regu']
-            ],
-            'Dewasa (> 17 s.d 35 tahun)' => [
-                'tanding_putra' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Kelas I (85 kg sampai 90 kg)', 'Kelas J (90 kg sampai 95 kg)', 'Open 1 (diatas 95 kg sampai 110 kg)', 'Open 2 (diatas 110kg)'],
-                'tanding_putri' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Open 1 (diatas 85 kg sampai 100 kg)', 'Open 2 (diatas 100 kg)'],
-                'jurus' => ['Jurus Tunggal', 'Jurus Tunggal Bebas', 'Jurus Ganda', 'Jurus Regu']
-            ],
-             'Master A (> 35 s.d 45 tahun)' => [
-                'tanding_putra' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Kelas I (85 kg sampai 90 kg)', 'Kelas J (90 kg sampai 95 kg)', 'Open 1 (diatas 95 kg sampai 110 kg)', 'Open 2 (diatas 110 kg)'],
-                'tanding_putri' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Open 1 (diatas 85 kg sampai 100 kg)', 'Open 2 (diatas 100 kg)']
-            ],
-             'Master B (> 45 tahun ke atas)' => [
-                'tanding_putra' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Kelas I (85 kg sampai 90 kg)', 'Kelas J (90 kg sampai 95 kg)', 'Open 1 (diatas 95 kg sampai 110 kg)', 'Open 2 (diatas 110 kg)'],
-                'tanding_putri' => ['Kelas <45 (Dibawah 45 kg)', 'Kelas A (45 kg sampai 50 kg)', 'Kelas B (50 kg sampai 55 kg)', 'Kelas C (55 kg sampai 60 kg)', 'Kelas D (60 kg sampai 65 kg)', 'Kelas E (65 kg sampai 70 kg)', 'Kelas F (70 kg sampai 75 kg)', 'Kelas G (75 kg sampai 80 kg)', 'Kelas H (80 kg sampai 85 kg)', 'Open 1 (diatas 85 kg sampai 100 kg)', 'Open 2 (diatas 100 kg)']
-            ],
+        // Gabungkan semua kemungkinan nama kelas dari Excel untuk menghindari duplikat
+        $allPossibleClasses = [
+            'PRA USIA DINI (dibawah 5 tahun)' => ['Tunggal Bebas', 'Berkelompok'],
+            'USIA DINI 1 (diatas 5 - 8 tahun)' => array_merge(
+                ['A = 18 - 19 KG', 'B = diatas 19 - 20 kg', 'C = diatas 20 - 21 kg', 'D = diatas 21 - 22 kg', 'E = diatas 22 - 23 kg', 'F = diatas 23 - 24 kg', 'G = diatas 24 - 25 kg', 'H = diatas 25 - 26 kg', 'I = diatas 26 - 27 kg', 'J = diatas 27 - 28 Kg', 'Open = diatas 28 - 29 kg'],
+                ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Regu A (1 - 6)', 'Regu B (7 - 12)', 'Tunggal Bebas', 'Perseorangan', 'Berpasangan', 'Berkelompok']
+            ),
+            'USIA DINI 2 (diatas 8 - 11 tahun)' => array_merge(
+                ['A = diatas 26 - 28 kg', 'B = diatas 28 - 30 kg', 'C = diatas 30 - 32 kg', 'D = diatas 32 - 34 kg', 'E = diatas 34 - 36 kg', 'F = diatas 36 - 38 kg', 'G = diatas 38 - 40 kg', 'H = diatas 40 - 42 kg', 'I = diatas 42 - 44 kg', 'J = diatas 44 - 46 kg', 'K = diatas 46 - 48 kg', 'L = diatas 48 - 50 kg', 'M = diatas 50 - 52 kg', 'N = diatas 52 - 54 kg', 'O = diatas 54 - 56 kg', 'P = diatas 56 - 58 kg', 'Q = diatas 58 - 60 kg', 'R = diatas 60 - 62 kg', 'S = diatas 62 - 64 kg', 'OPEN = diatas 64 - 68 kg'],
+                ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Regu A (1 - 6)', 'Regu B (7 - 12)', 'Tunggal Bebas', 'Perseorangan', 'Berpasangan', 'Berkelompok']
+            ),
+            'PRA REMAJA (diatas 11 - 14 tahun)' => array_merge(
+                ['Under = dibawah 30 Kg', 'A = 30 - 33 Kg', 'B = diatas 33 - 36 Kg', 'C = diatas 36 - 39 Kg', 'D = diatas 39 - 42 Kg', 'E = diatas 42 - 45 Kg', 'F = diatas 45 - 48 Kg', 'G = diatas 48 - 51 Kg', 'H = diatas 51 - 54 Kg', 'I = diatas 54 - 57 Kg', 'J = diatas 57 - 60 Kg', 'K = diatas 60 - 63 Kg', 'L = diatas 63 - 66 Kg', 'M = diatas 66 - 69 Kg', 'N = diatas 69 - 72 Kg', 'O = diatas 72 - 75 Kg', 'P = diatas 75 - 78 Kg', 'OPEN = diatas 78 - 84 Kg'],
+                ['Tunggal Tangan Kosong', 'Tunggal Bersenjata', 'Ganda Tangan Kosong', 'Ganda Bersenjata', 'Regu A (1 - 6)', 'Regu B (7 - 12)', 'Tunggal Bebas', 'Perseorangan', 'Berpasangan', 'Berkelompok']
+            ),
+            'REMAJA (diatas 14 - 17 tahun)' => array_merge(
+                ['Under = dibawah 39 Kg', 'A = 39 - 43 Kg', 'B = diatas 43 - 47 Kg', 'C = diatas 47 - 51 Kg', 'D = diatas 51 - 55 Kg', 'E = diatas 55 - 59 Kg', 'F = diatas 59 - 63 Kg', 'G = diatas 63 - 67 Kg', 'H = diatas 67 - 71 Kg', 'I = diatas 71 - 75 Kg', 'J = diatas 75 - 79 Kg', 'K = diatas 79 - 83 Kg', 'L = diatas 83 - 87 Kg', 'OPEN 1 = diatas 87 - 100 Kg', 'OPEN 2 = diatas 100 Kg'],
+                ['Tunggal', 'Ganda', 'Regu', 'Tunggal Bebas', 'Perseorangan', 'Berpasangan', 'Berkelompok']
+            ),
+            'DEWASA (diatas 17 - 35 tahun)' => array_merge(
+                ['Under = dibawah 45 Kg', 'A = 45 - 50 Kg', 'B = diatas 50 - 55 Kg', 'C = diatas 55 - 60 Kg', 'D = diatas 60 - 65 Kg', 'E = diatas 65 - 70 Kg', 'F = diatas 70 - 75 Kg', 'G = diatas 75 - 80 Kg', 'H = diatas 80 - 85 Kg', 'I = diatas 85 - 90 Kg', 'J = diatas 90 - 95 Kg', 'OPEN 1 = diatas 95 - 110 kg', 'OPEN 2 = diatas 100 kg'],
+                ['Tunggal', 'Ganda', 'Regu', 'Tunggal Bebas', 'Perseorangan', 'Berpasangan', 'Berkelompok']
+            )
         ];
 
-        // PROSES DATA DAN SIAPKAN UNTUK INSERT
-        foreach ($dataLengkap as $usiaNama => $kategori) {
-            if (!isset($usiaIds[$usiaNama])) continue;
-            
-            $usiaId = $usiaIds[$usiaNama];
-
-            foreach ($kategori as $jenisKey => $kelasArray) {
+        foreach ($allPossibleClasses as $usiaNama => $kelasArray) {
+            if (isset($usiaIds[$usiaNama])) {
+                $usiaId = $usiaIds[$usiaNama];
                 foreach ($kelasArray as $namaKelas) {
-                    $namaFinal = ($jenisKey === 'tanding_putra' ? 'Putra ' : ($jenisKey === 'tanding_putri' ? 'Putri ' : '')) . $namaKelas;
-                    
-                    // Gunakan 'firstOrCreate' like logic untuk menghindari duplikat nama kelas
-                    // Ini tidak efisien di seeder, jadi kita akan filter manual
-                    $exists = false;
-                    foreach ($dataToInsert as $existingData) {
-                        if ($existingData['nama_kelas'] === $namaFinal && $existingData['rentang_usia_id'] === $usiaId) {
-                            $exists = true;
-                            break;
-                        }
-                    }
-
-                    if (!$exists) {
-                         $dataToInsert[] = ['nama_kelas' => $namaFinal, 'rentang_usia_id' => $usiaId];
-                    }
+                    $dataToInsert[] = ['nama_kelas' => $namaKelas, 'rentang_usia_id' => $usiaId];
                 }
             }
         }
         
-        // TENTUKAN JUMLAH PEMAIN & TAMBAHKAN TIMESTAMPS
-        foreach ($dataToInsert as &$data) {
+        // Hapus duplikat berdasarkan 'nama_kelas' dan 'rentang_usia_id'
+        $uniqueData = collect($dataToInsert)->unique(function ($item) {
+            return $item['nama_kelas'].$item['rentang_usia_id'];
+        })->all();
+        
+        $finalData = [];
+        foreach ($uniqueData as $data) {
             $namaKelasLower = strtolower($data['nama_kelas']);
             $jumlahPemain = 1;
-            if (str_contains($namaKelasLower, 'ganda')) $jumlahPemain = 2;
-            elseif (str_contains($namaKelasLower, 'regu')) $jumlahPemain = 3;
+            if (str_contains($namaKelasLower, 'ganda') || str_contains($namaKelasLower, 'berpasangan')) {
+                $jumlahPemain = 2;
+            } elseif (str_contains($namaKelasLower, 'regu') || str_contains($namaKelasLower, 'berkelompok')) {
+                $jumlahPemain = 3;
+            }
 
-            $data['jumlah_pemain'] = $jumlahPemain;
-            $data['created_at'] = now();
-            $data['updated_at'] = now();
+            $finalData[] = [
+                'nama_kelas' => $data['nama_kelas'],
+                'rentang_usia_id' => $data['rentang_usia_id'],
+                'jumlah_pemain' => $jumlahPemain,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
         }
 
-        DB::table('kelas')->insert($dataToInsert);
+        DB::table('kelas')->insert($finalData);
     }
 }

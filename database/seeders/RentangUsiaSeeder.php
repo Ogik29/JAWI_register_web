@@ -8,25 +8,22 @@ use Illuminate\Support\Facades\Schema;
 
 class RentangUsiaSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     *
-     * @return void
-     */
     public function run()
     {
-        // Menangani Foreign Key Constraint
         Schema::disableForeignKeyConstraints();
         DB::table('rentang_usia')->truncate();
         Schema::enableForeignKeyConstraints();
 
         $daftarRentangUsia = [
-            ['rentang_usia' => 'Pra Usia Dini (Dibawah 5 Tahun)'], // <-- DATA BARU
-            ['rentang_usia' => 'Usia Dini 1 (5-8 Tahun)'],
-            ['rentang_usia' => 'Usia Dini 2 (8-11 Tahun)'],
-            ['rentang_usia' => 'Pra Remaja (11-14 Tahun)'],
-            ['rentang_usia' => 'Remaja (13-17 Tahun)'],
-            ['rentang_usia' => 'Dewasa (17-23 Tahun)'],
+            // Sesuai dengan gambar terbaru
+            ['rentang_usia' => 'Pra Usia Dini (<= 5 tahun)'],
+            ['rentang_usia' => 'Usia Dini 1 (> 5 s.d 8 tahun)'],
+            ['rentang_usia' => 'Usia Dini 2 (> 8 s.d 11 tahun)'],
+            ['rentang_usia' => 'Pra Remaja (> 11 s.d 14 tahun)'],
+            ['rentang_usia' => 'Remaja (> 14 s.d 17 tahun)'],
+            ['rentang_usia' => 'Dewasa (> 17 s.d 35 tahun)'],
+            ['rentang_usia' => 'Master A (> 35 s.d 45 tahun)'],
+            ['rentang_usia' => 'Master B (> 45 tahun ke atas)'],
         ];
 
         // Tambahkan timestamp

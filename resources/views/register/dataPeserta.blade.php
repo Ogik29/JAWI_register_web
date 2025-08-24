@@ -92,10 +92,10 @@
                                     <th style="width: 15%;">Kontingen</th>
                                     {{-- <th style="width: 10%;">Kontak</th> --}}
                                     <th style="width: 10%;">Jenis</th>
-                                    {{-- <th style="width: 10%;">Kelas</th> --}}
-                                    {{-- <th style="width: 5%;">Usia</th> --}}
+                                    <th style="width: 10%;">Kelas</th>
+                                    <th style="width: 10%;">Tgl Lahir</th>
                                     <th style="width: 10%;">Tgl Daftar</th>
-                                    <th style="width: 5%;">Aksi</th>
+                                    <th style="width: 10%;">gender</th>
                                 </tr>
                             </thead>
                             <tbody id="participantTableBody"></tbody>
@@ -185,8 +185,10 @@
                         <td class="text-start">${p.event}</td>
                         <td class="text-start">${p.kontingen}</td>
                         <td>${jenisBadge}</td>
+                        <td>${p.kelas}</td>
+                        <td>${formatDate(p.tanggalLahir)} (${p.usia} Tahun)</td>
                         <td>${formatDate(p.tanggalDaftar)}</td>
-                        <td><button class="btn btn-sm btn-outline-primary" onclick="showDetail(${p.id})" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
+                        <td>${p.jenisKelamin}</td>
                     </tr>
                 `;
             }).join('');

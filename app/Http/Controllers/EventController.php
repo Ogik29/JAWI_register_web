@@ -311,69 +311,72 @@ class EventController extends Controller
 
     public function show_invoice($contingent_id)
     {
-        // 1. Ambil kontingen dan relasinya yang dibutuhkan
-        $contingent = Contingent::findOrFail($contingent_id);
+         // 1. Ambil kontingen dan relasinya yang dibutuhkan
+        $contingent = Contingent::with('event')->findOrFail($contingent_id);
 
         // =================================================================
-        // PERUBAHAN UTAMA: Filter pemain agar hanya yang berstatus 0 (Belum Bayar)
+        // PERBAIKAN KUNCI: Eager loading relasi bersarang dengan sintaks yang benar
         // =================================================================
         $unpaidPlayers = $contingent->players()
-            ->where('status', 0)
-            ->with('kelasPertandingan.kelas')
+            ->where('status', 0) // Ganti '0' jika status "Belum Bayar" Anda berbeda
+            ->with([
+                // Cara benar untuk memuat beberapa relasi dalam satu 'level'
+                // dan relasi yang lebih dalam (nested)
+                'kelasPertandingan.kelas.rentangUsia',
+                'kelasPertandingan.kategoriPertandingan',
+                'kelasPertandingan.jenisPertandingan',
+
+            ])
             ->get();
 
         $invoiceItems = [];
         $totalHarga = 0;
 
-        // Langkah A: Kelompokkan pemain yang BELUM BAYAR berdasarkan kelas_pertandingan_id mereka
+        // Langkah A: Kelompokkan pemain (logika ini tidak diubah)
         $playersByClass = $unpaidPlayers->groupBy('kelas_pertandingan_id');
 
-        // Langkah B: Proses setiap grup kelas satu per satu
+        // Langkah B: Proses setiap grup (logika ini tidak diubah)
         foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {
-
-            // Ambil detail kelas dari pemain pertama (semua sama dalam grup ini)
             $firstPlayer = $playersInClass->first();
-            if (!$firstPlayer) continue; // Lewati jika grup kosong
+            if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
+                continue;
+            }
 
             $classDetails = $firstPlayer->kelasPertandingan;
             $hargaPerPendaftaran = $classDetails->harga;
-            // Ambil jumlah pemain yang dibutuhkan per pendaftaran (misal: 1 untuk tunggal, 2 untuk ganda)
-            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1; // Default ke 1 jika null
+            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
 
-            // Langkah C: Hitung berapa banyak pendaftaran terpisah yang dibuat untuk kelas ini
             $jumlahPemainTotal = $playersInClass->count();
-            // Gunakan ceil() untuk membulatkan ke atas jika ada data ganjil
             $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran);
 
-            // Ambil semua nama dan ID pemain untuk didistribusikan
             $allPlayerNames = $playersInClass->pluck('name')->all();
             $allPlayerIds = $playersInClass->pluck('id')->all();
 
-            // Langkah D: Buat satu baris invoice untuk setiap pendaftaran
             for ($i = 0; $i < $jumlahPendaftaran; $i++) {
-
-                // "Potong" array nama & ID untuk pendaftaran saat ini
                 $offset = $i * $pemainPerPendaftaran;
                 $pemainUntukItemIni = array_slice($allPlayerNames, $offset, $pemainPerPendaftaran);
                 $idUntukItemIni = array_slice($allPlayerIds, $offset, $pemainPerPendaftaran);
 
-                // Buat entri baru di invoice
+                if (empty($pemainUntukItemIni)) continue;
+                
                 $invoiceItems[] = [
-                    'nama_kelas' => $classDetails->kelas->nama_kelas,
-                    'gender' => $classDetails->gender,
+                    'nama_kelas'        => $classDetails->kelas->nama_kelas,
+                    'gender'            => $classDetails->gender,
+                    'rentang_usia'      => $classDetails->kelas->rentangUsia->rentang_usia,
+                    'kategori'          => $classDetails->kategoriPertandingan->nama_kategori,
+                    'jenis'             => $classDetails->jenisPertandingan->nama_jenis,
                     'harga_per_pendaftaran' => $hargaPerPendaftaran,
-                    'jumlah_pemain' => count($pemainUntukItemIni),
-                    'nama_pemain' => $pemainUntukItemIni,
-                    'player_ids' => $idUntukItemIni,
+                    'jumlah_pemain'     => count($pemainUntukItemIni),
+                    'nama_pemain'       => $pemainUntukItemIni,
+                    'player_ids'        => $idUntukItemIni,
                 ];
 
-                // Tambahkan harga ke total untuk setiap pendaftaran
                 $totalHarga += $hargaPerPendaftaran;
             }
         }
 
         // 3. Kirim data yang sudah terstruktur dengan benar ke view
-        return view('invoice.invoice', [
+        return view('invoice.invoice', [ // Pastikan path view sudah benar
             'contingent' => $contingent,
             'invoiceItems' => $invoiceItems,
             'totalHarga' => $totalHarga,

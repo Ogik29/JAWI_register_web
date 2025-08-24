@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice - {{ $contingent->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    {{-- PERUBAHAN: Menambahkan support untuk plugin tailwind typography --}}
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -18,14 +17,6 @@
 </head>
 <body class="bg-gray-50 min-h-screen py-8">
     <div class="max-w-4xl mx-auto px-4">
-
-        <!-- Tombol Kembali ke Riwayat -->
-        <div class="mb-4 text-right">
-            <a href="{{ route('history') }}" class="inline-block bg-gray-800 text-white px-6 py-2 rounded-lg hover:bg-gray-900 transition-colors shadow-sm font-medium">
-                &larr; Kembali ke Riwayat
-            </a>
-        </div>
-
 
         @if (session('success'))
             <div id="alert-success" class="flex items-center p-4 mb-4 text-green-800 rounded-lg bg-green-100 border border-green-400" role="alert">
@@ -50,9 +41,7 @@
                         <p class="text-neutral-100 text-sm">{{ $contingent->event->lokasi }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">
-                            #INV-{{ $contingent->id }}-{{ now()->format('Ymd') }}
-                        </div>
+                        <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">#INV-{{ $contingent->id }}-{{ now()->format('Ymd') }}</div>
                         <p class="text-neutral-100 text-sm mt-2">Tanggal: {{ now()->translatedFormat('d F Y') }}</p>
                         <p class="text-neutral-100 text-sm">Jatuh Tempo: {{ now()->addDays(14)->translatedFormat('d F Y') }}</p>
                     </div>
@@ -64,17 +53,11 @@
                 <div class="grid md:grid-cols-2 gap-8">
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Tagihan Kepada:</h3>
-                        <div class="text-gray-600">
-                            <p class="font-medium text-gray-800">{{ $contingent->name }}</p>
-                            <p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p>
-                        </div>
+                        <div class="text-gray-600"><p class="font-medium text-gray-800">{{ $contingent->name }}</p><p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p></div>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Detail CP & Rek Pembayaran:</h3>
-                        {{-- Class 'prose' digunakan untuk styling otomatis konten HTML dari database --}}
-                        <div class="text-gray-600 prose prose-sm max-w-none">
-                            {!! $contingent->event->cp !!}
-                        </div>
+                        <div class="text-gray-600 prose prose-sm max-w-none">{!! $contingent->event->cp !!}</div>
                     </div>
                 </div>
             </div>
@@ -84,19 +67,18 @@
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b-2 border-gray-200">
-                                <th class="text-left py-3 px-2 font-semibold text-gray-800">Deskripsi</th>
-                                <th class="text-center py-3 px-2 font-semibold text-gray-800">Jumlah Pemain</th>
-                                <th class="text-right py-3 px-2 font-semibold text-gray-800">Harga Kelas</th>
-                                <th class="text-right py-3 px-2 font-semibold text-gray-800">Total</th>
-                            </tr>
+                            <tr class="border-b-2 border-gray-200"><th class="text-left py-3 px-2 font-semibold text-gray-800">Deskripsi</th><th class="text-center py-3 px-2 font-semibold text-gray-800">Jumlah Pemain</th><th class="text-right py-3 px-2 font-semibold text-gray-800">Harga Kelas</th><th class="text-right py-3 px-2 font-semibold text-gray-800">Total</th></tr>
                         </thead>
                         <tbody>
                             @forelse ($invoiceItems as $item)
                             <tr class="border-b border-gray-100">
                                 <td class="py-4 px-2">
                                     <div class="font-medium text-gray-800">{{ $item['nama_kelas'] }} ({{ $item['gender'] }})</div>
-                                    <div class="text-sm text-gray-500">
+                                    {{-- PERUBAHAN: Menampilkan detail tambahan --}}
+                                    <div class="text-xs text-gray-500">
+                                        {{ $item['rentang_usia'] }} • {{ $item['kategori'] }} / {{ $item['jenis'] }}
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-1">
                                         Pemain: {{ implode(', ', $item['nama_pemain']) }}
                                     </div>
                                 </td>
@@ -105,9 +87,7 @@
                                 <td class="text-right py-4 px-2 font-medium text-gray-800">Rp {{ number_format($item['harga_per_pendaftaran'], 0, ',', '.') }}</td>
                             </tr>
                             @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data pendaftaran yang perlu dibayar.</td>
-                            </tr>
+                            <tr><td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data pendaftaran yang perlu dibayar.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -116,9 +96,7 @@
                 <!-- Totals -->
                 <div class="mt-8 flex justify-end">
                     <div class="w-full max-w-sm">
-                        @php
-                            $grandTotal = $totalHarga;
-                        @endphp
+                        @php $grandTotal = $totalHarga; @endphp
                         <div class="flex justify-between py-2 border-b border-gray-200">
                             <span class="text-gray-600">Subtotal:</span>
                             <span class="font-medium">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
@@ -136,9 +114,8 @@
             <div class="bg-gray-50 p-8 border-t border-gray-200">
                 <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
                 
-                <form action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
+                <form id="paymentForm" action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
                     @csrf
-                    
                     <input type="hidden" name="total_price" value="{{ $grandTotal }}">
                     <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">
 
@@ -151,7 +128,6 @@
                         @endforeach
                     @endforeach
 
-                    <!-- Upload Area (Visual) -->
                     <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
                         <div id="uploadContent">
                             <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -167,8 +143,11 @@
                         </div>
                     </div>
                     <input type="file" name="foto_invoice" id="fileInput" class="hidden" accept="image/*,.pdf" required />
-                    <div class="mt-6 text-center">
-                        <button id="submitProof" type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Kirim Bukti Transfer</button>
+                    
+                    {{-- PERUBAHAN: Tata letak tombol dipindah dan diubah --}}
+                    <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
+                        <a href="{{ route('history') }}" class="w-full sm:w-auto text-center bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors">&larr; Kembali ke Riwayat</a>
+                        <button id="submitProof" type="submit" class="w-full sm:w-auto bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Kirim Bukti Transfer</button>
                     </div>
                 </form>
             </div>
@@ -192,7 +171,7 @@
         const fileSize = document.getElementById('fileSize');
         const removeFile = document.getElementById('removeFile');
         const submitProof = document.getElementById('submitProof');
-        const form = submitProof.closest('form');
+        const form = document.getElementById('paymentForm');
 
         if(uploadArea) {
             uploadArea.addEventListener('click', () => fileInput.click());
@@ -206,12 +185,10 @@
                 const files = e.dataTransfer.files;
                 if (files.length > 0) handleFile(files[0]);
             });
-
             fileInput.addEventListener('change', (e) => {
                 if (e.target.files.length > 0) handleFile(e.target.files[0]);
             });
         }
-
 
         function handleFile(file) {
             if (file.size > 5 * 1024 * 1024) {
@@ -223,12 +200,16 @@
                 alert('Format file tidak didukung! Gunakan JPG, PNG, atau PDF.');
                 return;
             }
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onload = (e) => { imagePreview.src = e.target.result; showPreview(file); };
                 reader.readAsDataURL(file);
             } else {
-                imagePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQwIDhIMTJDOS43OTA4NiA4IDggOS43OTA4NiA4IDEyVjUyQzggNTQuMjA5MSA5Ljc5MDg2IDU2IDEyIDU2SDUyQzU0LjIwOTEgNTYgNTYgNTQuMjA5MSA1NiA1MlYyMEw0MCA4WiIgZmlsbD0iI0Y1NjU2NSIvPgo8cGF0aCBkPSJNNDAgOFYyMEg1NiIgZmlsbD0iI0ZCQkZCRiIvPgo8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaGyPSJtaWRkbGUiPlBERjwvdGV4dD4KPC9zdmc+';
+                imagePreview.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQwIDhIMTJDOS43OTA4NiA4IDggOS43OTA4NiA4IDEyVjUyQzggNTQuMjA5MSA5Ljc5MDg2IDU2IDEyIDU2SDUyQzU0LjIwOTEgNTYgNTYgNTQuMjA5MSA1NiA1MlYyMEw0MCA4WiIgZmlsbD0iI0Y1NjU2NSIvPgo8cGF0aCBkPSJNNDAgOFYyMEg1NiIgZmlsbD0iI0ZCQkZCRiIvPgo8dGV4dCB4PSIzMiIgeT0iNDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlBERjwvdGV4dD4KPC9zdmc+';
                 showPreview(file);
             }
         }
@@ -251,8 +232,15 @@
             });
         }
 
+        // PERUBAHAN: Menambahkan konfirmasi sebelum submit
         if(form) {
             form.addEventListener('submit', function(e) {
+                const isConfirmed = confirm('Apakah Anda yakin data peserta yang tertera di atas sudah benar dan ingin melanjutkan pembayaran?');
+                if (!isConfirmed) {
+                    e.preventDefault(); // Hentikan proses submit form jika user menekan "Cancel"
+                    return false;
+                }
+                // Jika dikonfirmasi, lanjutkan dengan menonaktifkan tombol
                 submitProof.disabled = true;
                 submitProof.textContent = 'Mengirim...';
             });

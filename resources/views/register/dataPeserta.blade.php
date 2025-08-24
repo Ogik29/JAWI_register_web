@@ -90,10 +90,10 @@
                                     <th style="width: 15%;">Nama</th>
                                     <th style="width: 15%;">Event</th>
                                     <th style="width: 15%;">Kontingen</th>
-                                    <th style="width: 10%;">Kontak</th>
+                                    {{-- <th style="width: 10%;">Kontak</th> --}}
                                     <th style="width: 10%;">Jenis</th>
-                                    <th style="width: 10%;">Kelas</th>
-                                    <th style="width: 5%;">Usia</th>
+                                    {{-- <th style="width: 10%;">Kelas</th> --}}
+                                    {{-- <th style="width: 5%;">Usia</th> --}}
                                     <th style="width: 10%;">Tgl Daftar</th>
                                     <th style="width: 5%;">Aksi</th>
                                 </tr>
@@ -184,10 +184,7 @@
                         <td class="text-start"><strong>${p.nama}</strong></td>
                         <td class="text-start">${p.event}</td>
                         <td class="text-start">${p.kontingen}</td>
-                        <td class="text-start"><small><i class="fas fa-envelope me-1"></i>${p.email}</small><br><small><i class="fas fa-phone me-1"></i>${p.telepon}</small></td>
                         <td>${jenisBadge}</td>
-                        <td><strong>${p.kelas.toUpperCase()}</strong></td>
-                        <td>${p.usia}</td>
                         <td>${formatDate(p.tanggalDaftar)}</td>
                         <td><button class="btn btn-sm btn-outline-primary" onclick="showDetail(${p.id})" title="Lihat Detail"><i class="fas fa-eye"></i></button></td>
                     </tr>
@@ -265,12 +262,18 @@
             // Menambahkan info event di modal
             document.getElementById('modalBody').innerHTML = `
                 <div class="row">
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Data Pribadi</h6><table class="table table-borderless"><tr><td><strong>Nama:</strong></td><td>${p.nama}</td></tr><tr><td><strong>NIK:</strong></td><td>${p.nik}</td></tr><tr><td><strong>Gender:</strong></td><td>${p.jenisKelamin}</td></tr><tr><td><strong>Tgl Lahir:</strong></td><td>${formatDate(p.tanggalLahir)} (${p.usia} thn)</td></tr></table></div>
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-address-book me-2"></i>Kontak & Tim</h6><table class="table table-borderless"><tr><td><strong>Email:</strong></td><td>${p.email}</td></tr><tr><td><strong>Telepon:</strong></td><td>${p.telepon}</td></tr><tr><td><strong>Event:</strong></td><td>${p.event}</td></tr><tr><td><strong>Kontingen:</strong></td><td>${p.kontingen}</td></tr></table></div>
+                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Data Pribadi</h6><table class="table table-borderless"><tr><td><strong>Nama:</strong></td><td>${p.nama}</td><tr><td><strong>Gender:</strong></td><td>${p.jenisKelamin}</td></tr><tr><td><strong>Tgl Lahir:</strong></td><td>${formatDate(p.tanggalLahir)} (${p.usia} thn)</td></tr></table></div>
+                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-users me-2"></i>Tim</h6><table class="table table-borderless"><tr><td><strong>Event:</strong></td><td>${p.event}</td></tr><tr><td><strong>Kontingen:</strong></td><td>${p.kontingen}</td></tr><tr><td><strong>Tgl Daftar:</strong></td><td>${formatDate(p.tanggalDaftar)}</td></tr></table></div>
                 </div><hr>
                 <div class="row">
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-trophy me-2"></i>Pertandingan</h6><table class="table table-borderless"><tr><td><strong>Kategori:</strong></td><td>${p.kategori}</td></tr><tr><td><strong>Jenis:</strong></td><td>${p.jenis}</td></tr><tr><td><strong>Kelas:</strong></td><td>${p.kelas.toUpperCase()}</td></tr></table></div>
-                    <div class="col-md-6"><h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Dokumen</h6><table class="table table-borderless"><tr><td><strong>KTP/KK:</strong></td><td>${p.dokumenKTP ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Foto Diri:</strong></td><td>${p.dokumenFoto ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Izin Ortu:</strong></td><td>${p.dokumenIzin ? '<i class="fas fa-check text-success"></i> Tersedia' : '<i class="fas fa-times text-danger"></i> Belum'}</td></tr><tr><td><strong>Tgl Daftar:</strong></td><td>${formatDate(p.tanggalDaftar)}</td></tr></table></div>
+                    <div class="col-md-8">
+                        <h6 class="text-primary"><i class="fas fa-trophy me-2"></i>Pertandingan</h6>
+                        <table class="table table-borderless table-sm">
+                            <tr><td style="width: 100px;"><strong>Kategori:</strong></td><td>${p.kategori}</td></tr>
+                            <tr><td><strong>Jenis:</strong></td><td>${p.jenis}</td></tr>
+                            <tr><td><strong>Kelas:</strong></td><td>${p.kelas.toUpperCase()}</td></tr>
+                        </table>
+                    </div>
                 </div>`;
             new bootstrap.Modal(document.getElementById('detailModal')).show();
         }

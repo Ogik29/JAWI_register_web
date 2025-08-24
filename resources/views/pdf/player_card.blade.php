@@ -1,147 +1,207 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Kartu Peserta - {{ $player->name }}</title>
     <style>
-        @page { margin: 0; }
+        @page {
+            margin: 0;
+            size: 54mm 85.6mm;
+            /* Ukuran standar kartu ID */
+        }
+
+        /* Menggunakan font dasar yang aman untuk PDF */
         body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
             margin: 0;
             padding: 0;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background-color: #212121;
+            /* Warna background gelap */
             color: #ffffff;
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
         }
+
         .card {
-            width: 153pt;  /* 54mm */
-            height: 242.6pt; /* 85.6mm */
+            width: 100%;
+            height: 100%;
             position: relative;
             overflow: hidden;
-            background-color: #1a1a1a; /* Latar belakang gelap jika gambar gagal dimuat */
         }
-        .background {
+
+        .vertical-strip {
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            /* Ganti dengan path ke gambar background Anda jika punya */
-            /* background-image: url({{ public_path('path/to/your/background.jpg') }}); */
-            background-color: #1a1a1a;
-            background-size: cover;
-        }
-        .overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-image: linear-gradient(to top right, rgba(197, 0, 0, 0.85), rgba(0, 0, 0, 0.7));
-        }
-        .logo {
-            position: absolute;
-            top: 10pt;
-            right: 10pt;
+            left: 0;
+            top: 0;
             width: 30pt;
-            height: auto;
+            /* Sedikit diperlebar untuk memberi ruang */
+            height: 100%;
+            background-color: #ad0505;
         }
-        .header-text {
+
+        .vertical-text-container {
+            /* Kontainer untuk mempermudah pemusatan */
             position: absolute;
-            top: 12pt;
-            left: 10pt;
-            text-transform: uppercase;
+            top: 50%;
+            /* left: 15pt; Setengah dari lebar strip */
+            width: 100%;
         }
-        .header-text .event-title {
+
+        .vertical-text {
+            color: white;
             font-size: 8pt;
             font-weight: bold;
-            margin: 0;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
+            text-align: center;
+            text-transform: uppercase;
+            white-space: nowrap;
+            /* Trik pemusatan vertikal setelah rotasi */
+            transform: translateY(-50%) rotate(-90deg);
         }
-        .photo-container {
-            position: absolute;
-            top: 45pt;
-            left: 10pt;
+
+        .main-content {
+            padding: 15pt 15pt 15pt 40pt;
+            /* Jarak dari sisi kiri disesuaikan dengan strip baru */
             text-align: center;
         }
-        .photo {
-            width: 80pt;
-            height: 105pt;
-            border: 3px solid white;
-            border-radius: 5px;
+
+        .title-main {
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 0 0 20pt 0;
+        }
+
+        .photo-section {
+            margin-bottom: 15pt;
+        }
+
+        .photo-circle {
+            width: 70pt;
+            height: 70pt;
+            border-radius: 50%;
+            border: 2.5pt solid white;
+            display: inline-block;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        .photo-img {
+            width: 100%;
+            height: 100%;
             object-fit: cover;
         }
-        .main-details {
-            position: absolute;
-            top: 155pt; /* Posisi di bawah foto */
-            left: 10pt;
-            right: 10pt;
-        }
-        .player-name {
-            font-size: 16pt;
+        
+        .photo-placeholder {
+            width: 100%;
+            height: 100%;
+            display: table-cell;
+            vertical-align: middle;
+            font-size: 10pt;
             font-weight: bold;
-            margin: 0;
-            line-height: 1.1;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            color: #fff;
+            background-color: rgba(0,0,0,0.2);
         }
+
+        .info-section {
+            width: 100%;
+            padding-bottom: 5pt;
+        }
+
+        .player-name {
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        .contingent-name {
+            font-size: 7px;
+            color: #d1d1d1;
+            margin-top: 2pt;
+            text-transform: uppercase;
+        }
+
+        .separator {
+            width: 80%;
+            margin: 12pt auto;
+            border-bottom: 0.5pt solid rgba(255, 255, 255, 0.3);
+        }
+
         .details-table {
             width: 100%;
-            margin-top: 8pt;
-            font-size: 8.5pt;
+            border-collapse: collapse;
         }
+
         .details-table td {
-            padding-bottom: 4pt;
-        }
-        .details-table .label {
-            font-weight: bold;
-            opacity: 0.8;
-            width: 50pt;
+            font-size: 9pt;
+            padding: 4pt 5pt;
             vertical-align: top;
-        }
-        .footer-bar {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: #c50000;
-            padding: 5pt 10pt;
             text-align: center;
-            font-size: 8pt;
+        }
+
+        .detail-label {
+            font-size: 5pt;
+            color: #d1d1d1;
+            display: block;
+            margin-bottom: 2pt;
+            text-transform: uppercase;
+        }
+
+        .detail-value {
             font-weight: bold;
+            font-size: 5pt;
             text-transform: uppercase;
         }
     </style>
 </head>
+
 <body>
     <div class="card">
-        <div class="background"></div>
-        <div class="overlay"></div>
-
-        {{-- Ganti path logo ini jika perlu --}}
-        @if (file_exists(public_path('assets/img/icon/logo-jawi-white.png')))
-            <img src="{{ public_path('assets/img/icon/logo-jawi-white.png') }}" class="logo" alt="Logo">
-        @endif
-
-        <div class="header-text">
-            <p class="event-title">{{ $player->contingent->event->name }}</p>
-        </div>
-        
-        <div class="photo-container">
-            @if ($player->foto_diri && file_exists(public_path(Storage::url($player->foto_diri))))
-                <img src="{{ public_path(Storage::url($player->foto_diri)) }}" alt="Foto Peserta" class="photo">
-            @else
-                <div style="width:80pt; height:105pt; border:3px solid white; border-radius:5px; text-align:center; padding-top:45pt; background:rgba(0,0,0,0.2); font-size:8pt;">FOTO</div>
-            @endif
-        </div>
-        
-        <div class="main-details">
-            <h2 class="player-name">{{ $player->name }}</h2>
-            <table class="details-table">
-                <tr>
-                    <td class="label">KONTINGEN</td>
-                    <td>: {{ $player->contingent->name }}</td>
-                </tr>
-                <tr>
-                    <td class="label">KELAS</td>
-                    <td>: {{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</td>
-                </tr>
-            </table>
+        <div class="vertical-strip">
+            <div class="vertical-text-container">
+                <div class="vertical-text">{{ $player->contingent->event->name ?? 'JAWARA INDONESIA' }}</div>
+            </div>
         </div>
 
-        <div class="footer-bar">
-            JAWARA INDONESIA
+        <div class="main-content">
+            <h1 class="title-main">PESERTA</h1>
+
+            <div class="photo-section">
+                <div class="photo-circle">
+                    @if ($player->foto_diri && file_exists(public_path('storage/' . $player->foto_diri)))
+                        <img src="{{ public_path('storage/' . $player->foto_diri) }}" alt="Foto" class="photo-img">
+                    @else
+                        <div class="photo-placeholder">FOTO</div>
+                    @endif
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <h2 class="player-name">{{ $player->name }}</h2>
+                <p class="contingent-name">{{ $player->contingent->name }}</p>
+
+                <div class="separator"></div>
+
+                <table class="details-table">
+                    <tr>
+                        <td>
+                            <span class="detail-label">Kategori</span>
+                            <span class="detail-value">
+                                @php
+                                    $rentangUsiaText = $player->kelasPertandingan->kelas->rentangUsia->rentang_usia ?? 'UMUM';
+                                    echo strtoupper(explode(' (', $rentangUsiaText)[0]);
+                                @endphp
+                            </span>
+                        </td>
+                        <td>
+                            <span class="detail-label">Kelas</span>
+                            <span class="detail-value">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}, {{ $player->gender }}</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         </div>
     </div>
 </body>

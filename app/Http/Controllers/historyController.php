@@ -27,13 +27,8 @@ class historyController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // =================================================================
-        // LOGIKA BARU: Mengelompokkan pemain untuk setiap kontingen
-        // =================================================================
         foreach ($contingents as $contingent) {
             $groupedPlayers = [];
-
-            // Kelompokkan pemain berdasarkan kelas_pertandingan_id mereka
             $playersByClass = $contingent->players->groupBy('kelas_pertandingan_id');
 
             foreach ($playersByClass as $playersInClass) {
@@ -44,20 +39,18 @@ class historyController extends Controller
                 $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
                 $jumlahPendaftaran = ceil($playersInClass->count() / $pemainPerPendaftaran);
 
-                // Buat "irisan" dari koleksi pemain untuk setiap pendaftaran
                 for ($i = 0; $i < $jumlahPendaftaran; $i++) {
                     $pemainUntukItemIni = $playersInClass->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
-
                     if ($pemainUntukItemIni->isEmpty()) continue;
 
-                    // Tentukan status grup (prioritas: Ditolak > Belum Bayar > Pending > Terverifikasi)
                     $status = 2; // Default Terverifikasi
-                    if ($pemainUntukItemIni->contains('status', 3)) $status = 3; // Ditolak
-                    elseif ($pemainUntukItemIni->contains('status', 0)) $status = 0; // Belum Bayar
-                    elseif ($pemainUntukItemIni->contains('status', 1)) $status = 1; // Pending
+                    if ($pemainUntukItemIni->contains('status', 3)) $status = 3;
+                    elseif ($pemainUntukItemIni->contains('status', 0)) $status = 0;
+                    elseif ($pemainUntukItemIni->contains('status', 1)) $status = 1;
 
-                    // Cari pemain yang memiliki catatan (jika ada) untuk menampilkan ikon info
-                    $playerWithNote = $pemainUntukItemIni->firstWhere('status', 3);
+                    // PERBAIKAN: Mengambil SEMUA pemain yang ditolak & punya catatan
+                    // dan menggunakan key 'rejected_players'
+                    $rejectedPlayersWithNotes = $pemainUntukItemIni->where('status', 3)->whereNotNull('catatan');
 
                     $groupedPlayers[] = [
                         'player_instances' => $pemainUntukItemIni,
@@ -65,14 +58,12 @@ class historyController extends Controller
                         'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
                         'gender' => $classDetails->gender,
                         'status' => $status,
-                        'note_player' => $playerWithNote, // Kirim instance player yang punya catatan
+                        'rejected_players' => $rejectedPlayersWithNotes, // Menggunakan key yang benar
                     ];
                 }
             }
-            // Tambahkan hasil pengelompokan ke objek kontingen
             $contingent->displayPlayers = $groupedPlayers;
         }
-
 
         return view('historyContingent.index', [
             'contingents' => $contingents
@@ -92,80 +83,55 @@ class historyController extends Controller
                 'max:255',
                 Rule::unique('contingent')->where('event_id', $contingent->event_id)->ignore($contingent->id),
             ],
-            // Add validation for the new optional file uploads
             'surat_rekomendasi' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:2048',
             'foto_invoice' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
         ], [
             'name.unique' => 'Nama kontingen ini sudah ada di event ini. Gunakan nama lain.',
         ]);
 
-        // Update name
         $contingent->name = $request->name;
 
-        // Handle Surat Rekomendasi upload
         if ($request->hasFile('surat_rekomendasi')) {
-            // Delete old file if it exists
             if ($contingent->surat_rekomendasi) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($contingent->surat_rekomendasi);
+                Storage::disk('public')->delete($contingent->surat_rekomendasi);
             }
-            // Store the new file
             $contingent->surat_rekomendasi = $request->file('surat_rekomendasi')->store('contingent', 'public');
         }
 
-        // Handle Foto Invoice upload
         if ($request->hasFile('foto_invoice')) {
             $transaction = $contingent->transactions()->first();
             if ($transaction) {
-                // Delete old file if it exists
                 if ($transaction->foto_invoice) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($transaction->foto_invoice);
+                    Storage::disk('public')->delete($transaction->foto_invoice);
                 }
-                // Store the new file and update the transaction
                 $transaction->foto_invoice = $request->file('foto_invoice')->store('invoices', 'public');
                 $transaction->save();
             }
         }
 
-        // Jika statusnya 'ditolak' (2), ubah kembali menjadi 'pending' (0)
         if ($contingent->status == 2) {
             $contingent->status = 0;
         }
 
         $contingent->save();
-
         return redirect()->route('history')->with('status', 'Data kontingen berhasil diperbarui.');
     }
 
     public function editPlayer(Player $player)
     {
-        // Otorisasi: pastikan user pemilik kontingen yang mengakses
         if ($player->contingent->user_id !== Auth::id()) {
             abort(403);
         }
 
         $event = $player->contingent->event;
-
-        // Ambil semua data master untuk filter, sama seperti di halaman registrasi
         $kategoriPertandingan = KategoriPertandingan::all();
         $jenisPertandingan = JenisPertandingan::all();
         $rentangUsia = RentangUsia::all();
-
-        // [FIX] Query untuk mengambil kelas yang tersedia dengan JOIN
         $availableClasses = KelasPertandingan::where('kelas_pertandingan.event_id', $event->id)
             ->join('kelas', 'kelas_pertandingan.kelas_id', '=', 'kelas.id')
-            ->select(
-                'kelas_pertandingan.id as kelas_pertandingan_id',
-                'kelas.nama_kelas', // Mengambil nama_kelas dari tabel 'kelas'
-                'kelas_pertandingan.gender',
-                'kelas.rentang_usia_id',
-                'kelas_pertandingan.kategori_pertandingan_id',
-                'kelas_pertandingan.jenis_pertandingan_id'
-            )
+            ->select('kelas_pertandingan.id as kelas_pertandingan_id', 'kelas.nama_kelas', 'kelas_pertandingan.gender', 'kelas.rentang_usia_id', 'kelas_pertandingan.kategori_pertandingan_id', 'kelas_pertandingan.jenis_pertandingan_id')
             ->get();
 
-        // =================================================================
-        // LOGIKA BARU: Cari rekan satu tim
-        // =================================================================
         $teammates = Player::where('contingent_id', $player->contingent_id)
             ->where('kelas_pertandingan_id', $player->kelas_pertandingan_id)
             ->where('id', '!=', $player->id)
@@ -178,18 +144,16 @@ class historyController extends Controller
             'jenisPertandingan',
             'rentangUsia',
             'availableClasses',
-            'teammates' // <-- Kirim data teammates ke view
+            'teammates'
         ));
     }
 
     public function updatePlayer(Request $request, Player $player)
     {
-        // Otorisasi
         if ($player->contingent->user_id !== Auth::id()) {
             abort(403);
         }
 
-        // Validasi, tambahkan kelas_pertandingan_id
         $request->validate([
             'name' => 'required|string|max:255',
             'nik' => 'required|string|size:16',
@@ -201,33 +165,29 @@ class historyController extends Controller
             'foto_persetujuan_ortu' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ]);
 
-        // Update data teks
         $player->update($request->except(['foto_ktp', 'foto_diri', 'foto_persetujuan_ortu']));
 
-        // Handle file uploads (jika ada file baru)
         if ($request->hasFile('foto_ktp')) {
-            if ($player->foto_ktp) \Illuminate\Support\Facades\Storage::disk('public')->delete($player->foto_ktp);
+            if ($player->foto_ktp) Storage::disk('public')->delete($player->foto_ktp);
             $player->foto_ktp = $request->file('foto_ktp')->store('player_documents', 'public');
         }
 
         if ($request->hasFile('foto_diri')) {
-            if ($player->foto_diri) \Illuminate\Support\Facades\Storage::disk('public')->delete($player->foto_diri);
+            if ($player->foto_diri) Storage::disk('public')->delete($player->foto_diri);
             $player->foto_diri = $request->file('foto_diri')->store('player_documents', 'public');
         }
 
         if ($request->hasFile('foto_persetujuan_ortu')) {
-            if ($player->foto_persetujuan_ortu) \Illuminate\Support\Facades\Storage::disk('public')->delete($player->foto_persetujuan_ortu);
+            if ($player->foto_persetujuan_ortu) Storage::disk('public')->delete($player->foto_persetujuan_ortu);
             $player->foto_persetujuan_ortu = $request->file('foto_persetujuan_ortu')->store('player_documents', 'public');
         }
 
-        // Jika statusnya Ditolak (3), ubah kembali menjadi Pending (1) setelah diedit
         if ($player->status == 3) {
             $player->status = 1;
         }
 
         $player->save();
 
-        // Jika kontingen induknya ditolak (2), ubah juga statusnya menjadi pending (0)
         $contingent = $player->contingent;
         if ($contingent->status == 2) {
             $contingent->status = 0;
@@ -239,26 +199,45 @@ class historyController extends Controller
 
     public function destroyPlayer(Player $player)
     {
-        // Otorisasi: Pastikan user yang login adalah pemilik kontingen
         if ($player->contingent->user_id !== Auth::id()) {
             abort(403, 'Anda tidak memiliki hak untuk menghapus peserta ini.');
         }
 
-        if ($player->foto_ktp) {
-            Storage::disk('public')->delete($player->foto_ktp);
-        }
-        if ($player->foto_diri) {
-            Storage::disk('public')->delete($player->foto_diri);
-        }
-        if ($player->foto_persetujuan_ortu) {
-            Storage::disk('public')->delete($player->foto_persetujuan_ortu);
-        }
+        if ($player->foto_ktp) Storage::disk('public')->delete($player->foto_ktp);
+        if ($player->foto_diri) Storage::disk('public')->delete($player->foto_diri);
+        if ($player->foto_persetujuan_ortu) Storage::disk('public')->delete($player->foto_persetujuan_ortu);
 
-        // Hapus record player dari database
         $player->delete();
-
         return redirect()->route('history')->with('status', 'Data peserta berhasil dihapus.');
     }
+
+    // public function printCard(Player $player)
+    // {
+    //     if ($player->contingent->user_id !== Auth::id()) {
+    //         abort(403, 'Akses ditolak.');
+    //     }
+
+    //     if ($player->status != 2) {
+    //         return redirect('/history')->with('status', 'Tunggu sampai pemain diverifikasi terlebih dahulu!');
+    //     }
+
+    //     // PERBAIKAN UTAMA: Eager Load semua relasi yang dibutuhkan oleh view
+    //     $player->load([
+    //         'contingent.event',
+    //         'kelasPertandingan.kelas.rentangUsia'
+    //     ]);
+
+    //     $data = ['player' => $player];
+
+    //     $pdf = Pdf::loadView('pdf.player_card', $data);
+
+    //     // Ukuran kertas custom yang proporsional seperti kartu (misal: 9cm x 14cm)
+    //     // Ukuran dalam points (1pt = 1/72 inch). 9cm ≈ 255pt, 14cm ≈ 397pt
+    //     $customPaper = array(0, 0, 255, 397);
+    //     $pdf->setPaper($customPaper, 'portrait');
+
+    //     return $pdf->stream('kartu-peserta-' . $player->name . '.pdf');
+    // }
 
     public function printCard(Player $player)
     {
@@ -280,7 +259,7 @@ class historyController extends Controller
 
         // ukuran kertas seukuran KTP potret
         // Format: [x, y, width, height] dalam points
-        $customPaper = array(0, 0, 153.00, 242.60);
+        $customPaper = array(0, 0, 255, 397);
         $pdf->setPaper($customPaper, 'portrait');
 
         // Tampilkan PDF di browser

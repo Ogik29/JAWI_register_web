@@ -151,14 +151,9 @@
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Daftar Peserta</h5>
                                         <div class="d-flex flex-wrap gap-2 justify-content-end">
-                                            {{-- ================================================================= --}}
-                                            {{-- PERUBAHAN: Kondisi untuk menampilkan/menyembunyikan tombol --}}
-                                            {{-- ================================================================= --}}
                                             @if ($contingent->status == 1 && $contingent->players->where('status', 1)->count() == 0)
-                                                {{-- Tampilkan tombol jika kontingen aktif DAN tidak ada player yang statusnya pending --}}
                                                 <a href="{{ route('peserta.event', $contingent->id) }}" class="btn btn-info"><i class="bi bi-plus-circle"></i> Tambah Peserta</a>
                                             @elseif ($contingent->status == 1)
-                                                {{-- Tampilkan tombol disabled jika kontingen aktif TAPI ADA player yang statusnya pending --}}
                                                 <div class="text-end">
                                                     <button class="btn btn-info" disabled title="Selesaikan verifikasi atlet yang ada terlebih dahulu.">
                                                         <i class="bi bi-plus-circle"></i> Tambah Peserta
@@ -184,8 +179,15 @@
                                                             @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
                                                             
-                                                            @if ($registration['note_player'])
-                                                                <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $registration['note_player']->id }}"><i class="bi bi-info-circle-fill"></i></button>
+                                                            {{-- ========================================================== --}}
+                                                            {{-- PERBAIKAN: Loop untuk setiap catatan pemain yang ditolak --}}
+                                                            {{-- ========================================================== --}}
+                                                            @if ($registration['rejected_players']->isNotEmpty())
+                                                                @foreach($registration['rejected_players'] as $rejectedPlayer)
+                                                                    <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $rejectedPlayer->id }}" title="Lihat catatan untuk {{ $rejectedPlayer->name }}">
+                                                                        <i class="bi bi-info-circle-fill text-danger"></i>
+                                                                    </button>
+                                                                @endforeach
                                                             @endif
                                                         </td>
                                                         <td>

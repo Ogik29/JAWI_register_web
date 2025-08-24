@@ -12,12 +12,14 @@ class adminController extends Controller
 {
     /**
      * Helper function to group players into their respective teams (ganda, regu, etc.).
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $players
+     * @return array
      */
     private function groupPlayers($players)
     {
         $groupedRegistrations = [];
 
-        // Group players by a unique team identifier: "contingentId-classId"
         $playersByTeam = $players->groupBy(function ($player) {
             return $player->contingent_id . '-' . $player->kelas_pertandingan_id;
         });
@@ -44,7 +46,6 @@ class adminController extends Controller
                     'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
                     'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
                     'gender' => $classDetails->gender,
-                    // We can take the status from the first player as it's the same for the whole query set
                     'status' => $firstPlayer->status,
                 ];
             }
@@ -52,68 +53,72 @@ class adminController extends Controller
         return $groupedRegistrations;
     }
 
+    /**
+     * Display the admin dashboard.
+     *
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         $admin = Auth::user();
         $managedEventIds = $admin->eventRoles->pluck('event_id');
 
-        // --- Data for Dashboard & "Kelola Event" Section ---
         $eventsQuery = Event::whereIn('id', $managedEventIds);
         $events = (clone $eventsQuery)->withCount('players')->latest()->get();
         $activeEvents = (clone $eventsQuery)->where('status', 1)->latest()->take(5)->get();
 
-        // --- Data for Verification Tables (Pending) ---
-        $contingentsForVerification = Contingent::with(['user', 'event', 'players', 'transactions'])
+        $playerRelations = [
+            'contingent.event',
+            'playerInvoice',
+            'kelasPertandingan.kelas.rentangUsia',
+            'kelasPertandingan.kategoriPertandingan',
+            'kelasPertandingan.jenisPertandingan'
+        ];
+
+        $contingentsForVerification = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
-            ->where('status', 0) // 0 = Menunggu Verifikasi
+            ->where('status', 0)
             ->latest()
             ->get();
 
-        $playersForVerification = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
+        $playersForVerification = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 1) // 1 = Pending
+            ->where('status', 1)
             ->latest()
             ->get();
 
-        // --- Data for Approved Lists Tables ---
-        $approvedPlayers = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
-            ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 2) // 2 = Terverifikasi
-            ->latest()
-            ->get();
-
-        $approvedContingents = Contingent::with(['user', 'event', 'players'])
+        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas'])
             ->whereIn('event_id', $managedEventIds)
-            ->where('status', 1) // 1 = Disetujui
+            ->where('status', 1)
             ->latest()
             ->get();
 
-        // --- Data for Rejected Lists Tables ---
-        $rejectedContingents = Contingent::with(['user', 'event', 'players', 'transactions'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 2) // 2 = Ditolak
-            ->latest()
-            ->get();
-
-        $rejectedPlayers = Player::with(['contingent.event', 'kelasPertandingan.kelas', 'playerInvoice'])
+        $approvedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 3) // 3 = Ditolak
+            ->where('status', 2)
             ->latest()
             ->get();
 
-        // =================================================================
-        // LOGIKA BARU: MENGELOMPOKKAN SEMUA DATA PEMAIN
-        // =================================================================
+        $rejectedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('status', 2)
+            ->latest()
+            ->get();
+
+        $rejectedPlayers = Player::with($playerRelations)
+            ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
+            ->where('status', 3)
+            ->latest()
+            ->get();
+
         $groupedPlayersForVerification = $this->groupPlayers($playersForVerification);
         $groupedApprovedPlayers = $this->groupPlayers($approvedPlayers);
         $groupedRejectedPlayers = $this->groupPlayers($rejectedPlayers);
 
-
-        // --- Data for Dashboard Cards ---
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
         $pendingContingentsCount = $contingentsForVerification->count();
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
-        $pendingPlayersCount = $playersForVerification->count(); // Count original players, not groups
+        $pendingPlayersCount = $playersForVerification->count();
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -125,33 +130,60 @@ class adminController extends Controller
             'totalContingents',
             'pendingPlayersCount',
             'rejectedContingents',
-            // --- KIRIM DATA YANG SUDAH DI-GROUP ---
             'groupedPlayersForVerification',
             'groupedApprovedPlayers',
             'groupedRejectedPlayers'
         ));
     }
 
+    /**
+     * Verify or reject a contingent.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Contingent $contingent
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function verifyContingent(Request $request, Contingent $contingent)
     {
         $this->authorizeAdminAction($contingent->event_id);
-        $request->validate(['action' => 'required|in:approve,reject', 'catatan' => 'nullable|string']);
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'catatan' => 'nullable|string|required_if:action,reject'
+        ]);
+
         $contingent->status = ($request->action == 'approve') ? 1 : 2;
         $contingent->catatan = ($request->action == 'approve') ? null : $request->catatan;
         $contingent->save();
         return redirect()->route('adminIndex')->with('status', 'Verifikasi kontingen berhasil diproses.');
     }
 
+    /**
+     * Verify or reject a player.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\Player $player
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function verifyPlayer(Request $request, Player $player)
     {
         $this->authorizeAdminAction($player->contingent->event_id);
-        $request->validate(['action' => 'required|in:approve,reject', 'catatan' => 'nullable|string']);
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'catatan' => 'nullable|string|required_if:action,reject'
+        ]);
+
         $player->status = ($request->action == 'approve') ? 2 : 3;
         $player->catatan = ($request->action == 'approve') ? null : $request->catatan;
         $player->save();
         return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet berhasil diproses.');
     }
 
+    /**
+     * Authorize that the admin has access to the given event.
+     *
+     * @param int $event_id
+     * @return void
+     */
     private function authorizeAdminAction($event_id)
     {
         $adminEventIds = Auth::user()->eventRoles->pluck('event_id')->toArray();

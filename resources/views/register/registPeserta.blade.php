@@ -48,6 +48,10 @@
         <div class="athlete-header"><h5 class="mb-0 athlete-title"><i class="fas fa-ticket-alt me-2"></i>Pendaftaran Kelas #__COUNT__</h5><button type="button" class="btn btn-sm btn-outline-light remove-card-btn"><i class="fas fa-trash me-1"></i>Hapus</button></div>
         <div class="p-4">
             <h5 class="text-danger mb-3">Filter Pilihan Kelas</h5>
+            <div class="alert alert-secondary">
+                <i class="fas fa-lock me-2"></i>
+                Setelah peserta ditambahkan, kelas pertandingan tidak dapat diubah, mohon untuk diteliti terlebih dahulu sebelum memilih kelas. Untuk mengganti kelas, silakan hapus peserta ini dan daftarkan kembali dengan kelas yang benar.
+            </div>
             <div class="row filter-controls">
                 <div class="col-md-3 mb-3"><label class="form-label fw-bold">1. Rentang Usia</label><div class="rentang-usia-options"></div></div>
                 <div class="col-md-3 mb-3"><label class="form-label fw-bold">2. Kategori</label><div class="kategori-options"></div></div>

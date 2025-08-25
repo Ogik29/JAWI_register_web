@@ -252,7 +252,11 @@
                                                 <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
                                             @endif
                                         </div>
-                                        @if ($contingent->event->harga_contingent > 0 && $contingent->status == 3)
+                                        @php
+                                            // Ambil transaksi pertama untuk kontingen ini
+                                            $transaction = $contingent->transactions->first();
+                                        @endphp
+                                        @if (($contingent->status == 3 || $contingent->status == 2) && ($contingent->event->harga_contingent > 0 && $transaction->foto_invoice))
                                             <div class="mb-3">
                                                 <label for="foto_invoice-{{ $contingent->id }}" class="form-label">Bukti Bayar Kontingen</label>
                                                 @php $transaction = $contingent->transactions->first(); @endphp

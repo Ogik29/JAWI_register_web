@@ -232,7 +232,7 @@
             <div id="pending" class="sub-section">
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Data Kontingen</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Data Kontingen (Tahap 1)</h3>
                         <div class="w-1/3">
                             <input type="text" id="pendingContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
                         </div>
@@ -281,7 +281,7 @@
                 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen (Tahap 2)</h3>
                         <div class="w-1/3">
                             <input type="text" id="dataVerificationContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
                         </div>
@@ -724,6 +724,27 @@
             detailModalTitle.textContent = 'Detail Kontingen: ' + contingent.name;
             let playersListHtml = '<li>Belum ada peserta terdaftar.</li>';
 
+            // Mendapatkan URL storage dari variabel global (jika ada) atau hardcode
+            // Ini untuk memastikan path file benar
+            const storageUrlPrefix = "/storage/";
+
+            // LOGIKA BARU: Buat HTML untuk link Surat Rekomendasi
+            let suratHtml;
+            if (contingent.surat_rekomendasi) {
+                suratHtml = `<a href="${storageUrlPrefix}${contingent.surat_rekomendasi}" target="_blank" class="text-blue-600 hover:underline">Lihat Surat Rekomendasi</a>`;
+            } else {
+                suratHtml = `<span class="text-gray-500 italic">N/A</span>`;
+            }
+
+            // LOGIKA BARU: Buat HTML untuk link Bukti Bayar
+            let buktiBayarHtml;
+            // Cek jika relasi transactions ada, tidak kosong, dan punya foto_invoice
+            if (contingent.transactions && contingent.transactions.length > 0 && contingent.transactions[0].foto_invoice) {
+                buktiBayarHtml = `<a href="${storageUrlPrefix}${contingent.transactions[0].foto_invoice}" target="_blank" class="text-blue-600 hover:underline">Lihat Bukti Bayar</a>`;
+            } else {
+                buktiBayarHtml = `<span class="text-gray-500 italic">N/A</span>`;
+            }
+
             // PERUBAHAN: Menambahkan biaya kontingen dan format angkanya
             const hargaKontingen = contingent.event ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(contingent.event.harga_contingent) : 'N/A';
 
@@ -743,7 +764,7 @@
                 }).join('');
             }
             
-            // PERUBAHAN: Menambahkan baris "Biaya Kontingen"
+            // PERUBAHAN UTAMA: Sisipkan HTML baru ke dalam modal
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="block text-gray-500">Event</strong> <p>${contingent.event.name}</p></div>
@@ -752,10 +773,26 @@
                     <div><strong class="block text-gray-500">No. Telepon</strong> <p>${contingent.no_telp}</p></div>
                     <div><strong class="block text-gray-500">Pemilik Akun</strong> <p>${contingent.user.nama_lengkap}</p></div>
                     <div><strong class="block text-gray-500">Biaya Kontingen</strong> <p>${hargaKontingen}</p></div>
-                    <div><strong class="block text-gray-500">Jumlah Atlet</strong> <p>${contingent.players.length} orang</p></div>
+                    
+                    <!-- KONTEN BARU DITAMBAHKAN DI SINI -->
+                    <div>
+                        <strong class="block text-gray-500">Surat Rekomendasi</strong>
+                        <p>${suratHtml}</p>
+                    </div>
+                    <div>
+                        <strong class="block text-gray-500">Bukti Bayar Kontingen</strong>
+                        <p>${buktiBayarHtml}</p>
+                    </div>
+                    <!-- AKHIR DARI KONTEN BARU -->
+
+                    <div class="md:col-span-2"><strong class="block text-gray-500">Jumlah Atlet</strong> <p>${contingent.players.length} orang</p></div>
                 </div>
-                <div class="mt-4"><strong class="block text-gray-500">Catatan Admin</strong> <p class="whitespace-pre-wrap">${contingent.catatan || 'Tidak ada catatan.'}</p></div>
-                <div class="mt-4"><strong class="block text-gray-500">Daftar Atlet</strong> <ul class="list-disc list-inside mt-1 space-y-1">${playersListHtml}</ul></div>
+                <div class="mt-4"><strong class="block text-gray-500">Catatan Admin</strong> 
+                    <p class="whitespace-pre-wrap">${contingent.catatan || 'Tidak ada catatan.'}</p>
+                </div>
+                <div class="mt-4">
+                    <strong class="block text-gray-500">Daftar Atlet</strong> <ul class="list-disc list-inside mt-1 space-y-1">${playersListHtml}</ul>
+                </div>
             `;
             detailModal.classList.remove('hidden');
         }

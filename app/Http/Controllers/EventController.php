@@ -129,12 +129,17 @@ class EventController extends Controller
 
     public function pesertaEvent($contingent_id)
     {
-        if (Contingent::findOrFail($contingent_id)->status != 1) {
+        $contingent = Contingent::findOrFail($contingent_id);
+
+        if(auth()->user()->id !== $contingent->user_id){
+            return abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }  
+
+        if ($contingent->status != 1) {
             return redirect('/history')->with('status', 'Tunggu sampai kontingen diverifikasi terlebih dahulu!');
         }
 
         // 1. Ambil data dasar (Kontingen dan Event)
-        $contingent = Contingent::findOrFail($contingent_id);
         $event = $contingent->event;
 
         // 2. Ambil semua data master yang dibutuhkan untuk filter di view
@@ -313,6 +318,10 @@ class EventController extends Controller
     {
          // 1. Ambil kontingen dan relasinya yang dibutuhkan
         $contingent = Contingent::with('event')->findOrFail($contingent_id);
+
+        if(auth()->user()->id !== $contingent->user_id){
+            return abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
 
         // =================================================================
         // PERBAIKAN KUNCI: Eager loading relasi bersarang dengan sintaks yang benar

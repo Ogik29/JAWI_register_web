@@ -98,7 +98,7 @@ class adminController extends Controller
             ->latest()
             ->get();
 
-        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas'])
+        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 1)
             ->latest('updated_at')

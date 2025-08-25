@@ -472,7 +472,7 @@
             </div>
 
             <div id="rejected" class="sub-section hidden">
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
+                <<div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Ditolak</h3>
                         <div class="w-1/3">
@@ -497,12 +497,20 @@
                                 </td>
                                 <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
                                 <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
-                                <td class="p-3"><button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button></td>
+                                {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
+                                <td class="p-3">
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button>
+                                        {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
+                                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                    </div>
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
+
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Daftar Atlet Ditolak</h3>
@@ -529,10 +537,14 @@
                                 </td>
                                 <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
                                 <td class="p-3 text-sm text-gray-700 italic">"{{ $firstPlayer->catatan ?: 'Tidak ada catatan spesifik.' }}"</td>
+                                {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan untuk setiap atlet --}}
                                 <td class="p-3">
                                     @foreach($registration['player_instances'] as $player)
-                                    <div class="mb-1">
-                                        <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang {{ \Illuminate\Support\Str::limit($player->name, 10) }}</button>
+                                    <div class="flex items-center space-x-2 mb-1">
+                                        <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs hover:bg-yellow-600 truncate" title="Verifikasi Ulang {{ $player->name }}">Verifikasi Ulang</button>
+                                        {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
+                                        <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                        <span class="text-gray-600 text-xs truncate" title="{{$player->name}}">{{ \Illuminate\Support\Str::limit($player->name, 10) }}</span>
                                     </div>
                                     @endforeach
                                 </td>

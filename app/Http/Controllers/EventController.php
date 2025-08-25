@@ -396,6 +396,10 @@ class EventController extends Controller
         $contingent = Contingent::with('event')->findOrFail($contingent_id);
         $transaction = Transaction::where('contingent_id', $contingent_id)->first();
 
+        if ($contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
         // Jika tidak ada biaya pendaftaran, kembalikan ke history
         if ($contingent->event->harga_contingent <= 0) {
             return redirect()->route('history')->with('status', 'Event ini tidak memerlukan biaya pendaftaran kontingen.');

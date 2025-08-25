@@ -100,15 +100,17 @@
                             <div id="emailError" class="invalid-feedback"></div>
                         </div>
 
-                        <div class="mb-4">
-                            <label for="suratRekomendasi" class="form-label fw-semibold">
-                                <i class="bi bi-file-earmark-image-fill text-danger me-1"></i> Kirim Surat Rekomendasi
-                            </label>
-                            <input type="file" class="form-control" id="suratRekomendasi" name="surat_rekomendasi" required>
-                            <div id="suratRekomendasiError" class="invalid-feedback"></div>
-                        </div>
+                        @if ($event->surat_rekom == 'wajib')
+                            <div class="mb-4">
+                                <label for="suratRekomendasi" class="form-label fw-semibold">
+                                    <i class="bi bi-file-earmark-image-fill text-danger me-1"></i> Kirim Surat Rekomendasi
+                                </label>
+                                <input type="file" class="form-control" id="suratRekomendasi" name="surat_rekomendasi" required>
+                                <div id="suratRekomendasiError" class="invalid-feedback"></div>
+                            </div>  
+                        @endif
 
-                        @if($event->harga_contingent > 0)
+                        {{-- @if($event->harga_contingent > 0)
                             <div class="mb-4">
                                 <label for="fotoInvoice" class="form-label fw-semibold">
                                     <i class="bi bi-file-earmark-image-fill text-danger me-1"></i> Kirim Bukti Pembayaran
@@ -116,7 +118,7 @@
                                 <input type="file" class="form-control" id="fotoInvoice" name="fotoInvoice" required>
                                 <div id="fotoInvoiceError" class="invalid-feedback"></div>
                             </div>
-                        @endif
+                        @endif --}}
                         
                         <div class="d-grid">
                             <button type="submit" id="submitButton" class="btn btn-primary btn-register btn-lg">

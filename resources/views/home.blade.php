@@ -64,6 +64,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                             <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
                             @if (Auth::user()->role_id == 3)
+                                <li><a class="dropdown-item" href="{{ route('user.edit.manager', Auth::user()->id) }}">Edit Profile</a></li>
                                 <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
                             @elseif (Auth::user()->role_id == 2)
                                 <li><a class="dropdown-item" href="{{ route('adminIndex') }}">Admin</a></li>

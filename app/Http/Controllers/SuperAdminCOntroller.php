@@ -18,7 +18,7 @@ class SuperAdminController extends Controller
 {
     public function dashboard()
     {
- // Menghitung data untuk kartu statistik
+        // Menghitung data untuk kartu statistik
         $totalEvent = Event::count();
         $totalAdmin = User::where('role_id', 2)->count();
         $eventAktif = Event::where('status', 1)->count(); // Status 1 = Dibuka/Aktif
@@ -26,12 +26,12 @@ class SuperAdminController extends Controller
 
         // Mengambil 5 event terbaru untuk ditampilkan di tabel
         $recentEvents = Event::latest()->take(5)->get();
-        
+
         // Kirim semua data yang dibutuhkan ke view
         return view('superadmin.dashboard', compact(
-            'totalEvent', 
-            'totalAdmin', 
-            'eventAktif', 
+            'totalEvent',
+            'totalAdmin',
+            'eventAktif',
             'eventSelesai',
             'recentEvents' // Kirim data event terbaru
         ));
@@ -43,7 +43,7 @@ class SuperAdminController extends Controller
         $jenis_pertandingan = JenisPertandingan::all();
         $daftar_kelas = Kelas::orderBy('nama_kelas')->get();
         // TAMBAHKAN INI: Ambil semua data rentang usia
-    $daftar_rentang_usia = DB::table('rentang_usia')->get();
+        $daftar_rentang_usia = DB::table('rentang_usia')->get();
 
         return view('superadmin.tambah_event', compact('kategori_pertandingan', 'jenis_pertandingan', 'daftar_kelas', 'daftar_rentang_usia'));
     }
@@ -51,21 +51,22 @@ class SuperAdminController extends Controller
     public function kelolaEvent()
     {
         $events = Event::with('kelasPertandingan')
-                    ->latest()
-                    ->withCount('kelasPertandingan')
-                    ->get();
-                    
-    return view('superadmin.kelola_event', compact('events'));
+            ->latest()
+            ->withCount('kelasPertandingan')
+            ->get();
+
+        return view('superadmin.kelola_event', compact('events'));
     }
 
-     public function createAdmin()
+    public function createAdmin()
     {
         $events = Event::select('id', 'name')->latest()->get();
         return view('superadmin.tambah_admin', compact('events'));
     }
 
-    public function kelola_admin(){
-    
+    public function kelola_admin()
+    {
+
         // Ambil semua PENGGUNA dengan role_id = 2, eager load relasi events (jamak)
         $admins = User::with('events')->where('role_id', 2)->latest()->get();
         $events = Event::select('id', 'name')->latest()->get();
@@ -119,14 +120,14 @@ class SuperAdminController extends Controller
         // 4. REDIRECT KEMBALI DENGAN PESAN SUKSES
         // Arahkan pengguna kembali ke halaman daftar admin.
         return redirect()->route('superadmin.kelola_admin')->with('success', 'Admin baru bernama "' . $request->nama_lengkap . '" berhasil ditambahkan.');
-    } 
+    }
 
 
     public function editAdmin(User $admin)
     {
         // Eager load relasi events untuk efisiensi
         $admin->load('events');
-        
+
         // Ambil semua event untuk dropdown
         $events = Event::select('id', 'name')->latest()->get();
 
@@ -196,9 +197,10 @@ class SuperAdminController extends Controller
 
 
 
-    public function storeEvent(Request $request){
-        
-    // 1. VALIDASI DATA SESUAI STRUKTUR INPUT 'GROUPS'
+    public function storeEvent(Request $request)
+    {
+
+        // 1. VALIDASI DATA SESUAI STRUKTUR INPUT 'GROUPS'
         $validator = Validator::make($request->all(), [
             // Validasi Event Utama
             'name' => 'required|string|max:255',
@@ -217,6 +219,7 @@ class SuperAdminController extends Controller
             'status' => 'required|in:0,1,2',
             'cp' => 'required|string',
             'juknis' => 'nullable|string',
+            'surat_rekom' => 'required|string',
 
             // Validasi untuk Grup Kelas Pertandingan
             'groups' => 'required|array|min:1',
@@ -240,23 +243,23 @@ class SuperAdminController extends Controller
 
         // 2. HANDLE FILE UPLOAD
         $imagePath = null;
-if ($request->hasFile('image')) {
-    // 1. Ambil nama file asli dan ekstensinya
-    $originalFileName = $request->file('image')->getClientOriginalName();
-    $extension = $request->file('image')->getClientOriginalExtension();
+        if ($request->hasFile('image')) {
+            // 1. Ambil nama file asli dan ekstensinya
+            $originalFileName = $request->file('image')->getClientOriginalName();
+            $extension = $request->file('image')->getClientOriginalExtension();
 
-    // 2. Buat slug yang bersih dari nama event untuk nama file
-    //    Menggunakan Str::slug memastikan tidak ada karakter aneh di nama file.
-    $slug = Str::slug($request->name, '-');
+            // 2. Buat slug yang bersih dari nama event untuk nama file
+            //    Menggunakan Str::slug memastikan tidak ada karakter aneh di nama file.
+            $slug = Str::slug($request->name, '-');
 
-    // 3. Gabungkan semuanya untuk membuat nama file yang unik dan deskriptif
-    //    Format: slug-event-timestamp-unik.ekstensi
-    $imageName = $slug . '-' . time() . '.' . $extension;
+            // 3. Gabungkan semuanya untuk membuat nama file yang unik dan deskriptif
+            //    Format: slug-event-timestamp-unik.ekstensi
+            $imageName = $slug . '-' . time() . '.' . $extension;
 
-    // 4. Simpan file ke disk 'public' di dalam folder 'event-images'
-    //    Method storeAs() akan mengembalikan path: 'event-images/nama-file-barunya.jpg'
-    $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
-}
+            // 4. Simpan file ke disk 'public' di dalam folder 'event-images'
+            //    Method storeAs() akan mengembalikan path: 'event-images/nama-file-barunya.jpg'
+            $imagePath = $request->file('image')->storeAs('event-images', $imageName, 'public');
+        }
 
 
 
@@ -278,6 +281,7 @@ if ($request->hasFile('image')) {
         $event->status = $request->status;
         $event->cp = $request->cp;
         $event->juknis = $request->juknis;
+        $event->surat_rekom = $request->surat_rekom;
         $event->save();
 
         // 4. SIMPAN DATA KELAS PERTANDINGAN DENGAN LOGIC BARU
@@ -308,7 +312,7 @@ if ($request->hasFile('image')) {
     }
 
 
-      public function editEvent(Event $event)
+    public function editEvent(Event $event)
     {
         // 1. Eager load relasi yang dibutuhkan untuk efisiensi query
         //    Kita butuh 'kelasPertandingan' DAN juga relasi 'kelas' di dalamnya
@@ -330,9 +334,9 @@ if ($request->hasFile('image')) {
             // Buat 'key' unik untuk setiap kombinasi aturan.
             // Ini akan menggabungkan kelas-kelas dengan Kategori, Jenis, Gender, dan Harga yang sama.
             $groupKey = $kelas->kategori_pertandingan_id . '-' .
-                        $kelas->jenis_pertandingan_id . '-' .
-                        $kelas->gender . '-' .
-                        (int)$kelas->harga; // Cast harga ke integer untuk konsistensi
+                $kelas->jenis_pertandingan_id . '-' .
+                $kelas->gender . '-' .
+                (int)$kelas->harga; // Cast harga ke integer untuk konsistensi
 
             // Jika grup dengan kunci ini belum ada di array $existingGroups, buat entri baru.
             if (!isset($existingGroups[$groupKey])) {
@@ -346,7 +350,7 @@ if ($request->hasFile('image')) {
                     'kelas_ids'       => [], // Siapkan array kosong untuk menampung semua kelas_id di grup ini
                 ];
             }
-            
+
             // Tambahkan kelas_id dari loop saat ini ke grup yang sesuai.
             $existingGroups[$groupKey]['kelas_ids'][] = $kelas->kelas_id;
         }
@@ -370,16 +374,16 @@ if ($request->hasFile('image')) {
 
     public function updateEvent(Request $request, Event $event)
     {
-         // ... (method index, create, store, edit Anda di sini) ...
+        // ... (method index, create, store, edit Anda di sini) ...
 
-    /**
-     * Memperbarui data event di database.
-     * VERSI YANG SUDAH DIPERBAIKI TOTAL.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Event  $event
-     * @return \Illuminate\Http\RedirectResponse
-     */
+        /**
+         * Memperbarui data event di database.
+         * VERSI YANG SUDAH DIPERBAIKI TOTAL.
+         *
+         * @param  \Illuminate\Http\Request  $request
+         * @param  \App\Models\Event  $event
+         * @return \Illuminate\Http\RedirectResponse
+         */
         // 1. VALIDASI DATA SESUAI STRUKTUR BARU
         $validator = Validator::make($request->all(), [
             // Validasi Event Utama
@@ -399,6 +403,7 @@ if ($request->hasFile('image')) {
             'status' => 'required|in:0,1,2', // Menggunakan angka 0, 1, 2
             'cp' => 'required|string',
             'juknis' => 'nullable|string',
+            'surat_rekom' => 'required|string',
 
             // Validasi untuk "Grup Aturan"
             'groups' => 'required|array|min:1',
@@ -444,12 +449,13 @@ if ($request->hasFile('image')) {
             'status' => $request->status,
             'cp' => $request->cp,
             'juknis' => $request->juknis,
+            'surat_rekom' => $request->surat_rekom,
         ]);
 
         // =================================================================
         // 4. SINKRONISASI DATA KELAS PERTANDINGAN DENGAN LOGIC BARU
         // =================================================================
-        
+
         // Hapus semua kelas pertandingan yang lama terkait event ini
         $event->kelasPertandingan()->delete();
 
@@ -480,7 +486,7 @@ if ($request->hasFile('image')) {
     }
 
 
-     public function destroyEvent(Event $event)
+    public function destroyEvent(Event $event)
     {
         // 1. HAPUS GAMBAR LAMA DARI STORAGE JIKA ADA
         // Ini mencegah file sampah tertinggal di server.
@@ -496,6 +502,4 @@ if ($request->hasFile('image')) {
         // 3. REDIRECT KEMBALI DENGAN PESAN SUKSES
         return redirect()->route('superadmin.kelola_event')->with('success', 'Event "' . $event->name . '" berhasil dihapus.');
     }
-
-
 }

@@ -1,56 +1,22 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice - {{ $contingent->name }}</title>
+    <title>Invoice Kontingen - {{ $contingent->name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .invoice-shadow {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .upload-area {
-            border: 2px dashed #d1d5db;
-            transition: all 0.3s ease;
-        }
-
-        .upload-area:hover {
-            border-color: #c50000ff;
-            background-color: #f8fafc;
-        }
-
-        .upload-area.dragover {
-            border-color: #c50000ff;
-            background-color: #eff6ff;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .invoice-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .upload-area { border: 2px dashed #d1d5db; transition: all 0.3s ease; }
+        .upload-area:hover { border-color: #c50000ff; background-color: #f8fafc; }
+        .upload-area.dragover { border-color: #c50000ff; background-color: #eff6ff; }
     </style>
 </head>
-
 <body class="bg-gray-50 min-h-screen py-8">
     <div class="max-w-4xl mx-auto px-4">
-
-        @if (session('success'))
-        <div id="alert-success" class="flex items-center p-4 mb-4 text-green-800 rounded-lg bg-green-100 border border-green-400" role="alert">
-            <svg class="flex-shrink-0 w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" /></svg>
-            <span class="sr-only">Info</span>
-            <div class="ms-3 text-sm font-medium">{{ session('success') }}</div>
-            <button type="button" class="ms-auto -mx-1.5 -my-1.5 bg-green-100 text-green-500 rounded-lg focus:ring-2 focus:ring-green-400 p-1.5 hover:bg-green-200 inline-flex items-center justify-center h-8 w-8" data-dismiss-target="#alert-success" aria-label="Close">
-                <span class="sr-only">Close</span>
-                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" /></svg>
-            </button>
-        </div>
-        @endif
 
         <!-- Invoice Container -->
         <div class="bg-white rounded-lg invoice-shadow overflow-hidden">
@@ -58,14 +24,13 @@
             <div class="bg-gray-950 text-white p-8">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h1 class="text-3xl font-bold mb-2">INVOICE</h1>
+                        <h1 class="text-3xl font-bold mb-2">INVOICE KONTINGEN</h1>
                         <p class="text-neutral-100">{{ $contingent->event->name }}</p>
                         <p class="text-neutral-100 text-sm">{{ $contingent->event->lokasi }}</p>
                     </div>
                     <div class="text-right">
-                        <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">#INV-{{ $contingent->id }}-{{ now()->format('Ymd') }}</div>
-                        <p class="text-neutral-100 text-sm mt-2">Tanggal: {{ now()->translatedFormat('d F Y') }}</p>
-                        <p class="text-neutral-100 text-sm">Jatuh Tempo: {{ now()->addDays(14)->translatedFormat('d F Y') }}</p>
+                        <div class="bg-white text-neutral-600 px-4 py-2 rounded-lg font-bold text-lg">#INV-KONT-{{ $contingent->id }}</div>
+                        <p class="text-neutral-100 text-sm mt-2">Tanggal: {{ $transaction->created_at->translatedFormat('d F Y') }}</p>
                     </div>
                 </div>
             </div>
@@ -75,11 +40,7 @@
                 <div class="grid md:grid-cols-2 gap-8">
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Tagihan Kepada:</h3>
-                        <div class="text-gray-600">
-                            <p class="font-medium text-gray-800">{{ $contingent->name }}</p>
-                            <p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p>
-                            <p>No Telp: {{ $contingent->no_telp }}</p>
-                        </div>
+                        <div class="text-gray-600"><p class="font-medium text-gray-800">{{ $contingent->name }}</p><p>Email: {{ $contingent->email ?? 'Email tidak tersedia' }}</p><p>No Telp: {{ $contingent->no_telp }}</p></div>
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800 mb-3">Detail CP & Rek Pembayaran:</h3>
@@ -90,49 +51,20 @@
 
             <!-- Invoice Items -->
             <div class="p-8">
-
-                <!-- ====================================================== -->
-                <!--    PERUBAHAN: MENAMBAHKAN PESAN PERINGATAN DI SINI    -->
-                <!-- ====================================================== -->
-                <div class="mb-6 p-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700">
-                    <p class="font-bold">Perhatian!</p>
-                    <p>Tolong cek kembali detail pemain sebelum mengirim bukti bayar. Jika masih ragu terkait kesalahan, mohon pergi ke
-                        <a href="{{ route('history') }}" class="font-semibold underline hover:text-yellow-800">halaman riwayat</a>
-                        dan lakukan edit/hapus pemain terlebih dahulu. Terima kasih.
-                    </p>
-                </div>
-
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b-2 border-gray-200">
-                                <th class="text-left py-3 px-2 font-semibold text-gray-800">Deskripsi</th>
-                                <th class="text-center py-3 px-2 font-semibold text-gray-800">Jumlah Pemain</th>
-                                <th class="text-right py-3 px-2 font-semibold text-gray-800">Harga Kelas</th>
-                                <th class="text-right py-3 px-2 font-semibold text-gray-800">Total</th>
-                            </tr>
+                            <tr class="border-b-2 border-gray-200"><th class="text-left py-3 px-2 font-semibold text-gray-800">Deskripsi</th><th class="text-right py-3 px-2 font-semibold text-gray-800">Total</th></tr>
                         </thead>
                         <tbody>
-                            @forelse ($invoiceItems as $item)
                             <tr class="border-b border-gray-100">
                                 <td class="py-4 px-2">
-                                    <div class="font-medium text-gray-800">{{ $item['nama_kelas'] }} ({{ $item['gender'] }})</div>
-                                    <div class="text-xs text-gray-500">
-                                        {{ $item['rentang_usia'] }} • {{ $item['kategori'] }} / {{ $item['jenis'] }}
-                                    </div>
-                                    <div class="text-sm text-gray-600 mt-1">
-                                        Pemain: {{ implode(', ', $item['nama_pemain']) }}
-                                    </div>
+                                    <div class="font-medium text-gray-800">Biaya Pendaftaran Kontingen</div>
+                                    <div class="text-sm text-gray-800">Kontingen: ({{ $contingent->name }})</div>
+                                    <div class="text-sm text-gray-500">Event: {{ $contingent->event->name }}</div>
                                 </td>
-                                <td class="text-center py-4 px-2 text-gray-600">{{ $item['jumlah_pemain'] }}</td>
-                                <td class="text-right py-4 px-2 text-gray-600">Rp {{ number_format($item['harga_per_pendaftaran'], 0, ',', '.') }}</td>
-                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp {{ number_format($item['harga_per_pendaftaran'], 0, ',', '.') }}</td>
+                                <td class="text-right py-4 px-2 font-medium text-gray-800">Rp {{ number_format($contingent->event->harga_contingent, 0, ',', '.') }}</td>
                             </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-gray-500">Tidak ada data pendaftaran yang perlu dibayar.</td>
-                            </tr>
-                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -140,46 +72,35 @@
                 <!-- Totals -->
                 <div class="mt-8 flex justify-end">
                     <div class="w-full max-w-sm">
-                        @php $grandTotal = $totalHarga; @endphp
-                        <div class="flex justify-between py-2 border-b border-gray-200">
-                            <span class="text-gray-600">Subtotal:</span>
-                            <span class="font-medium">Rp {{ number_format($totalHarga, 0, ',', '.') }}</span>
-                        </div>
-                        <div class="flex justify-between py-3 border-b-2 border-gray-300">
-                            <span class="text-lg font-semibold text-gray-800">Total:</span>
-                            <span class="text-lg font-bold text-neutral-600">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+                        <div class="flex justify-between py-3 border-t-2 border-gray-300">
+                            <span class="text-lg font-semibold text-gray-800">Total Tagihan:</span>
+                            <span class="text-lg font-bold text-neutral-600">Rp {{ number_format($contingent->event->harga_contingent, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Payment Proof Upload Section -->
-            @if(count($invoiceItems) > 0)
             <div class="bg-gray-50 p-8 border-t border-gray-200">
-                <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer</h3>
-                <form id="paymentForm" action="{{ route('invoice.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
+                <h3 class="text-xl font-semibold text-gray-800 mb-6 text-center">Upload Bukti Transfer Pendaftaran Kontingen</h3>
+                <form id="paymentForm" action="{{ route('invoice.contingent.store') }}" method="POST" enctype="multipart/form-data" class="max-w-2xl mx-auto">
                     @csrf
-                    <input type="hidden" name="total_price" value="{{ $grandTotal }}">
-                    <input type="hidden" name="contingent_id" value="{{ $contingent->id }}">
-
-                    @php $playerIndex = 0; @endphp
-                    @foreach ($invoiceItems as $item)
-                    @foreach ($item['player_ids'] as $playerId)
-                    <input type="hidden" name="pemain[{{ $playerIndex }}][player_id]" value="{{ $playerId }}">
-                    <input type="hidden" name="pemain[{{ $playerIndex }}][price]" value="{{ $item['harga_per_pendaftaran'] }}">
-                    @php $playerIndex++; @endphp
-                    @endforeach
-                    @endforeach
-
+                    <input type="hidden" name="transaction_id" value="{{ $transaction->id }}">
                     <div id="uploadArea" class="upload-area rounded-lg p-8 text-center cursor-pointer">
                         <div id="uploadContent">
-                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                             <p class="text-lg font-medium text-gray-700 mb-2">Klik untuk upload atau drag & drop</p>
                             <p class="text-sm text-gray-500 mb-4">Format: JPG, PNG, PDF (Max 5MB)</p>
                             <button type="button" class="bg-neutral-600 text-white px-6 py-2 rounded-lg hover:bg-neutral-700 transition-colors">Pilih File</button>
                         </div>
                         <div id="previewArea" class="hidden">
+                            @if ($transaction->foto_invoice)
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-600 font-medium">Bukti saat ini:</p>
+                                <a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="text-blue-600 underline">Lihat file</a>
+                            </div>
+                            <hr class="my-4">
+                            @endif
                             <img id="imagePreview" class="mx-auto max-w-full max-h-64 rounded-lg shadow-md mb-4" />
                             <p id="fileName" class="text-sm font-medium text-gray-700 mb-2"></p>
                             <p id="fileSize" class="text-xs text-gray-500 mb-4"></p>
@@ -194,16 +115,8 @@
                     </div>
                 </form>
             </div>
-            @endif
-
-            <!-- Footer -->
-            <div class="bg-gray-800 text-white p-6 text-center rounded-b-lg">
-                <p class="text-sm">Terima kasih atas kepercayaan Anda</p>
-                <p class="text-xs text-gray-400 mt-1">Invoice ini dibuat secara otomatis dan sah tanpa tanda tangan</p>
-            </div>
         </div>
     </div>
-
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -274,19 +187,6 @@
                 submitProof.disabled = true;
             });
         }
-
-        if(form) {
-            form.addEventListener('submit', function(e) {
-                const isConfirmed = confirm('Apakah Anda yakin data peserta yang tertera di atas sudah benar dan ingin melanjutkan pembayaran?');
-                if (!isConfirmed) {
-                    e.preventDefault(); 
-                    return false;
-                }
-                submitProof.disabled = true;
-                submitProof.textContent = 'Mengirim...';
-            });
-        }
     </script>
 </body>
-
 </html>

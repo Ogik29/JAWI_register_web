@@ -31,7 +31,8 @@ class Event extends Model
         'status',
         'cp',
         'juknis',
-        'total_hadiah'
+        'total_hadiah',
+        'surat_rekom'
     ];
 
     public function classCategories()

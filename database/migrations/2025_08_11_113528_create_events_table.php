@@ -30,6 +30,7 @@ return new class extends Migration {
             $table->text('cp');
             $table->string('juknis');
             $table->integer('total_hadiah');
+            $table->string('surat_rekom');
             $table->timestamps();
         });
     }

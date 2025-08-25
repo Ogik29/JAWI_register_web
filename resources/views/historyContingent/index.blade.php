@@ -36,6 +36,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
                             <li><h6 class="dropdown-header">Hy, {{ Auth::user()->nama_lengkap }}</h6></li>
                             @if (Auth::user()->role_id == 3)
+                                <li><a class="dropdown-item" href="{{ route('user.edit.manager', Auth::user()->id) }}">Edit Profile</a></li>
                                 <li><a class="dropdown-item" href="{{ route('history') }}">History</a></li>
                             @elseif (Auth::user()->role_id == 2)
                                 <li><a class="dropdown-item" href="{{ route('adminIndex') }}">Admin</a></li>
@@ -91,8 +92,10 @@
                                             @if(!empty($contingent->catatan))
                                                 <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#noteContingentModal-{{ $contingent->id }}"><i class="bi bi-info-circle-fill"></i></button>
                                             @endif
+                                        @elseif ($contingent->status == 3)
+                                            <span class="badge bg-secondary text-light p-2">Menunggu Verifikasi Tahap 2</span>
                                         @else
-                                            <span class="badge bg-warning text-dark p-2">Menunggu Verifikasi</span>
+                                            <span class="badge bg-warning text-dark p-2">Menunggu Verifikasi Tahap 1</span>
                                         @endif
                                     </span>
                                 </div>
@@ -101,7 +104,16 @@
                                         @if ($contingent->players->where('status', 0)->count() > 0)
                                             <a href="{{ route('invoice.show', $contingent->id) }}" class="btn btn-info">Invoice Peserta</a>
                                         @endif
-                                        @if ($contingent->status == 0 || $contingent->status == 2)
+
+                                        @php
+                                            // Ambil transaksi pertama untuk kontingen ini
+                                            $transaction = $contingent->transactions->first();
+                                        @endphp
+                                        @if ($contingent->status == 3 && $contingent->event->harga_contingent > 0 && !$transaction->foto_invoice)
+                                            <a href="{{ route('invoiceContingent.show', $contingent->id) }}" class="btn btn-info">Invoice Kontingen</a>
+                                        @endif
+
+                                        @if ($contingent->status == 0 || $contingent->status == 2 || $contingent->status == 3)
                                             <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#editContingentModal-{{ $contingent->id }}">Edit</button>
                                         @endif
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detailContingentModal-{{ $contingent->id }}">Lihat Detail</button>
@@ -234,17 +246,21 @@
                                         @if ($contingent->status == 2)<div class="alert alert-warning" role="alert">Mengubah data akan mengubah status kontingen dari 'Ditolak' menjadi 'Menunggu Verifikasi'.</div>@endif
                                         <div class="mb-3"><label for="name-{{ $contingent->id }}" class="form-label">Nama Kontingen</label><input type="text" class="form-control" name="name" id="name-{{ $contingent->id }}" value="{{ $contingent->name }}" required></div><hr>
                                         <div class="mb-3">
-                                            <label for="surat_rekomendasi-{{ $contingent->id }}" class="form-label">Surat Rekomendasi</label>
-                                            @if ($contingent->surat_rekomendasi)<div class="mb-2"><a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Surat Saat Ini</a></div>@endif
-                                            <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                            @if ($contingent->surat_rekomendasi)
+                                                <div class="mb-2"><a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Surat Saat Ini</a></div>
+                                                <label for="surat_rekomendasi-{{ $contingent->id }}" class="form-label">Surat Rekomendasi</label>
+                                                <input type="file" class="form-control" name="surat_rekomendasi" id="surat_rekomendasi-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                            @endif
                                         </div>
-                                        @if ($contingent->event->harga_contingent > 0)
-                                        <div class="mb-3">
-                                            <label for="foto_invoice-{{ $contingent->id }}" class="form-label">Bukti Bayar Kontingen</label>
-                                            @php $transaction = $contingent->transactions->first(); @endphp
-                                            @if ($transaction && $transaction->foto_invoice)<div class="mb-2"><a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Bukti Bayar Saat Ini</a></div>@endif
-                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
-                                        </div>
+                                        @if ($contingent->event->harga_contingent > 0 && $contingent->status == 3)
+                                            <div class="mb-3">
+                                                <label for="foto_invoice-{{ $contingent->id }}" class="form-label">Bukti Bayar Kontingen</label>
+                                                @php $transaction = $contingent->transactions->first(); @endphp
+                                                @if ($transaction && $transaction->foto_invoice)
+                                                    <div class="mb-2"><a href="{{ Storage::url($transaction->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm">Lihat Bukti Bayar Saat Ini</a></div>
+                                                @endif
+                                                <input type="file" class="form-control" name="foto_invoice" id="foto_invoice-{{ $contingent->id }}"><small class="form-text text-muted">Unggah file baru untuk mengganti yang lama.</small>
+                                            </div>
                                         @endif
                                     </div>
                                     <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan Perubahan</button></div>

@@ -22,11 +22,11 @@
                     <span><b>Jawara Indonesia</b></span>
                 </div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+            {{-- <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
                 aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            </button> --}}
+            {{-- <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item mx-5"><a class="hover-underline nav-link" href="{{ url('/home') }}">Home</a></li>
                     <li class="nav-item mx-5"><a class="nav-link hover-underline" href="#about">About</a></li>
@@ -38,7 +38,7 @@
                 <form class="d-flex">
                     <a class="nav-link" href="{{ url('/') }}" data-bs-toggle="modal" data-bs-target="#staticBackdrop" ><img src="{{ asset('assets') }}/img/icon/logo-profile.png" alt="lah" style="width: 25px"></a>
                 </form>
-            </div>
+            </div> --}}
         </div>
     </nav>
 

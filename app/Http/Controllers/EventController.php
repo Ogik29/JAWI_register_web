@@ -65,16 +65,16 @@ class EventController extends Controller
             'email'         => 'required|email|max:255',
             'user_id'       => 'required|integer|exists:users,id',
             'event_id'      => 'required|integer|exists:events,id',
-            'surat_rekomendasi' => 'required|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'surat_rekomendasi' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ];
 
         $messages = [
             'namaKontingen.unique' => 'Nama kontingen ini sudah terdaftar di event ini. Silakan gunakan nama lain.',
-            'surat_rekomendasi.required' => 'Surat rekomendasi wajib diunggah.',
+            // 'surat_rekomendasi.required' => 'Surat rekomendasi wajib diunggah.',
         ];
 
         if ($event->harga_contingent > 0) {
-            $rules['fotoInvoice'] = 'required|image|mimes:jpg,jpeg,png|max:2048';
+            $rules['fotoInvoice'] = 'nullable|image|mimes:jpg,jpeg,png|max:2048';
         }
 
         $validator = Validator::make($request->all(), $rules, $messages);
@@ -311,12 +311,10 @@ class EventController extends Controller
 
     public function show_invoice($contingent_id)
     {
-         // 1. Ambil kontingen dan relasinya yang dibutuhkan
+        // 1. Ambil kontingen dan relasinya yang dibutuhkan
         $contingent = Contingent::with('event')->findOrFail($contingent_id);
 
-        // =================================================================
         // PERBAIKAN KUNCI: Eager loading relasi bersarang dengan sintaks yang benar
-        // =================================================================
         $unpaidPlayers = $contingent->players()
             ->where('status', 0) // Ganti '0' jika status "Belum Bayar" Anda berbeda
             ->with([
@@ -358,7 +356,7 @@ class EventController extends Controller
                 $idUntukItemIni = array_slice($allPlayerIds, $offset, $pemainPerPendaftaran);
 
                 if (empty($pemainUntukItemIni)) continue;
-                
+
                 $invoiceItems[] = [
                     'nama_kelas'        => $classDetails->kelas->nama_kelas,
                     'gender'            => $classDetails->gender,
@@ -381,6 +379,49 @@ class EventController extends Controller
             'invoiceItems' => $invoiceItems,
             'totalHarga' => $totalHarga,
         ]);
+    }
+
+    public function show_invoice_contingent($contingent_id)
+    {
+        $contingent = Contingent::with('event')->findOrFail($contingent_id);
+        $transaction = Transaction::where('contingent_id', $contingent_id)->first();
+
+        // Jika tidak ada biaya pendaftaran, kembalikan ke history
+        if ($contingent->event->harga_contingent <= 0) {
+            return redirect()->route('history')->with('status', 'Event ini tidak memerlukan biaya pendaftaran kontingen.');
+        }
+
+        return view('invoice.invoiceContingent', [
+            'contingent' => $contingent,
+            'transaction' => $transaction,
+        ]);
+    }
+
+    public function store_invoice_contingent(Request $request)
+    {
+        $request->validate([
+            'transaction_id' => 'required|integer|exists:transaction,id',
+            'foto_invoice'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $transaction = Transaction::findOrFail($request->transaction_id);
+
+        // Otorisasi sederhana, pastikan user yang mengupload adalah pemilik kontingen
+        if ($transaction->contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
+        // Hapus file invoice lama jika ada
+        if ($transaction->foto_invoice) {
+            Storage::disk('public')->delete($transaction->foto_invoice);
+        }
+
+        // Simpan file baru
+        $path = $this->uploadImage($request->file('foto_invoice'), 'invoices');
+        $transaction->foto_invoice = $path;
+        $transaction->save();
+
+        return redirect()->route('history')->with('success', 'Bukti transfer pendaftaran kontingen berhasil dikirim!');
     }
 
     // data peserta part

@@ -63,6 +63,31 @@
                 <div class="col-md-6 mb-3"><label for="harga_contingent" class="form-label">Harga Kontingen</label><div class="input-group"><span class="input-group-text">Rp</span><input type="number" class="form-control @error('harga_contingent') is-invalid @enderror" id="harga_contingent" name="harga_contingent" value="{{ old('harga_contingent', $event->harga_contingent) }}" required></div>@error('harga_contingent') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror</div>
                 <div class="col-md-6 mb-3"><label for="total_hadiah" class="form-label">Total Hadiah</label><div class="input-group"><span class="input-group-text">Rp</span><input type="number" class="form-control @error('total_hadiah') is-invalid @enderror" id="total_hadiah" name="total_hadiah" value="{{ old('total_hadiah', $event->total_hadiah) }}" required></div>@error('total_hadiah') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror</div>
             </div>
+            <div class="mb-3">
+                <label class="form-label">Surat Rekomendasi Kontingen</label>
+                <div>
+                    @if ($event->surat_rekom == "wajib")
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="surat_rekom" id="suratRekomWajib" value="wajib" required checked>  
+                            <label class="form-check-label" for="suratRekomWajib">Wajib</label>        
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="surat_rekom" id="suratRekomTidakWajib" value="tidak wajib" required>
+                            <label class="form-check-label" for="suratRekomTidakWajib">Tidak Wajib</label>
+                        </div>
+                    @else
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="surat_rekom" id="suratRekomWajib" value="wajib" required>  
+                            <label class="form-check-label" for="suratRekomWajib">Wajib</label>        
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="surat_rekom" id="suratRekomTidakWajib" value="tidak wajib" required checked>
+                            <label class="form-check-label" for="suratRekomTidakWajib">Tidak Wajib</label>
+                        </div>
+                    @endif
+                </div>
+                @error('surat_rekom') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+            </div>
             <div class="row">
                 <div class="col-md-6 mb-3"><label for="kotaOrKabupaten" class="form-label">Kota / Kabupaten</label><input type="text" class="form-control @error('kotaOrKabupaten') is-invalid @enderror" id="kotaOrKabupaten" name="kotaOrKabupaten" value="{{ old('kotaOrKabupaten', $event->kotaOrKabupaten) }}" required>@error('kotaOrKabupaten') <div class="invalid-feedback">{{ $message }}</div> @enderror</div>
                 <div class="col-md-6 mb-3"><label for="lokasi" class="form-label">Lokasi Detail</label><input type="text" class="form-control @error('lokasi') is-invalid @enderror" id="lokasi" name="lokasi" value="{{ old('lokasi', $event->lokasi) }}" required>@error('lokasi') <div class="invalid-feedback">{{ $message }}</div> @enderror</div>

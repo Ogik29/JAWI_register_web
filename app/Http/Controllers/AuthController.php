@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Password;
 use DB;
 use Carbon\Carbon;
 use Mail;
+use Illuminate\Validation\Rule;
 
 use function Laravel\Prompts\alert;
 
@@ -88,7 +89,7 @@ class AuthController extends Controller
     public function verifyEmail(Request $request, $id)
     {
         // Pertama, validasi apakah URL memiliki tanda tangan yang valid
-        if (! $request->hasValidSignature()) {
+        if (!$request->hasValidSignature()) {
             abort(401, 'Link verifikasi tidak valid atau sudah kedaluwarsa.');
         }
 
@@ -153,5 +154,80 @@ class AuthController extends Controller
         return $status == Password::PASSWORD_RESET
             ? redirect('/')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
+    }
+
+    /**
+     * Menampilkan halaman formulir untuk mengedit profil pengguna yang sedang login.
+     *
+     * @return \Illuminate\View\View
+     */
+    public function edit($id)
+    {
+        if (Auth::user()->id != $id) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+        // Ambil data user yang sedang login saat ini
+        $user = User::findOrFail($id);
+
+        // Tampilkan view dan kirim data user ke view tersebut
+        return view('edit_manager', ['user' => $user]);
+    }
+
+    /**
+     * Memperbarui data pengguna di database.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function update(Request $request, $id)
+    {
+        if (Auth::user()->id != $id) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+        // Ambil user yang sedang login
+        $user = User::findOrFail($id);
+
+        // Validasi data yang dikirim dari formulir
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            // Gunakan Rule::unique untuk memastikan email unik,
+            // tetapi abaikan email user saat ini.
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            // Password dibuat opsional (hanya diupdate jika diisi)
+            'password' => 'nullable|string|min:8|confirmed',
+            'alamat' => 'required|string',
+            'jenis_kelamin' => 'required|string',
+            'tempat_lahir' => 'required|string|max:255',
+            'tanggal_lahir' => 'required|date',
+            'negara' => 'required|string|max:255',
+            'no_telp' => 'required|string|max:20',
+        ]);
+
+        // Update data user berdasarkan input
+        $user->nama_lengkap = $request->nama_lengkap;
+        $user->email = $request->email;
+        $user->alamat = $request->alamat;
+        $user->jenis_kelamin = $request->jenis_kelamin;
+        $user->tempat_lahir = $request->tempat_lahir;
+        $user->tanggal_lahir = $request->tanggal_lahir;
+        $user->negara = $request->negara;
+        $user->no_telp = $request->no_telp;
+
+        // Cek jika kolom password diisi, maka update password
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        // Simpan perubahan ke database
+        $user->save();
+
+        // Arahkan kembali ke halaman edit dengan pesan sukses
+        return redirect()->route('home')->with('status', 'Profil Anda berhasil diperbarui!');
     }
 }

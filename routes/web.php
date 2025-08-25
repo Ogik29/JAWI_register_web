@@ -41,6 +41,8 @@ Route::get('/event', [EventController::class, 'index']);
 // Route::get('/event/{slug}', [EventController::class, 'registEvent']);
 
 Route::middleware('checkRole:1,3')->group(function () {
+    Route::get('/edit-profil-manager/{id}', [AuthController::class, 'edit'])->name('user.edit.manager');
+    Route::put('/update-profil-manager/{id}', [AuthController::class, 'update'])->name('user.update.manager');
     Route::get('/kontingen/{event_id}', [EventController::class, 'registKontingen']);
     Route::post('/kontingen/{event_id}', [EventController::class, 'storeKontingen']);
     Route::get('/history', [historyController::class, 'index'])->name('history');
@@ -53,6 +55,8 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::post('/player_store', [EventController::class, 'storePeserta']);
     Route::get('/invoice/{contingent_id}', [EventController::class, 'show_invoice'])->name('invoice.show');
     Route::post('/invoice', [EventController::class, 'store_invoice'])->name('invoice.store');
+    Route::get('/invoiceContingent/{contingent_id}', [EventController::class, 'show_invoice_contingent'])->name('invoiceContingent.show');
+    Route::post('/invoice/contingent/store', [EventController::class, 'store_invoice_contingent'])->name('invoice.contingent.store');
 });
 
 

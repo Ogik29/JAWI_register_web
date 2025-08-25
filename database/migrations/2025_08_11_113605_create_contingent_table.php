@@ -16,8 +16,8 @@ return new class extends Migration {
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('event_id')->constrained('events')->cascadeOnDelete();
             $table->timestamps();
-            $table->integer('status')->default(0); // 1 = aktif, 0 = tidak aktif, 2 = ditolak
-            $table->string('surat_rekomendasi');
+            $table->integer('status')->default(0); //  0 = tidak aktif, 1 = verif pembayaran, 2 = ditolak, 3 = verif data
+            $table->string('surat_rekomendasi')->nullable();
             $table->text('catatan')->nullable();
         });
     }

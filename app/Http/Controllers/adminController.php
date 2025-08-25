@@ -7,6 +7,9 @@ use App\Models\Event;
 use App\Models\Player;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class adminController extends Controller
 {
@@ -75,9 +78,17 @@ class adminController extends Controller
             'kelasPertandingan.jenisPertandingan'
         ];
 
+        // Status 0 = Menunggu Verifikasi Pembayaran
         $contingentsForVerification = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 0)
+            ->latest()
+            ->get();
+
+        // BARU: Status 3 = Menunggu Verifikasi Data
+        $contingentsForDataVerification = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('status', 3)
             ->latest()
             ->get();
 
@@ -90,25 +101,25 @@ class adminController extends Controller
         $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 1)
-            ->latest()
+            ->latest('updated_at')
             ->get();
 
         $approvedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 2)
-            ->latest()
+            ->latest('updated_at')
             ->get();
 
         $rejectedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
             ->whereIn('event_id', $managedEventIds)
             ->where('status', 2)
-            ->latest()
+            ->latest('updated_at')
             ->get();
 
         $rejectedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 3)
-            ->latest()
+            ->latest('updated_at')
             ->get();
 
         $groupedPlayersForVerification = $this->groupPlayers($playersForVerification);
@@ -116,7 +127,7 @@ class adminController extends Controller
         $groupedRejectedPlayers = $this->groupPlayers($rejectedPlayers);
 
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
-        $pendingContingentsCount = $contingentsForVerification->count();
+        $pendingContingentsCount = $contingentsForVerification->count() + $contingentsForDataVerification->count();
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
         $pendingPlayersCount = $playersForVerification->count();
 
@@ -126,6 +137,7 @@ class adminController extends Controller
             'activeEvents',
             'events',
             'contingentsForVerification',
+            'contingentsForDataVerification', // Kirim variabel baru
             'approvedContingents',
             'totalContingents',
             'pendingPlayersCount',
@@ -151,8 +163,22 @@ class adminController extends Controller
             'catatan' => 'nullable|string|required_if:action,reject'
         ]);
 
-        $contingent->status = ($request->action == 'approve') ? 1 : 2;
-        $contingent->catatan = ($request->action == 'approve') ? null : $request->catatan;
+        // LOGIKA BARU UNTUK MULTI-TAHAP VERIFIKASI
+        if ($request->action == 'approve') {
+            if ($contingent->event->harga_contingent == 0) {
+                $contingent->status = 1;
+            } elseif ($contingent->status == 0) { // Tahap 1: Verifikasi Pembayaran
+                $contingent->status = 3; // Lolos ke Verifikasi Data
+            } elseif ($contingent->status == 3) { // Tahap 2: Verifikasi Data
+                $contingent->status = 1; // Sepenuhnya disetujui
+            }
+            $contingent->catatan = null; // Hapus catatan jika disetujui
+        } else {
+            // Jika ditolak, dari status manapun akan menjadi 2
+            $contingent->status = 2;
+            $contingent->catatan = $request->catatan;
+        }
+
         $contingent->save();
         return redirect()->route('adminIndex')->with('status', 'Verifikasi kontingen berhasil diproses.');
     }

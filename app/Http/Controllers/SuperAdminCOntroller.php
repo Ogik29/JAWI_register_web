@@ -314,60 +314,61 @@ class SuperAdminController extends Controller
 
     public function editEvent(Event $event)
     {
-        // 1. Eager load relasi yang dibutuhkan untuk efisiensi query
-        //    Kita butuh 'kelasPertandingan' DAN juga relasi 'kelas' di dalamnya
-        $event->load('kelasPertandingan.kelas');
+        // 1. Ambil SEMUA kelas pertandingan untuk event ini secara EKSPLISIT.
+        $semuaKelasPertandingan = \App\Models\KelasPertandingan::where('event_id', $event->id)
+            ->with('kelas') // Eager load relasi 'kelas'
+            ->get();
 
-        // 2. Ambil semua data master yang dibutuhkan untuk mengisi pilihan di form
+        // 2. Ambil semua data master seperti biasa
         $kategori_pertandingan = KategoriPertandingan::all();
         $jenis_pertandingan = JenisPertandingan::all();
         $daftar_rentang_usia = DB::table('rentang_usia')->get();
         $daftar_kelas = Kelas::orderBy('nama_kelas')->get();
 
         // =================================================================
-        // 3. LOGIKA KUNCI: Mengelompokkan kelas yang sudah ada ke dalam "Grup Aturan"
+        // 3. LOGIKA GROUPING BARU & SEDERHANA (TANPA GROUPKEY MANUAL)
         // =================================================================
-        $existingGroups = [];
-        $kelasPertandingan = $event->kelasPertandingan;
 
-        foreach ($kelasPertandingan as $kelas) {
-            // Buat 'key' unik untuk setiap kombinasi aturan.
-            // Ini akan menggabungkan kelas-kelas dengan Kategori, Jenis, Gender, dan Harga yang sama.
-            $groupKey = $kelas->kategori_pertandingan_id . '-' .
-                $kelas->jenis_pertandingan_id . '-' .
-                $kelas->gender . '-' .
-                (int)$kelas->harga; // Cast harga ke integer untuk konsistensi
-
-            // Jika grup dengan kunci ini belum ada di array $existingGroups, buat entri baru.
-            if (!isset($existingGroups[$groupKey])) {
-                $existingGroups[$groupKey] = [
-                    // Ambil rentang usia dari relasi 'kelas' yang sudah kita eager load
-                    'rentang_usia_id' => $kelas->kelas->rentang_usia_id,
-                    'kategori_id'     => $kelas->kategori_pertandingan_id,
-                    'jenis_id'        => $kelas->jenis_pertandingan_id,
-                    'gender'          => $kelas->gender,
-                    'harga'           => $kelas->harga,
-                    'kelas_ids'       => [], // Siapkan array kosong untuk menampung semua kelas_id di grup ini
-                ];
+        // Gunakan 'groupBy' dari Laravel Collection untuk mengelompokkan secara otomatis.
+        // Kunci grupnya adalah kombinasi dari SEMUA aturan yang mendefinisikan sebuah form grup.
+        $grupDariDatabase = $semuaKelasPertandingan->groupBy(function ($item) {
+            // Lewati data yang korup jika relasi 'kelas' tidak ditemukan
+            if (!$item->kelas) {
+                return null;
             }
+            // Kunci uniknya adalah gabungan semua properti ini.
+            return $item->kategori_pertandingan_id . '-' .
+                $item->jenis_pertandingan_id . '-' .
+                $item->gender . '-' .
+                (int)$item->harga . '-' .
+                $item->kelas->rentang_usia_id;
+        })->filter(); // ->filter() akan menghapus grup 'null' jika ada
 
-            // Tambahkan kelas_id dari loop saat ini ke grup yang sesuai.
-            $existingGroups[$groupKey]['kelas_ids'][] = $kelas->kelas_id;
+        // Sekarang, kita ubah struktur hasil grouping agar sesuai dengan yang dibutuhkan oleh view.
+        $eventGroups = [];
+        foreach ($grupDariDatabase as $groupItems) {
+            // Ambil item pertama sebagai perwakilan, karena semua item di grup ini aturannya sama.
+            $representasi = $groupItems->first();
+
+            $eventGroups[] = [
+                'rentang_usia_id' => $representasi->kelas->rentang_usia_id,
+                'kategori_id'     => $representasi->kategori_pertandingan_id,
+                'jenis_id'        => $representasi->jenis_pertandingan_id,
+                'gender'          => $representasi->gender,
+                'harga'           => $representasi->harga,
+                // Ambil SEMUA 'kelas_id' dari item-item di dalam grup ini.
+                'kelas_ids'       => $groupItems->pluck('kelas_id')->all(),
+            ];
         }
 
-        // Ubah dari array asosiatif (yang menggunakan $groupKey) menjadi array numerik biasa
-        // agar mudah di-loop dengan @foreach di Blade.
-        $eventGroups = array_values($existingGroups);
-
-
-        // 4. Kirim semua data yang dibutuhkan ke view.
-        return view('superadmin.edit_event', [ // Sesuaikan path view Anda jika perlu
+        // 4. Kirim semua data ke view, sama seperti sebelumnya.
+        return view('superadmin.edit_event', [
             'event'                 => $event,
             'kategori_pertandingan' => $kategori_pertandingan,
             'jenis_pertandingan'    => $jenis_pertandingan,
             'daftar_rentang_usia'   => $daftar_rentang_usia,
             'daftar_kelas'          => $daftar_kelas,
-            'eventGroups'           => $eventGroups, // <-- INI VARIABEL KUNCI YANG MENGATASI ERROR
+            'eventGroups'           => $eventGroups,
         ]);
     }
 

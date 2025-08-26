@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use App\Exports\ApprovedParticipantsExport;
+use Maatwebsite\Excel\Facades\Excel;
+// use App\Models\Event;
+// use Illuminate\Http\Request;
 
 class adminController extends Controller
 {
@@ -202,6 +206,14 @@ class adminController extends Controller
         $player->catatan = ($request->action == 'approve') ? null : $request->catatan;
         $player->save();
         return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet berhasil diproses.');
+    }
+
+
+    public function exportApprovedParticipants(Event $event)
+    {
+        $fileName = 'peserta-disetujui-' . $event->slug . '.xlsx';
+
+        return Excel::download(new ApprovedParticipantsExport($event), $fileName);
     }
 
     /**

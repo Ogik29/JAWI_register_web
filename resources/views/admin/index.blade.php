@@ -353,6 +353,7 @@
                                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
                                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
                                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
                                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
                                     <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                                 </tr>
@@ -377,6 +378,15 @@
                                             @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a> @endif
                                         </div>
                                         @endforeach
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        @if ($firstPlayer->playerInvoice)
+                                            <div class="text-gray-900 font-mono text-xs">
+                                                Invoice{{ $firstPlayer->playerInvoice->id }}_{{ $firstPlayer->contingent->name }}_{{ number_format( $firstPlayer->playerInvoice->total_price) }}
+                                            </div>
+                                        @else
+                                            <span class="text-gray-500 italic text-xs">Belum ada invoice</span>
+                                        @endif
                                     </td>
                                     <td class="p-3 text-sm text-blue-600">
                                         @if($firstPlayer->playerInvoice && $firstPlayer->playerInvoice->foto_invoice)

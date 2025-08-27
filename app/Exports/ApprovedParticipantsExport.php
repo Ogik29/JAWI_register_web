@@ -71,7 +71,7 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
 
         // Ubah data pemain menjadi string yang dipisahkan baris baru
         $playerNames = $registration['players']->pluck('name')->implode("\n");
-        $playerBirthDates = $registration['players']->pluck('tanggal_lahir')->map(function ($date) {
+        $playerBirthDates = $registration['players']->pluck('tgl_lahir')->map(function ($date) {
             return \Carbon\Carbon::parse($date)->format('d F Y');
         })->implode("\n");
         $playerNiks = $registration['players']->pluck('nik')->implode("\n");

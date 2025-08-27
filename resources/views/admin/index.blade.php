@@ -279,54 +279,59 @@
                 </table>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen (Tahap 2)</h3>
-                        <div class="w-1/3">
-                            <input type="text" id="dataVerificationContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
-                        </div>
-                    </div>
-                <table class="w-full" id="dataVerificationContingentsTable">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Bukti Pembayaran</th>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Biaya Kontingen</th>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($contingentsForDataVerification as $contingent)
-                        <tr>
-                            <td class="p-3">
-                                <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
-                                <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
-                            </td>
-                            <td class="p-3">
-                                <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
-                                <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
-                            </td>
-                            <td class="p-3 text-sm text-blue-900">
-                                @if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)
-                                    <a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>
-                                @else
-                                    <span class="text-gray-500">N/A</span>
-                                @endif
-                            </td>
-                            <td>
-                                <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
-                            </td>
-                            <td class="p-3">
-                                <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
-                                <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
-                            </td>
-                        </tr>
-                        @empty
-                        @endforelse
-                    </tbody>
-                </table>
-                </div>
+               <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen (Tahap 2)</h3>
+        <div class="w-1/3">
+            <input type="text" id="dataVerificationContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
+        </div>
+    </div>
+
+    <!-- Tambahkan wrapper scroll -->
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-max" id="dataVerificationContingentsTable">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Bukti Pembayaran</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Biaya Kontingen</th>
+                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($contingentsForDataVerification as $contingent)
+                <tr>
+                    <td class="p-3">
+                        <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
+                        <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
+                    </td>
+                    <td class="p-3">
+                        <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                        <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
+                    </td>
+                    <td class="p-3 text-sm text-blue-900">
+                        @if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)
+                            <a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>
+                        @else
+                            <span class="text-gray-500">N/A</span>
+                        @endif
+                    </td>
+                    <td>
+                        <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
+                    </td>
+                    <td class="p-3">
+                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
+                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
+                    </td>
+                </tr>
+                @empty
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">

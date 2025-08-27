@@ -237,18 +237,75 @@
                             <input type="text" id="pendingContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
                         </div>
                     </div>
-                    <table class="w-full" id="pendingContingentsTable">
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="pendingContingentsTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Surat Rekomendasi</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Biaya Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($contingentsForVerification as $contingent)
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
+                                    </td>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-blue-600">
+                                        @if ($contingent->surat_rekomendasi)
+                                        <a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="hover:underline">Surat Rekomendasi</a><br>
+                                        @else
+                                        <span class="text-gray-500">N/A</span> <br>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
+                                    </td>
+                                    <td class="p-3">
+                                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
+                                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
+                                    </td>
+                                </tr>
+                                @empty
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                </div>
+                
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
+
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen (Tahap 2)</h3>
+                <div class="w-1/3">
+                    <input type="text" id="dataVerificationContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
+                </div>
+            </div>
+
+            <!-- Tambahkan wrapper scroll -->
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-max" id="dataVerificationContingentsTable">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
                             <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
-                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Surat Rekomendasi</th>
+                            <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Bukti Pembayaran</th>
                             <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Biaya Kontingen</th>
                             <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($contingentsForVerification as $contingent)
+                        @forelse ($contingentsForDataVerification as $contingent)
                         <tr>
                             <td class="p-3">
                                 <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
@@ -258,11 +315,11 @@
                                 <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
                                 <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
                             </td>
-                            <td class="p-3 text-sm text-blue-600">
-                                @if ($contingent->surat_rekomendasi)
-                                <a href="{{ Storage::url($contingent->surat_rekomendasi) }}" target="_blank" class="hover:underline">Surat Rekomendasi</a><br>
+                            <td class="p-3 text-sm text-blue-900">
+                                @if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)
+                                    <a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>
                                 @else
-                                <span class="text-gray-500">N/A</span> <br>
+                                    <span class="text-gray-500">N/A</span>
                                 @endif
                             </td>
                             <td>
@@ -277,60 +334,8 @@
                         @endforelse
                     </tbody>
                 </table>
-                </div>
-                
-               <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
-    <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Pembayaran Kontingen (Tahap 2)</h3>
-        <div class="w-1/3">
-            <input type="text" id="dataVerificationContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
+            </div>
         </div>
-    </div>
-
-    <!-- Tambahkan wrapper scroll -->
-    <div class="overflow-x-auto">
-        <table class="w-full min-w-max" id="dataVerificationContingentsTable">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
-                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Bukti Pembayaran</th>
-                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Biaya Kontingen</th>
-                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($contingentsForDataVerification as $contingent)
-                <tr>
-                    <td class="p-3">
-                        <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
-                        <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
-                    </td>
-                    <td class="p-3">
-                        <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
-                        <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
-                    </td>
-                    <td class="p-3 text-sm text-blue-900">
-                        @if($contingent->transactions->first() && $contingent->transactions->first()->foto_invoice)
-                            <a href="{{ Storage::url($contingent->transactions->first()->foto_invoice) }}" target="_blank" class="hover:underline">Bukti Bayar</a>
-                        @else
-                            <span class="text-gray-500">N/A</span>
-                        @endif
-                    </td>
-                    <td>
-                        <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
-                    </td>
-                    <td class="p-3">
-                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
-                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
-                    </td>
-                </tr>
-                @empty
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
 
 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
@@ -341,57 +346,60 @@
                         </div>
                     </div>
 
-                    <table class="w-full" id="pendingPlayersTable">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200">
-                            @forelse ($groupedPlayersForVerification as $registration)
-                            @php $firstPlayer = $registration['player_instances']->first(); @endphp
-                            <tr>
-                                <td class="p-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
-                                    <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">
-                                    <div>{{ $firstPlayer->contingent->name }}</div>
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">
-                                    @foreach($registration['player_instances'] as $player)
-                                    <div class="text-xs text-blue-600">
-                                        {{ \Illuminate\Support\Str::limit($player->name, 15) }}:
-                                        @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP</a> | @endif
-                                        @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif
-                                        @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a> @endif
-                                    </div>
-                                    @endforeach
-                                </td>
-                                <td class="p-3 text-sm text-blue-600">
-                                    @if($firstPlayer->playerInvoice && $firstPlayer->playerInvoice->foto_invoice)
-                                    <a href="{{ Storage::url($firstPlayer->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Lihat Bukti Bayar</a>
-                                    @else
-                                    <span class="text-gray-500 italic">Belum Dibayar</span>
-                                    @endif
-                                </td>
-                                <td class="p-3 align-top">
-                                    @foreach($registration['player_instances'] as $player)
-                                    <div class="flex items-center space-x-2 mb-1">
-                                        <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 w-20 text-center">Verifikasi</button>
-                                        <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
-                                    </div>
-                                    @endforeach
-                                </td>
-                            </tr>
-                            @empty
-                            @endforelse
-                        </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="pendingPlayersTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Pembayaran</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                @forelse ($groupedPlayersForVerification as $registration)
+                                @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
+                                        <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        <div>{{ $firstPlayer->contingent->name }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        @foreach($registration['player_instances'] as $player)
+                                        <div class="text-xs text-blue-600">
+                                            {{ \Illuminate\Support\Str::limit($player->name, 15) }}:
+                                            @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP</a> | @endif
+                                            @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif
+                                            @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a> @endif
+                                        </div>
+                                        @endforeach
+                                    </td>
+                                    <td class="p-3 text-sm text-blue-600">
+                                        @if($firstPlayer->playerInvoice && $firstPlayer->playerInvoice->foto_invoice)
+                                        <a href="{{ Storage::url($firstPlayer->playerInvoice->foto_invoice) }}" target="_blank" class="hover:underline font-semibold">Lihat Bukti Bayar</a>
+                                        @else
+                                        <span class="text-gray-500 italic">Belum Dibayar</span>
+                                        @endif
+                                    </td>
+                                    <td class="p-3 align-top">
+                                        @foreach($registration['player_instances'] as $player)
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 w-20 text-center">Verifikasi</button>
+                                            <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                        </div>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                                @empty
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    
                 </div>
             </div>
 
@@ -404,32 +412,35 @@
                             <input type="text" id="approvedContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari nama kontingen atau event...">
                         </div>
                     </div>
-                    <table class="w-full" id="approvedContingentsTable">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($approvedContingents as $contingent)
-                            <tr>
-                                <td class="p-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
-                                <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
-                                <td class="p-3 space-x-2">
-                                    <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
-                                    <button onclick="openRejectModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Tolak</button>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="approvedContingentsTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($approvedContingents as $contingent)
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
+                                    <td class="p-3 space-x-2">
+                                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
+                                        <button onclick="openRejectModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="text-red-600 hover:text-red-800 text-sm font-medium">Tolak</button>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 {{-- GANTI SELURUH BLOK INI DENGAN YANG DI BAWAH --}}
 
@@ -512,43 +523,46 @@
             </div>
 
             <div id="rejected" class="sub-section hidden">
-                <<div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Ditolak</h3>
                         <div class="w-1/3">
                             <input type="text" id="rejectedContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
                         </div>
                     </div>
-                    <table class="w-full" id="rejectedContingentsTable">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($rejectedContingents as $contingent)
-                            <tr>
-                                <td class="p-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
-                                    <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
-                                <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
-                                {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
-                                <td class="p-3">
-                                    <div class="flex items-center space-x-2">
-                                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button>
-                                        {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
-                                        <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="rejectedContingentsTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Manajer</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($rejectedContingents as $contingent)
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
+                                        <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
+                                    <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
+                                    {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
+                                    <td class="p-3">
+                                        <div class="flex items-center space-x-2">
+                                            <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button>
+                                            {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
+                                            <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden p-6">
@@ -558,40 +572,43 @@
                              <input type="text" id="rejectedPlayerSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari...">
                         </div>
                     </div>
-                    <table class="w-full" id="rejectedPlayersTable">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
-                                <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($groupedRejectedPlayers as $registration)
-                            @php $firstPlayer = $registration['player_instances']->first(); @endphp
-                            <tr>
-                                <td class="p-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
-                                    <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }}</div>
-                                </td>
-                                <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
-                                <td class="p-3 text-sm text-gray-700 italic">"{{ $firstPlayer->catatan ?: 'Tidak ada catatan spesifik.' }}"</td>
-                                {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan untuk setiap atlet --}}
-                                <td class="p-3">
-                                    @foreach($registration['player_instances'] as $player)
-                                    <div class="flex items-center space-x-2 mb-1">
-                                        <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs hover:bg-yellow-600 truncate" title="Verifikasi Ulang {{ $player->name }}">Verifikasi Ulang</button>
-                                        {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
-                                        <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
-                                        <span class="text-gray-600 text-xs truncate" title="{{$player->name}}">{{ \Illuminate\Support\Str::limit($player->name, 10) }}</span>
-                                    </div>
-                                    @endforeach
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="rejectedPlayersTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Catatan</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($groupedRejectedPlayers as $registration)
+                                @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
+                                        <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
+                                    <td class="p-3 text-sm text-gray-700 italic">"{{ $firstPlayer->catatan ?: 'Tidak ada catatan spesifik.' }}"</td>
+                                    {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan untuk setiap atlet --}}
+                                    <td class="p-3">
+                                        @foreach($registration['player_instances'] as $player)
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-xs hover:bg-yellow-600 truncate" title="Verifikasi Ulang {{ $player->name }}">Verifikasi Ulang</button>
+                                            {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
+                                            <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                            <span class="text-gray-600 text-xs truncate" title="{{$player->name}}">{{ \Illuminate\Support\Str::limit($player->name, 10) }}</span>
+                                        </div>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -851,18 +868,16 @@
 
         function viewPlayerDetail(player) {
             detailModalTitle.textContent = 'Detail Atlet: ' + player.name;
+            const storageUrlPrefix = "/storage/";
+            
             const formatCurrency = (number) => { if (number === null || typeof number === 'undefined') return 'N/A'; return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); };
             const formatCurrencyNoRP = (number) => {
                 if (number === null || typeof number === 'undefined') return 'N/A';
-                // Ubah style ke 'decimal' dan hapus properti 'currency'
-                return new Intl.NumberFormat('id-ID', {
-                    style: 'decimal',
-                    minimumFractionDigits: 0
-                }).format(number);
+                return new Intl.NumberFormat('id-ID', { style: 'decimal', minimumFractionDigits: 0 }).format(number);
             };
 
             const invoiceName = player.player_invoice ? `Invoice${player.player_invoice.id}_${player.contingent.name}_${formatCurrencyNoRP(player.player_invoice.total_price)}` : 'Tidak Terikat Invoice';
-            const invoiceLinkHtml = player.player_invoice ?.foto_invoice ? `<a href="/storage/${player.player_invoice.foto_invoice}" target="_blank" class="text-blue-600 hover:underline">Lihat Bukti Bayar</a>` : `<span class="text-gray-500 italic">Belum ada invoice</span>`;
+            const invoiceLinkHtml = player.player_invoice ?.foto_invoice ? `<a href="${storageUrlPrefix}${player.player_invoice.foto_invoice}" target="_blank" class="text-blue-600 hover:underline">Lihat Bukti Bayar</a>` : `<span class="text-gray-500 italic">Belum ada invoice</span>`;
             const kategori = player.kelas_pertandingan?.kategori_pertandingan?.nama_kategori || 'N/A';
             const jenis = player.kelas_pertandingan?.jenis_pertandingan?.nama_jenis || 'N/A';
             const kelas = player.kelas_pertandingan?.kelas?.nama_kelas || 'N/A';
@@ -870,8 +885,29 @@
             const hargaKelasHtml = player.kelas_pertandingan ? `<span class="font-bold text-green-600">${formatCurrency(player.kelas_pertandingan.harga)}</span>` : `<span class="text-gray-500 italic">N/A</span>`;
             const totalInvoiceHtml = player.player_invoice ? `<span class="font-bold text-blue-600">${formatCurrency(player.player_invoice.total_price)}</span>` : `<span class="text-gray-500 italic">N/A</span>`;
 
+            // LOGIKA BARU UNTUK MEMBUAT LINK DOKUMEN
+            let docLinks = [];
+            if (player.foto_ktp) {
+                docLinks.push(`<a href="${storageUrlPrefix}${player.foto_ktp}" target="_blank" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors">Lihat KTP</a>`);
+            }
+            if (player.foto_diri) {
+                docLinks.push(`<a href="${storageUrlPrefix}${player.foto_diri}" target="_blank" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors">Lihat Foto Diri</a>`);
+            }
+            if (player.foto_persetujuan_ortu) {
+                docLinks.push(`<a href="${storageUrlPrefix}${player.foto_persetujuan_ortu}" target="_blank" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium hover:bg-gray-200 transition-colors">Lihat Izin Ortu</a>`);
+            }
+
+            // Jika tidak ada dokumen sama sekali
+            if (docLinks.length === 0) {
+                docLinks.push(`<span class="text-gray-500 italic">Tidak ada dokumen diunggah.</span>`);
+            }
+            
+            const documentsHtml = docLinks.join(' ');
+
+
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    {{-- Data Diri --}}
                     <div>
                         <strong class="block text-gray-500 mb-2 border-b pb-1">Data Diri</strong>
                         <div class="grid grid-cols-2 gap-2 text-sm">
@@ -881,6 +917,7 @@
                             <span class="text-gray-600">Tgl Lahir</span> <span>: ${new Date(player.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
                         </div>
                     </div>
+                    {{-- Informasi Tim --}}
                     <div>
                         <strong class="block text-gray-500 mb-2 border-b pb-1">Informasi Tim</strong>
                          <div class="grid grid-cols-2 gap-2 text-sm">
@@ -891,6 +928,7 @@
                         </div>
                     </div>
                     
+                    {{-- Detail Pertandingan --}}
                     <div class="md:col-span-2 mt-2">
                          <strong class="block text-gray-500 mb-2 border-b pb-1">Detail Pertandingan</strong>
                          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -900,7 +938,15 @@
                             <div><span class="text-gray-600 font-semibold">Rentang Usia:</span> <p class="text-gray-800">${rentangUsia}</p></div>
                          </div>
                     </div>
+
+                    <div class="md:col-span-2 mt-2">
+                         <strong class="block text-gray-500 mb-2 border-b pb-1">Dokumen Peserta</strong>
+                         <div class="flex items-center flex-wrap gap-2 mt-2">
+                            ${documentsHtml}
+                         </div>
+                    </div>
                     
+                    {{-- Informasi Pembayaran --}}
                     <div class="md:col-span-2 mt-2">
                         <strong class="block text-gray-500 mb-2 border-b pb-1">Informasi Pembayaran</strong>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -911,6 +957,7 @@
                         </div>
                     </div>
                 </div>
+                {{-- Catatan Admin --}}
                 <div class="mt-4"><strong class="block text-gray-500">Catatan Admin</strong> <p class="whitespace-pre-wrap text-sm">${player.catatan || 'Tidak ada catatan.'}</p></div>
             `;
             detailModal.classList.remove('hidden');

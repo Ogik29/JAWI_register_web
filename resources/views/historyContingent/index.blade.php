@@ -208,7 +208,7 @@
                                                                     @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
                                                                         <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
                                                                     @endif
-                                                                    @if ($player->status == 0)    
+                                                                    @if ($player->status == 0 || $player->status == 1 || $player->status == 3)    
                                                                         <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta {{ $player->name }}?');">
                                                                             @csrf
                                                                             @method('DELETE')

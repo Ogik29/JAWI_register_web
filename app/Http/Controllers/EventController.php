@@ -184,11 +184,6 @@ class EventController extends Controller
 
     public function storePeserta(Request $request)
     {
-        // return $request->all();
-
-        // 2. Siapkan array untuk menyimpan detail setiap atlet dan total harga
-        // $processedAthletesDetails = [];
-        // $totalHarga = 0;
 
         // 1. VALIDASI DATA DENGAN STRUKTUR BARU
         $validator = Validator::make($request->all(), [

@@ -48,8 +48,8 @@ class EventController extends Controller
         $event = Event::findOrFail($event_id);
 
         $request->merge([
-            'namaManajer' => Auth::user()->nama_lengkap,
-            'noTelepon'   => Auth::user()->no_telp,
+            // 'namaManajer' => Auth::user()->nama_lengkap,
+            // 'noTelepon'   => Auth::user()->no_telp,
             'email'       => Auth::user()->email,
         ]);
 
@@ -60,8 +60,8 @@ class EventController extends Controller
                 'max:255',
                 Rule::unique('contingent', 'name')->where('event_id', $event_id),
             ],
-            'namaManajer'   => 'required|string|max:255',
-            'noTelepon'     => 'required|string|max:15',
+            // 'namaManajer'   => 'required|string|max:255',
+            // 'noTelepon'     => 'required|string|max:15',
             'email'         => 'required|email|max:255',
             'user_id'       => 'required|integer|exists:users,id',
             'event_id'      => 'required|integer|exists:events,id',
@@ -96,9 +96,9 @@ class EventController extends Controller
 
         $contingent = Contingent::create([
             'name'                => $data['namaKontingen'],
-            'manajer_name'        => $data['namaManajer'],
+            // 'manajer_name'        => $data['namaManajer'],
             'email'               => $data['email'],
-            'no_telp'             => $data['noTelepon'],
+            // 'no_telp'             => $data['noTelepon'],
             'user_id'             => $data['user_id'],
             'event_id'            => $data['event_id'],
             'surat_rekomendasi'   => $rekomendasiPath, // Simpan path file ke database

@@ -202,24 +202,57 @@
                                                                 @endforeach
                                                             @endif
                                                         </td>
-                                                        <td>
-                                                            @foreach($registration['player_instances'] as $player)
-                                                                <div class="d-flex flex-nowrap gap-2 mb-1">
-                                                                    @if ($player->status == 0 || $player->status == 1 || $player->status == 3)
-                                                                        <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
-                                                                    @endif
-                                                                    @if ($player->status == 0 || $player->status == 1 || $player->status == 3)    
-                                                                        <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta {{ $player->name }}?');">
+
+                                                        <td class="align-middle">
+                                                            @php
+                                                                $playersInRegistration = $registration['player_instances'];
+                                                                $canBeModified = in_array($registration['status'], [0, 1, 3]);
+                                                            @endphp
+
+                                                            {{-- Gunakan flex-column untuk menumpuk aksi individu dan aksi tim --}}
+                                                            <div class="d-flex flex-column gap-2">
+
+                                                                @foreach ($playersInRegistration as $player)
+                                                                    <div class="d-flex align-items-center gap-2">
+                                                                        @if ($canBeModified)
+                                                                            {{-- Tombol EDIT INDIVIDU untuk setiap pemain --}}
+                                                                            <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
+                                                                        @endif
+                                                                        
+                                                                        @if ($player->status == 2)
+                                                                            {{-- Tombol CETAK KARTU INDIVIDU untuk setiap pemain --}}
+                                                                            <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm" title="Cetak Kartu {{ $player->name }}"><i class="bi bi-printer"></i></a>
+                                                                        @endif
+
+                                                                        {{-- Tampilkan nama pemain untuk kejelasan --}}
+                                                                        <span class="text-muted small" style="white-space: nowrap;">{{ $player->name }}</span>
+                                                                    </div>
+                                                                @endforeach
+
+                                                                @if ($playersInRegistration->count() > 1 && $canBeModified)
+                                                                    <hr class="my-1">
+                                                                    {{-- Form HAPUS TIM tetap sama, berlaku untuk seluruh grup --}}
+                                                                    <form action="{{ route('registration.destroy') }}" method="POST" onsubmit="return confirm('Anda akan menghapus SELURUH tim: {{ $registration['player_names'] }}. Yakin?');">
+                                                                        @csrf
+                                                                        @method('DELETE')
+                                                                        @foreach ($playersInRegistration as $player)
+                                                                            <input type="hidden" name="player_ids[]" value="{{ $player->id }}">
+                                                                        @endforeach
+                                                                        <button type="submit" class="btn btn-danger btn-sm w-100" title="Hapus Pendaftaran Tim">
+                                                                            <i class="bi bi-trash"></i> Hapus Seluruh Tim
+                                                                        </button>
+                                                                    </form>
+
+                                                                @elseif($playersInRegistration->count() == 1 && $canBeModified)
+                                                                    {{-- Jika pemainnya tunggal, tampilkan tombol hapus individu --}}
+                                                                    @php $player = $playersInRegistration->first(); @endphp
+                                                                    <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta {{ $player->name }}?');">
                                                                             @csrf
                                                                             @method('DELETE')
                                                                             <button type="submit" class="btn btn-danger btn-sm" title="Hapus {{ $player->name }}"><i class="bi bi-trash"></i></button>
-                                                                        </form>
-                                                                    @endif
-                                                                    @if ($player->status == 2)
-                                                                        <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm" title="Cetak Kartu {{ $player->name }}"><i class="bi bi-printer"></i></a>
-                                                                    @endif
-                                                                </div>
-                                                            @endforeach
+                                                                    </form>
+                                                                @endif
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @empty

@@ -77,21 +77,23 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="namaManajer" class="form-label fw-semibold">
+                            <label class="form-label fw-semibold">
                                 <i class="bi bi-person-fill text-danger me-1"></i> Nama Manajer
                             </label>
-                            <input type="text" value="{{ Auth::user()->nama_lengkap }}" class="form-control" id="namaManajer" name="namaManajer" placeholder="Masukkan nama manajer" required readonly>
-                            <div id="namaManajerError" class="invalid-feedback"></div>
+                            <div class="d-flex align-items-center p-2 border rounded bg-light">
+                                <span class="fw-bold">{{ Auth::user()->nama_lengkap }}</span>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="noTelepon" class="form-label fw-semibold">
+                            <label class="form-label fw-semibold">
                                 <i class="bi bi-telephone-fill text-danger me-1"></i> No. Telepon
                             </label>
-                            <input type="tel" value="{{ Auth::user()->no_telp }}" class="form-control" id="noTelepon" name="noTelepon" placeholder="Contoh: 08123456789" required readonly>
-                            <div id="noTeleponError" class="invalid-feedback"></div>
+                            <div class="d-flex align-items-center p-2 border rounded bg-light">
+                                <span class="fw-bold">{{ Auth::user()->no_telp }}</span>
+                            </div>
                         </div>
-                        
+
                         <div class="mb-4">
                             <label for="email" class="form-label fw-semibold">
                                 <i class="bi bi-envelope-fill text-danger me-1"></i> Email

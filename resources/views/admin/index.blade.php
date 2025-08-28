@@ -257,7 +257,7 @@
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
                                     <td class="p-3">
-                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->user->nama_lengkap }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
                                     </td>
                                     <td class="p-3 text-sm text-blue-600">
@@ -312,7 +312,7 @@
                                 <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                             </td>
                             <td class="p-3">
-                                <div class="text-sm font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $contingent->user->nama_lengkap }}</div>
                                 <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
                             </td>
                             <td class="p-3 text-sm text-blue-900">
@@ -440,7 +440,7 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
                                     <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
                                     <td class="p-3 space-x-2">
                                         <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
@@ -558,7 +558,7 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->manajer_name }}</td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
                                     <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
                                     {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
                                     <td class="p-3">
@@ -847,9 +847,9 @@
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="block text-gray-500">Event</strong> <p>${contingent.event.name}</p></div>
-                    <div><strong class="block text-gray-500">Nama Manajer</strong> <p>${contingent.manajer_name}</p></div>
-                    <div><strong class="block text-gray-500">Email</strong> <p>${contingent.email}</p></div>
-                    <div><strong class="block text-gray-500">No. Telepon</strong> <p>${contingent.no_telp}</p></div>
+                    <div><strong class="block text-gray-500">Nama Manajer</strong> <p>${contingent.user.nama_lengkap}</p></div>
+                    <div><strong class="block text-gray-500">Email</strong> <p>${contingent.user.email}</p></div>
+                    <div><strong class="block text-gray-500">No. Telepon</strong> <p>${contingent.user.no_telp}</p></div>
                     <div><strong class="block text-gray-500">Pemilik Akun</strong> <p>${contingent.user.nama_lengkap}</p></div>
                     <div><strong class="block text-gray-500">Biaya Kontingen</strong> <p>${hargaKontingen}</p></div>
                     

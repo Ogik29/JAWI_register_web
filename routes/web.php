@@ -50,6 +50,7 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::get('/history/player/{player}/edit', [historyController::class, 'editPlayer'])->name('player.edit');
     Route::put('/history/player/{player}', [historyController::class, 'updatePlayer'])->name('player.update');
     Route::delete('/history/player/{player}', [historyController::class, 'destroyPlayer'])->name('player.destroy');
+    Route::delete('/history/registration/destroy', [HistoryController::class, 'destroyRegistration'])->name('registration.destroy');
     Route::get('/history/player/{player}/print-card', [historyController::class, 'printCard'])->name('player.print.card');
     Route::get('{contingent_id}/peserta', [EventController::class, 'pesertaEvent'])->name('peserta.event');
     Route::post('/player_store', [EventController::class, 'storePeserta']);
@@ -102,7 +103,7 @@ Route::middleware('checkRole:1,2')->group(function () {
     // Rute untuk proses verifikasi
     Route::post('/admin/verify/contingent/{contingent}', [adminController::class, 'verifyContingent'])->name('admin.verify.contingent');
     Route::post('/admin/verify/player/{player}', [adminController::class, 'verifyPlayer'])->name('admin.verify.player');
-     // ROUTE BARU UNTUK EXPORT
+    // ROUTE BARU UNTUK EXPORT
     Route::get('/events/{event}/export-approved', [\App\Http\Controllers\adminController::class, 'exportApprovedParticipants'])
         ->name('admin.events.export-approved');
 });

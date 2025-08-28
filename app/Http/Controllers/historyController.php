@@ -211,6 +211,39 @@ class historyController extends Controller
         return redirect()->route('history')->with('status', 'Data peserta berhasil dihapus.');
     }
 
+    // hapus peserta yang ber-group
+    public function destroyRegistration(Request $request)
+    {
+        // Validasi bahwa kita menerima array ID pemain.
+        $request->validate([
+            'player_ids' => 'required|array',
+            'player_ids.*' => 'exists:players,id' // Memastikan setiap ID valid.
+        ]);
+
+        $playerIds = $request->input('player_ids');
+
+        // Ambil semua model Player berdasarkan ID yang diterima.
+        $players = Player::whereIn('id', $playerIds)->get();
+
+        // Pastikan semua pemain yang akan dihapus dimiliki oleh user yang sedang login.
+        foreach ($players as $player) {
+            if ($player->contingent->user_id !== Auth::id()) {
+                abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menghapus salah satu peserta ini.');
+            }
+        }
+
+        // Lakukan penghapusan (termasuk file dari storage).
+        foreach ($players as $player) {
+            if ($player->foto_ktp) Storage::disk('public')->delete($player->foto_ktp);
+            if ($player->foto_diri) Storage::disk('public')->delete($player->foto_diri);
+            if ($player->foto_persetujuan_ortu) Storage::disk('public')->delete($player->foto_persetujuan_ortu);
+
+            $player->delete();
+        }
+
+        return redirect()->route('history')->with('status', 'Pendaftaran tim berhasil dihapus.');
+    }
+
     // public function printCard(Player $player)
     // {
     //     if ($player->contingent->user_id !== Auth::id()) {

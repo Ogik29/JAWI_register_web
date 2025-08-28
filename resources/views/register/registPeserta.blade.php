@@ -48,10 +48,7 @@
         <div class="athlete-header"><h5 class="mb-0 athlete-title"><i class="fas fa-ticket-alt me-2"></i>Pendaftaran Kelas #__COUNT__</h5><button type="button" class="btn btn-sm btn-outline-light remove-card-btn"><i class="fas fa-trash me-1"></i>Hapus</button></div>
         <div class="p-4">
             <h5 class="text-danger mb-3">Filter Pilihan Kelas</h5>
-            <div class="alert alert-secondary">
-                <i class="fas fa-lock me-2"></i>
-                Setelah peserta ditambahkan, kelas pertandingan tidak dapat diubah, mohon untuk diteliti terlebih dahulu sebelum memilih kelas. Untuk mengganti kelas, silakan hapus peserta ini dan daftarkan kembali dengan kelas yang benar.
-            </div>
+            <div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>Setelah Anda memilih kelas dan mengisi data atlet, filter di atas akan dikunci. Untuk mengubah, hapus pendaftaran ini dan buat yang baru.</div>
             <div class="row filter-controls">
                 <div class="col-md-3 mb-3"><label class="form-label fw-bold">1. Rentang Usia</label><div class="rentang-usia-options"></div></div>
                 <div class="col-md-3 mb-3"><label class="form-label fw-bold">2. Kategori</label><div class="kategori-options"></div></div>
@@ -90,7 +87,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // --- DATA DARI CONTROLLER ---
     const CONTINGENT_ID = {{ $contingent->id }};
     const RENTANG_USIA_DATA = @json($rentangUsia);
     const KATEGORI_DATA = @json($kategoriPertandingan);
@@ -98,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const KELAS_PERTANDINGAN_DATA = @json($availableClasses);
     const GENDER_DATA = [ {id: 'Laki-laki', name: 'Laki-laki'}, {id: 'Perempuan', name: 'Perempuan'} ];
 
-    // --- ELEMENT REFERENCES ---
     const athletesContainer = document.getElementById('athletesContainer');
     const addAthleteBtn = document.getElementById('addAthleteBtn');
     const registrationForm = document.getElementById('registrationForm');
@@ -125,21 +120,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const buildRadioGroup = (data, name, labelKey, container, id) => {
         data.forEach(item => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'form-check';
-            const input = document.createElement('input');
-            input.type = 'radio';
-            input.className = 'form-check-input';
-            input.name = `${name}_${id}`;
-            input.value = item.id;
-            input.id = `${name}_${item.id}_${id}`;
-            const label = document.createElement('label');
-            label.className = 'form-check-label';
-            label.htmlFor = input.id;
-            label.textContent = item[labelKey];
-            wrapper.appendChild(input);
-            wrapper.appendChild(label);
-            container.appendChild(wrapper);
+            const wrapper = document.createElement('div'); wrapper.className = 'form-check';
+            const input = document.createElement('input'); input.type = 'radio'; input.className = 'form-check-input'; input.name = `${name}_${id}`; input.value = item.id; input.id = `${name}_${item.id}_${id}`;
+            const label = document.createElement('label'); label.className = 'form-check-label'; label.htmlFor = input.id; label.textContent = item[labelKey];
+            wrapper.appendChild(input); wrapper.appendChild(label); container.appendChild(wrapper);
         });
     };
 
@@ -150,20 +134,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedJenis = card.querySelector(`input[name="jenis_${uniqueId}"]:checked`)?.value;
         const selectedGender = card.querySelector(`input[name="gender_${uniqueId}"]:checked`)?.value;
         const kelasSelect = card.querySelector('select[name="kelas_pertandingan_id"]');
-        
         kelasSelect.innerHTML = '<option value="">Pilih...</option>';
         if (!selectedRentang || !selectedKategori || !selectedJenis || !selectedGender) {
             kelasSelect.firstElementChild.textContent = "Lengkapi semua filter di atas";
             return;
         }
-
         const filteredClasses = KELAS_PERTANDINGAN_DATA.filter(k => 
             k.rentang_usia_id == selectedRentang &&
             k.kategori_pertandingan_id == selectedKategori &&
             k.jenis_pertandingan_id == selectedJenis &&
             (k.gender === selectedGender || k.gender === 'Campuran')
         );
-
         if (filteredClasses.length > 0) {
             filteredClasses.forEach(k => {
                 const option = document.createElement('option');
@@ -178,13 +159,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const generateSubAthleteForms = (card, playerCount, gender) => {
         const subContainer = card.querySelector('.sub-athlete-container');
+        const cardId = card.dataset.cardId;
         subContainer.innerHTML = '';
-        for (let i = 1; i <= playerCount; i++) {
+        for (let i = 0; i < playerCount; i++) {
             const clone = subAthleteTemplate.content.cloneNode(true);
-            clone.querySelectorAll('.sub-athlete-form h6').forEach(h6 => h6.textContent = h6.textContent.replace('__SUB_COUNT__', i));
-            clone.querySelectorAll('input, select').forEach(input => input.name = `${input.name}_${i-1}`);
-            
-            const genderSelect = clone.querySelector('select[name^="jenisKelamin"]');
+            clone.querySelectorAll('.sub-athlete-form h6').forEach(h6 => h6.textContent = h6.textContent.replace('__SUB_COUNT__', i + 1));
+            clone.querySelectorAll('input, select').forEach(input => {
+                input.name = `${input.name}_${cardId}_${i}`;
+            });
+            const genderSelect = clone.querySelector(`select[name^="jenisKelamin"]`);
             if(genderSelect) {
                 genderSelect.value = gender;
                 if (gender !== 'Campuran') {
@@ -264,30 +247,30 @@ document.addEventListener('DOMContentLoaded', function () {
         
         document.querySelectorAll('.athlete-card').forEach((card, cardIndex) => {
             const kelasId = card.querySelector('select[name="kelas_pertandingan_id"]').value;
+            const cardId = card.dataset.cardId;
             if (!kelasId) {
                 showAlert(`Pendaftaran #${cardIndex + 1} belum memilih Kelas Pertandingan.`, 'danger');
                 hasError = true;
             }
-            
-            // Mengirim kelas_pertandingan_id di level registrasi
             formData.append(`registrations[${cardIndex}][kelas_pertandingan_id]`, kelasId);
             
             card.querySelectorAll('.sub-athlete-form').forEach((subForm, subIndex) => {
                 const prefix = `registrations[${cardIndex}][players][${subIndex}]`;
+                formData.append(`${prefix}[namaLengkap]`, subForm.querySelector(`input[name="namaLengkap_${cardId}_${subIndex}"]`).value);
+                formData.append(`${prefix}[nik]`, subForm.querySelector(`input[name="nik_${cardId}_${subIndex}"]`).value);
+                formData.append(`${prefix}[noTelepon]`, subForm.querySelector(`input[name="noTelepon_${cardId}_${subIndex}"]`).value);
+                formData.append(`${prefix}[email]`, subForm.querySelector(`input[name="email_${cardId}_${subIndex}"]`).value);
                 
-                formData.append(`${prefix}[namaLengkap]`, subForm.querySelector(`input[name="namaLengkap_${subIndex}"]`).value);
-                formData.append(`${prefix}[nik]`, subForm.querySelector(`input[name="nik_${subIndex}"]`).value);
-                formData.append(`${prefix}[noTelepon]`, subForm.querySelector(`input[name="noTelepon_${subIndex}"]`).value);
-                formData.append(`${prefix}[email]`, subForm.querySelector(`input[name="email_${subIndex}"]`).value);
-                
-                const genderSelect = subForm.querySelector(`select[name^="jenisKelamin"]`);
-                genderSelect.disabled = false;
-                formData.append(`${prefix}[jenisKelamin]`, genderSelect.value);
+                const genderSelect = subForm.querySelector(`select[name="jenisKelamin_${cardId}_${subIndex}"]`);
+                if(genderSelect){
+                    genderSelect.disabled = false;
+                    formData.append(`${prefix}[jenisKelamin]`, genderSelect.value);
+                }
 
-                formData.append(`${prefix}[tanggalLahir]`, subForm.querySelector(`input[name="tanggalLahir_${subIndex}"]`).value);
-                formData.append(`${prefix}[uploadKTP]`, subForm.querySelector(`input[name="uploadKTP_${subIndex}"]`).files[0]);
-                formData.append(`${prefix}[uploadFoto]`, subForm.querySelector(`input[name="uploadFoto_${subIndex}"]`).files[0]);
-                formData.append(`${prefix}[uploadPersetujuan]`, subForm.querySelector(`input[name="uploadPersetujuan_${subIndex}"]`).files[0]);
+                formData.append(`${prefix}[tanggalLahir]`, subForm.querySelector(`input[name="tanggalLahir_${cardId}_${subIndex}"]`).value);
+                formData.append(`${prefix}[uploadKTP]`, subForm.querySelector(`input[name="uploadKTP_${cardId}_${subIndex}"]`).files[0]);
+                formData.append(`${prefix}[uploadFoto]`, subForm.querySelector(`input[name="uploadFoto_${cardId}_${subIndex}"]`).files[0]);
+                formData.append(`${prefix}[uploadPersetujuan]`, subForm.querySelector(`input[name="uploadPersetujuan_${cardId}_${subIndex}"]`).files[0]);
             });
         });
 
@@ -331,8 +314,14 @@ document.addEventListener('DOMContentLoaded', function () {
         window.scrollTo(0, 0);
     };
 
-    const addCardAndPriceUpdate = () => { addRegistrationCard(); updateTotalPrice(); };
+    const addCardAndPriceUpdate = () => {
+        addRegistrationCard();
+        updateTotalPrice();
+    };
+    
     addAthleteBtn.addEventListener('click', addCardAndPriceUpdate);
     addRegistrationCard();
 });
 </script>
+</body>
+</html>

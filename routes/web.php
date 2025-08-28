@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\adminController;
+use App\Http\Controllers\SuperAdmin\KelasController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\historyController;
@@ -88,6 +89,15 @@ Route::prefix('superadmin')
         Route::get('kelola-admin/{admin}/edit', [SuperAdminController::class, 'editAdmin'])->name('admin.edit');
         Route::put('kelola-admin/{admin}', [SuperAdminController::class, 'updateAdmin'])->name('admin.update');
         Route::delete('kelola-admin/{admin}', [SuperAdminController::class, 'destroyAdmin'])->name('admin.destroy');
+
+
+        Route::get('/kelas', [KelasController::class, 'index'])->name('kelas.index');
+        Route::get('/kelas/create', [KelasController::class, 'create'])->name('kelas.create');
+        Route::post('/kelas', [KelasController::class, 'store'])->name('kelas.store');
+        Route::get('/kelas/{kela}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
+        Route::put('/kelas/{kela}', [KelasController::class, 'update'])->name('kelas.update');
+        Route::delete('/kelas/{kela}', [KelasController::class, 'destroy'])->name('kelas.destroy');
+
     });
 
 

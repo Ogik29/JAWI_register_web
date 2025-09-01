@@ -59,7 +59,51 @@ class Player extends Model
             'id',                       // Local key on Player table...
             'player_invoice_id'         // Local key on TransactionDetail table.
         );
+
     }
+
+
+
+     // === RELASI BARU UNTUK BRACKET ===
+
+    /**
+     * Relasi: Mendapatkan semua pertandingan di mana pemain ini berada di slot 1.
+     */
+    public function matchesAsPlayer1()
+    {
+        return $this->hasMany(Pertandingan::class, 'player1_id');
+    }
+
+    /**
+     * Relasi: Mendapatkan semua pertandingan di mana pemain ini berada di slot 2.
+     */
+    public function matchesAsPlayer2()
+    {
+        return $this->hasMany(Pertandingan::class, 'player2_id');
+    }
+
+    /**
+     * Relasi: Mendapatkan semua pertandingan yang dimenangkan oleh pemain ini.
+     */
+    public function wonMatches()
+    {
+        return $this->hasMany(Pertandingan::class, 'winner_id');
+    }
+
+    /**
+     * (Opsional) Method untuk menggabungkan semua pertandingan yang melibatkan pemain ini.
+     */
+    public function getAllMatches()
+    {
+        $matches1 = $this->matchesAsPlayer1()->get();
+        $matches2 = $this->matchesAsPlayer2()->get();
+
+        return $matches1->merge($matches2);
+    }
+
+
+
+    // relasi untuk bracket
 
   
 }

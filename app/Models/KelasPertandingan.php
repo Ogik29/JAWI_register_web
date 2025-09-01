@@ -44,4 +44,12 @@ class KelasPertandingan extends Model
     {
         return $this->hasMany(Player::class, 'kelas_pertandingan_id', 'id');
     }
+
+
+    public function pertandingan()
+    {
+        // 'round_number' dan 'match_number' digunakan untuk mengurutkan bracket secara benar.
+        return $this->hasMany(Pertandingan::class, 'kelas_pertandingan_id')->orderBy('round_number')->orderBy('match_number');
+    }
+
 }

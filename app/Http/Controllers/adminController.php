@@ -12,6 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use App\Exports\ApprovedParticipantsExport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\KelasPertandingan;
 // use App\Models\Event;
 // use Illuminate\Http\Request;
 
@@ -135,20 +136,45 @@ class adminController extends Controller
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
         $pendingPlayersCount = $playersForVerification->count();
 
+        // KODE BARU: Ambil data untuk navigasi Bracket
+        $managedEventIds = $admin->eventRoles->pluck('event_id');
+
+        // 1. Ambil ID dari Kategori "Prestasi". Asumsikan namanya konsisten.
+        // Jika tidak ada kategori Prestasi, id = 0 agar query tidak error.
+        $kategoriPrestasiId = \App\Models\KategoriPertandingan::where('nama_kategori', 'Prestasi')->value('id') ?? 0;
+
+        // 2. Ambil semua kelas pertandingan yang:
+        //    - Termasuk dalam event yang dikelola admin
+        //    - Memiliki Kategori "Prestasi"
+        //    - Memiliki pemain terverifikasi (status 2) yang jumlahnya lebih dari 0
+        $kelasUntukBracket = KelasPertandingan::with([
+            'event',
+            'kelas' // relasi untuk mengambil nama kelas
+        ])
+            ->whereIn('event_id', $managedEventIds)
+            ->where('kategori_pertandingan_id', $kategoriPrestasiId)
+            ->whereHas('players', function ($query) {
+                $query->where('status', 2); // Status 2 = Terverifikasi
+            })
+            ->get();
+        // ==========================================================
+
+
         return view('admin.index', compact(
             'totalPlayers',
             'pendingContingentsCount',
             'activeEvents',
             'events',
             'contingentsForVerification',
-            'contingentsForDataVerification', // Kirim variabel baru
+            'contingentsForDataVerification',
             'approvedContingents',
             'totalContingents',
             'pendingPlayersCount',
             'rejectedContingents',
             'groupedPlayersForVerification',
             'groupedApprovedPlayers',
-            'groupedRejectedPlayers'
+            'groupedRejectedPlayers',
+            'kelasUntukBracket' // <-- TAMBAHKAN VARIABEL BARU INI
         ));
     }
 

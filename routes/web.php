@@ -1,13 +1,14 @@
 <?php
 
-use App\Http\Controllers\adminController;
-use App\Http\Controllers\SuperAdmin\KelasController;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\historyController;
-use App\Http\Controllers\SuperAdminController;
 use App\Models\Event;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\adminController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\BracketController;
+use App\Http\Controllers\historyController;
+use App\Http\Controllers\SuperAdminController;
+use App\Http\Controllers\SuperAdmin\KelasController;
 
 /*
 |--------------------------------------------------------------------------
@@ -98,7 +99,6 @@ Route::prefix('superadmin')
         Route::get('/kelas/{kela}/edit', [KelasController::class, 'edit'])->name('kelas.edit');
         Route::put('/kelas/{kela}', [KelasController::class, 'update'])->name('kelas.update');
         Route::delete('/kelas/{kela}', [KelasController::class, 'destroy'])->name('kelas.destroy');
-
     });
 
 
@@ -116,6 +116,14 @@ Route::middleware('checkRole:1,2')->group(function () {
     // ROUTE BARU UNTUK EXPORT
     Route::get('/events/{event}/export-approved', [\App\Http\Controllers\adminController::class, 'exportApprovedParticipants'])
         ->name('admin.events.export-approved');
+    // Menampilkan halaman bracket untuk kelas pertandingan tertentu
+    Route::get('/bracket/{kelas}', [BracketController::class, 'show'])->name('bracket.show');
+    // Aksi untuk meng-generate / mengundi (draw) bracket
+    Route::post('/bracket/{kelas}/generate', [BracketController::class, 'generate'])->name('bracket.generate');
+    // Aksi untuk memindahkan posisi player (untuk drag-and-drop)
+    Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
+    // Aksi untuk update skor dan menentukan pemenang
+    Route::post('/bracket/update-match/{pertandingan}', [BracketController::class, 'updateMatch'])->name('bracket.updateMatch');
 });
 
 

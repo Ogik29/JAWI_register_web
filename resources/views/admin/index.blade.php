@@ -113,6 +113,7 @@
         <div class="px-6">
             <div class="flex space-x-8">
                 <button onclick="showSection('events')" class="nav-btn py-4 px-2 border-b-2 border-red-500 text-red-600 font-medium ">🏆 Kelola Event</button>
+                <button onclick="showSection('bracket')" class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">⚔️ Bracket Prestasi</button>
                 <button onclick="showSection('dashboard')" class="nav-btn py-4 px-2 border-b-2 border-transparent text-gray-500 hover:text-gray-700">📊 Dashboard</button>
             </div>
         </div>
@@ -624,6 +625,40 @@
         </div>
     </main>
 
+    <div id="bracket" class="section hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Bracket Pertandingan Prestasi</h2>
+                <p class="text-gray-600">Pilih event dan kelas untuk melihat atau membuat bagan pertandingan.</p>
+            </div>
+
+            @forelse ($kelasUntukBracket->groupBy('event_id') as $event_id => $kelasGrup)
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
+                    <div class="px-6 py-4 border-b">
+                        <h3 class="text-lg font-semibold text-gray-900">Event: {{ $kelasGrup->first()->event->name }}</h3>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-sm text-gray-700 mb-4">Kelas Pertandingan (Kategori Prestasi) yang tersedia:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            @foreach ($kelasGrup as $kelas)
+                                <a href="{{ route('bracket.show', $kelas->id) }}" class="block p-4 bg-gray-50 rounded-lg hover:bg-red-100 hover:shadow-md transition-all">
+                                    <p class="font-semibold text-gray-800">{{ $kelas->kelas->nama_kelas }}</p>
+                                    <p class="text-sm text-gray-600">{{ $kelas->gender }}</p>
+                                    <span class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        {{ $kelas->players_count }} Peserta
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="bg-white rounded-xl shadow-sm border p-6 text-center">
+                    <p class="text-gray-600">Tidak ada kelas dengan kategori "Prestasi" yang memiliki peserta terverifikasi saat ini.</p>
+                </div>
+            @endforelse
+        </div>
+    </main>
+
     {{-- MODAL DETAIL --}}
     <div id="detailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl modal-content overflow-y-auto">
@@ -745,16 +780,45 @@
             }
         });
 
-        function showSection(sectionId) {
+         function showSection(sectionId) {
+            // Sembunyikan semua section
             document.querySelectorAll('.section').forEach(section => section.classList.add('hidden'));
-            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Tampilkan section yang dipilih
+            const targetSection = document.getElementById(sectionId);
+            if(targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+
+            // Atur style tombol navigasi
             document.querySelectorAll('.nav-btn').forEach(btn => {
+                // Hapus style aktif dari SEMUA tombol
                 btn.classList.remove('border-red-500', 'text-red-600');
                 btn.classList.add('border-transparent', 'text-gray-500');
+
+                // Tambahkan style aktif HANYA pada tombol yang diklik
+                if(btn.getAttribute('onclick') === `showSection('${sectionId}')`) {
+                    btn.classList.add('border-red-500', 'text-red-600');
+                    btn.classList.remove('border-transparent', 'text-gray-500');
+                }
             });
-            event.currentTarget.classList.add('border-red-500', 'text-red-600');
-            event.currentTarget.classList.remove('border-transparent', 'text-gray-500');
+
+            // Atasi bug duplikat event handler lama, gunakan event.currentTarget
+            // Ini membuat event handler lebih robust jika ada elemen lain di dalam button
+             if(event && event.currentTarget) {
+                 document.querySelectorAll('.nav-btn').forEach(btn => {
+                     btn.classList.remove('border-red-500', 'text-red-600');
+                     btn.classList.add('border-transparent', 'text-gray-500');
+                 });
+                 event.currentTarget.classList.add('border-red-500', 'text-red-600');
+                 event.currentTarget.classList.remove('border-transparent', 'text-gray-500');
+             }
         }
+        
+        // Atur agar section "events" ditampilkan secara default saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', (event) => {
+            showSection('events');
+        });
 
         function showSubSection(subSectionId) {
             document.querySelectorAll('.sub-section').forEach(section => section.classList.add('hidden'));

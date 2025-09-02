@@ -124,6 +124,8 @@ Route::middleware('checkRole:1,2')->group(function () {
     Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
     // Aksi untuk update skor dan menentukan pemenang
     Route::post('/bracket/update-match/{pertandingan}', [BracketController::class, 'updateMatch'])->name('bracket.updateMatch');
+    // PENTING: Tambahkan route ini untuk menangani update posisi pemain via AJAX
+Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
 });
 
 

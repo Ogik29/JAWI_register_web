@@ -626,37 +626,80 @@
     </main>
 
     <div id="bracket" class="section hidden">
-            <div class="mb-6">
+        <div class="max-w-7xl mx-auto">
+            
+            {{-- BAGIAN HEADER --}}
+            <div class="mb-8 pb-4 border-b-2 border-gray-200">
                 <h2 class="text-2xl font-bold text-gray-900">Bracket Pertandingan Prestasi</h2>
-                <p class="text-gray-600">Pilih event dan kelas untuk melihat atau membuat bagan pertandingan.</p>
+                <p class="mt-1 text-gray-600">Pilih event dan kelas untuk melihat atau membuat bagan pertandingan.</p>
             </div>
 
+            {{-- BAGIAN KONTEN --}}
             @forelse ($kelasUntukBracket->groupBy('event_id') as $event_id => $kelasGrup)
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8">
-                    <div class="px-6 py-4 border-b">
-                        <h3 class="text-lg font-semibold text-gray-900">Event: {{ $kelasGrup->first()->event->name }}</h3>
+                    {{-- Header untuk setiap Event Card --}}
+                    <div class="px-6 py-4 border-b bg-gray-50/75">
+                        <div class="flex items-center gap-3">
+                            <span class="inline-flex justify-center items-center w-8 h-8 rounded-lg bg-red-100 text-red-700">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-6.75c-.621 0-1.125.504-1.125 1.125V18.75m9 0h-9" /></svg>
+                            </span>
+                            <h3 class="text-lg font-semibold text-gray-900">Event: {{ $kelasGrup->first()->event->name }}</h3>
+                        </div>
                     </div>
+                    
+                    {{-- Grid untuk menampilkan kartu Kelas Pertandingan --}}
                     <div class="p-6">
-                        <p class="text-sm text-gray-700 mb-4">Kelas Pertandingan (Kategori Prestasi) yang tersedia:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                             @foreach ($kelasGrup as $kelas)
-                                <a href="{{ route('bracket.show', $kelas->id) }}" class="block p-4 bg-gray-50 rounded-lg hover:bg-red-100 hover:shadow-md transition-all">
-                                    <p class="font-semibold text-gray-800">{{ $kelas->kelas->nama_kelas }}</p>
-                                    <p class="text-sm text-gray-600">{{ $kelas->gender }}</p>
-                                    <span class="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        {{ $kelas->players_count }} Peserta
-                                    </span>
+                                <a href="{{ route('bracket.show', $kelas->id) }}" 
+                                class="group flex flex-col bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-red-500 hover:-translate-y-1">
+                                    
+                                    {{-- Konten Utama Kartu --}}
+                                    <div class="p-4 flex-grow">
+                                        <p class="font-bold text-gray-800 group-hover:text-red-700 transition-colors">
+                                            {{ $kelas->kelas->nama_kelas }}
+                                        </p>
+                                        <div class="flex items-center mt-2 text-sm text-gray-500">
+                                            {{-- Ikon untuk Gender --}}
+                                            @if($kelas->gender == 'Laki-laki')
+                                                <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                                            @elseif($kelas->gender == 'Perempuan')
+                                                <svg class="w-4 h-4 mr-1.5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                                            @else
+                                                <svg class="w-4 h-4 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.964A3 3 0 006 12v-1.5a3 3 0 013-3h.008v.008h-.008V12z" /></svg>
+                                            @endif
+                                            <span>{{ $kelas->gender }}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {{-- Footer Kartu untuk Jumlah Peserta --}}
+                                    <div class="px-4 py-2 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+                                        <span class="inline-flex items-center text-xs font-semibold text-red-800">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                                            {{ $kelas->players_count }} Peserta Terverifikasi
+                                        </span>
+                                    </div>
                                 </a>
                             @endforeach
                         </div>
                     </div>
                 </div>
             @empty
-                <div class="bg-white rounded-xl shadow-sm border p-6 text-center">
-                    <p class="text-gray-600">Tidak ada kelas dengan kategori "Prestasi" yang memiliki peserta terverifikasi saat ini.</p>
+                {{-- Tampilan Kartu Kosong yang Lebih Menarik --}}
+                <div class="bg-white text-center rounded-xl shadow-sm border-2 border-dashed border-gray-300 p-8">
+                    <div class="mx-auto w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full">
+                        <svg class="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.652a3.75 3.75 0 010-5.304m5.304 0a3.75 3.75 0 010 5.304m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.008H12V12z" />
+                        </svg>
+                    </div>
+                    <h3 class="mt-4 text-lg font-semibold text-gray-800">Belum Ada Data Bracket</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Tidak ada kelas kategori "Prestasi" yang memiliki peserta terverifikasi untuk ditampilkan saat ini.
+                    </p>
                 </div>
             @endforelse
         </div>
+    </div>
     </main>
 
     {{-- MODAL DETAIL --}}

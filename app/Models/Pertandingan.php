@@ -26,8 +26,8 @@ class Pertandingan extends Model
         'kelas_pertandingan_id',
         'round_number',
         'match_number',
-        'player1_id',
-        'player2_id',
+        'unit1_id',
+        'unit2_id',
         'score1',
         'score2',
         'winner_id',
@@ -47,18 +47,18 @@ class Pertandingan extends Model
     /**
      * Relasi: Satu pertandingan MEMILIKI SATU pemain di slot 1.
      */
-    public function player1(): BelongsTo
-    {
-        return $this->belongsTo(Player::class, 'player1_id');
-    }
+    // public function player1(): BelongsTo
+    // {
+    //     return $this->belongsTo(Player::class, 'player1_id');
+    // }
 
-    /**
-     * Relasi: Satu pertandingan MEMILIKI SATU pemain di slot 2.
-     */
-    public function player2(): BelongsTo
-    {
-        return $this->belongsTo(Player::class, 'player2_id');
-    }
+    // /**
+    //  * Relasi: Satu pertandingan MEMILIKI SATU pemain di slot 2.
+    //  */
+    // public function player2(): BelongsTo
+    // {
+    //     return $this->belongsTo(Player::class, 'player2_id');
+    // }
 
     /**
      * Relasi: Satu pertandingan MEMILIKI SATU pemain sebagai pemenang.
@@ -84,4 +84,25 @@ class Pertandingan extends Model
     {
         return $this->hasMany(Pertandingan::class, 'next_match_id');
     }
+
+
+    public function getPemainUnit1Attribute()
+    {
+        return BracketPeserta::where('kelas_pertandingan_id', $this->kelas_pertandingan_id)
+                             ->where('unit_id', $this->unit1_id)
+                             ->with('player.contingent') // Eager load relasi dari BracketPeserta
+                             ->get();
+    }
+
+    /**
+     * [SOLUSI] Membuat 'kolom' virtual bernama 'pemainUnit2'.
+     */
+    public function getPemainUnit2Attribute()
+    {
+        return BracketPeserta::where('kelas_pertandingan_id', $this->kelas_pertandingan_id)
+                             ->where('unit_id', $this->unit2_id)
+                             ->with('player.contingent') // Eager load relasi dari BracketPeserta
+                             ->get();
+    }
+
 }

@@ -64,6 +64,7 @@
         
         /* Item Pemain */
         .player-item { display: flex; flex-direction: column; padding: 8px 14px; background-color: #f4f4f7; border-radius: 6px; }
+        .player-item:not(:last-child) { margin-bottom: 5px; } /* Memberi jarak jika ada >1 pemain di satu unit */
         .player-item.is-draggable { cursor: grab; transition: background-color 0.2s; }
         .player-item.is-draggable:hover { background-color: #e9e9e9; }
         .player-item .player-name { font-weight: 600; font-size: 0.9em; color: var(--color-teks-utama); }
@@ -85,7 +86,6 @@
             background-color: var(--color-putih);
             border-radius: 8px;
             overflow: hidden;
-            /* [PERBAIKAN KUNCI] Aksen Merah & Bayangan Jelas */
             border: 1px solid var(--color-border);
             border-left: 4px solid var(--color-merah-gelap);
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.07);
@@ -99,8 +99,8 @@
         .round > .match-wrapper:not(:last-child) { margin-bottom: var(--match-vert-gap); }
         
         /* Slot Pemain */
-        .player-slot { padding: 12px 14px; min-height: 58px; box-sizing: border-box; display: flex; align-items: center; position: relative; }
-        .player-slot.draggable:empty::after { content: 'Slot Tersedia'; display: flex; align-items: center; justify-content: center; width: calc(100% - 2px); height: calc(100% - 2px); color: var(--color-teks-sekunder); border: 2px dashed #e0e0e0; border-radius: 7px; font-size: 0.9em; font-weight: 500; }
+        .player-slot { padding: 12px 14px; min-height: 58px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: center; position: relative; }
+        .player-slot.draggable:empty::after { content: 'Slot Tersedia'; display: flex; align-items: center; justify-content: center; width: calc(100% - 2px); height: calc(100% - 2px); color: var(--color-teks-sekunder); border: 2px dashed #e0e0e0; border-radius: 7px; font-size: 0.9em; font-weight: 500; position: absolute; top: 1px; left: 1px;}
         .player-slot.locked .player-placeholder { width: 100%; text-align: center; color: var(--color-teks-sekunder); font-size: 0.9em; font-style: italic; }
         .player-slot.bye-locked { background-color: #fdfdfd; }
         .player-slot + .player-slot { border-top: 1px solid var(--color-border); }
@@ -157,29 +157,40 @@
                         @if(isset($rounds[$r]))
                             @foreach ($rounds[$r] as $match)
                                 <div class="match-wrapper" data-match-id="{{ $match->id }}">
+                                    
+                                    {{-- ===================== SLOT 1 (PERBAIKAN) ===================== --}}
                                     <div class="player-slot @if($r == 1) draggable @else locked @endif" data-slot="1">
-                                        @if($match->player1)
-                                            <div class="player-item @if($r == 1) is-draggable @endif" data-player-id="{{ $match->player1->id }}">
-                                                <span class="player-name">{{ $match->player1->name }}</span>
-                                                <span class="player-contingent">{{ $match->player1->contingent->name }}</span>
-                                            </div>
+                                        @if($match->pemain_unit_1->isNotEmpty())
+                                            @foreach($match->pemain_unit_1 as $peserta)
+                                                <div class="player-item @if($r == 1) is-draggable @endif" data-player-id="{{ $peserta->player->id }}">
+                                                    <span class="player-name">{{ $peserta->player->name }}</span>
+                                                    <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
+                                                </div>
+                                            @endforeach
                                         @elseif ($r > 1)
                                             <div class="player-placeholder">Menunggu Pemenang</div>
                                         @endif
                                     </div>
+
+                                    {{-- Logika untuk mengunci slot BYE (PERBAIKAN) --}}
                                     @php
-                                        $isByeSlotLocked = $r == 1 && $match->player1_id && !$match->player2_id;
+                                        $isByeSlotLocked = $r == 1 && $match->unit1_id && !$match->unit2_id;
                                     @endphp
+
+                                    {{-- ===================== SLOT 2 (PERBAIKAN) ===================== --}}
                                     <div class="player-slot @if($r == 1 && !$isByeSlotLocked) draggable @else locked @endif @if($isByeSlotLocked) bye-locked @endif" data-slot="2">
-                                        @if($match->player2)
-                                            <div class="player-item @if($r == 1) is-draggable @endif" data-player-id="{{ $match->player2->id }}">
-                                                <span class="player-name">{{ $match->player2->name }}</span>
-                                                <span class="player-contingent">{{ $match->player2->contingent->name }}</span>
-                                            </div>
+                                        @if($match->pemain_unit_2->isNotEmpty())
+                                            @foreach($match->pemain_unit_2 as $peserta)
+                                                <div class="player-item @if($r == 1) is-draggable @endif" data-player-id="{{ $peserta->player->id }}">
+                                                    <span class="player-name">{{ $peserta->player->name }}</span>
+                                                    <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
+                                                </div>
+                                            @endforeach
                                         @elseif ($r > 1 || $isByeSlotLocked)
                                             <div class="player-placeholder">{{ $r > 1 ? 'Menunggu Pemenang' : '' }}</div>
                                         @endif
                                     </div>
+
                                 </div>
                             @endforeach
                         @endif
@@ -192,30 +203,51 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Skrip untuk Drag & Drop (Tidak ada perubahan)
             const headers = { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'), 'Content-Type': 'application/json', 'Accept': 'application/json' };
             const savePlayerPosition = (playerId, matchId, slotNumber) => {
                 fetch('{{ route("bracket.updatePosition") }}', { method: 'POST', headers: headers, body: JSON.stringify({ player_id: playerId, match_id: matchId, slot: slotNumber }) })
                 .then(response => response.json().then(data => ({ status: response.status, body: data })))
                 .then(({ status, body }) => {
-                    if (status >= 400) { alert('Error: ' + body.message); location.reload(); } 
-                    else { console.log('Success:', body.message); location.reload(); }
-                }).catch((error) => { console.error('Fatal Error:', error); alert('Gagal menyimpan posisi pemain.'); location.reload(); });
+                    if (status >= 400) { 
+                        alert('Error: ' + body.message); 
+                        location.reload(); 
+                    } else { 
+                        console.log('Success:', body.message); 
+                        // Muat ulang halaman agar perubahan (misalnya swap) terlihat
+                        location.reload(); 
+                    }
+                }).catch((error) => { 
+                    console.error('Fatal Error:', error); 
+                    alert('Gagal menyimpan posisi pemain.'); 
+                    location.reload(); 
+                });
             };
+            
             const playerPool = document.getElementById('player-pool');
             const draggableSlots = document.querySelectorAll('.player-slot.draggable');
+            
             const sortableOptions = {
-                group: 'players', animation: 150,
+                group: 'players', 
+                animation: 150,
+                // Fungsi ini dipanggil saat item ditambahkan ke list/slot
                 onAdd: function (evt) {
-                    if (evt.to.id === 'player-pool') return;
+                    // Jangan lakukan apa-apa jika pemain dikembalikan ke pool
+                    if (evt.to.id === 'player-pool') {
+                        // Di masa depan, Anda bisa menambahkan logika untuk MENGHAPUS pemain dari slot
+                        return;
+                    }
                     const playerId = evt.item.dataset.playerId;
                     const matchId = evt.to.closest('.match-wrapper').dataset.matchId;
                     const slotNumber = evt.to.dataset.slot;
                     savePlayerPosition(playerId, matchId, slotNumber);
                 }
             };
+            
             if (playerPool) new Sortable(playerPool, sortableOptions);
-            draggableSlots.forEach(slot => { new Sortable(slot, sortableOptions); });
+            
+            draggableSlots.forEach(slot => { 
+                new Sortable(slot, sortableOptions); 
+            });
         });
     </script>
 </body>

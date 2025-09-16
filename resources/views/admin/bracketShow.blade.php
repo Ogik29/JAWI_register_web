@@ -83,7 +83,7 @@
         .round-title { width: 100%; text-align: center; font-family: 'Roboto Condensed', sans-serif; font-size: 1.3em; color: var(--color-merah-teks); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px; }
         
         .match-wrapper {
-            background-color: var(--color-putih);
+            background-color: var(--color-merah-gelap);
             border-radius: 8px;
             overflow: hidden;
             border: 1px solid var(--color-border);
@@ -101,7 +101,7 @@
         /* Slot Pemain */
         .player-slot { padding: 12px 14px; min-height: 58px; box-sizing: border-box; display: flex; flex-direction: column; align-items: stretch; justify-content: center; position: relative; }
         .player-slot.draggable:empty::after { content: 'Slot Tersedia'; display: flex; align-items: center; justify-content: center; width: calc(100% - 2px); height: calc(100% - 2px); color: var(--color-teks-sekunder); border: 2px dashed #e0e0e0; border-radius: 7px; font-size: 0.9em; font-weight: 500; position: absolute; top: 1px; left: 1px;}
-        .player-slot.locked .player-placeholder { width: 100%; text-align: center; color: var(--color-teks-sekunder); font-size: 0.9em; font-style: italic; }
+        .player-slot.locked .player-placeholder { width: 100%; text-align: center; color: var(--color-putih); font-size: 0.9em; font-style: italic; }
         .player-slot.bye-locked { background-color: #fdfdfd; }
         .player-slot + .player-slot { border-top: 1px solid var(--color-border); }
 

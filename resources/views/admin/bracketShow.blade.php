@@ -111,7 +111,7 @@
     <header class="header">
         <div class="title">
             <h1>Pengaturan Pertandingan: {{ $kelas->kelas->nama_kelas }} ({{ $kelas->gender }})</h1>
-            <p>{{ $kelas->kategoriPertandingan->nama_kategori }} - {{ $kelas->jenisPertandingan->nama_jenis }}</p>
+            <p>{{ $kelas->kategoriPertandingan->nama_kategori }} - {{ $kelas->jenisPertandingan->nama_jenis }} - {{ $kelas->kelas->rentangUsia->rentang_usia }}</p>
         </div>
         <div class="actions-container">
             <a href="{{ route('adminIndex') }}#bracket" class="btn btn-home">Kembali</a>

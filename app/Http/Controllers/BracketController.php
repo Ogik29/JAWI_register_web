@@ -194,94 +194,108 @@ class BracketController extends Controller
 {
     try {
         DB::transaction(function () use ($kelas) {
+            
+            // =========================================================================
+            // BAGIAN 1 & 2: SUDAH BENAR, TIDAK DIUBAH
+            // =========================================================================
             $kelas->pertandingan()->delete();
+            $kelas->bracketPeserta()->delete();
+            $jumlahPemainPerUnit = $kelas->kelas->jumlah_pemain;
+            $players = $kelas->players()->where('status', 2)->with('contingent')->get();
 
-            $unitIds = BracketPeserta::where('kelas_pertandingan_id', $kelas->id)
-                ->whereHas('player', function ($query) {
-                    $query->where('status', 2);
-                })
-                ->pluck('unit_id')->unique()->values()->all();
-
-            $unitCount = count($unitIds);
-            if ($unitCount < 2) {
-                throw new Exception('Peserta/Tim terverifikasi minimal 2 untuk membuat bracket.');
+            if ($players->isEmpty()) {
+                throw new Exception('Tidak ada pemain terverifikasi untuk kelas ini.');
+            }
+            $unitCounter = 1;
+            if ($jumlahPemainPerUnit == 1) {
+                foreach ($players as $player) {
+                    BracketPeserta::create(['kelas_pertandingan_id' => $kelas->id, 'player_id' => $player->id, 'unit_id' => $unitCounter]);
+                    $unitCounter++;
+                }
+            } else {
+                $playersByContingent = $players->groupBy('contingent_id');
+                foreach ($playersByContingent as $contingentPlayers) {
+                    $teams = $contingentPlayers->chunk($jumlahPemainPerUnit);
+                    foreach ($teams as $teamPlayers) {
+                        if ($teamPlayers->count() < $jumlahPemainPerUnit) {
+                            $contingentName = $teamPlayers->first()->contingent->name ?? 'Tidak diketahui';
+                            throw new Exception("Kontingen '{$contingentName}' memiliki jumlah pemain tidak lengkap ({$teamPlayers->count()} dari {$jumlahPemainPerUnit}).");
+                        }
+                        foreach ($teamPlayers as $player) {
+                            BracketPeserta::create(['kelas_pertandingan_id' => $kelas->id, 'player_id' => $player->id, 'unit_id' => $unitCounter]);
+                        }
+                        $unitCounter++;
+                    }
+                }
             }
 
-            // Pembuatan struktur bracket (tetap sama, sudah benar)
+            // =========================================================================
+            // BAGIAN 3: [DIPERBAIKI TOTAL] PEMBUATAN STRUKTUR PERTANDINGAN
+            // =========================================================================
+            
+            $unitIds = BracketPeserta::where('kelas_pertandingan_id', $kelas->id)
+                                     ->pluck('unit_id')->unique()->values();
+            
+            // ACAK unit SEKARANG, sebelum struktur bracket dibuat
+            $shuffledUnitIds = $unitIds->shuffle();
+
+            $unitCount = $shuffledUnitIds->count();
+            if ($unitCount < 2) {
+                throw new Exception('Jumlah unit/tim terverifikasi kurang dari 2.');
+            }
+
             $bracketSize = pow(2, ceil(log($unitCount, 2)));
             $totalRounds = log($bracketSize, 2);
+            $byeCount = $bracketSize - $unitCount;
+
+            // Buat semua pertandingan kosong dari final mundur ke babak 1
             $nextRoundMatches = [];
             for ($round = $totalRounds; $round >= 1; $round--) {
                 $matchesInThisRound = [];
-                $matchCountInThisRound = pow(2, $totalRounds - $round);
+                // [FIX] Jumlah pertandingan di babak 1 adalah bracketSize / 2, bukan dihitung dari totalRounds
+                $matchCountInThisRound = ($round == 1) ? $bracketSize / 2 : pow(2, $totalRounds - $round);
+
                 for ($i = 0; $i < $matchCountInThisRound; $i++) {
                     $match = Pertandingan::create([
-                        'kelas_pertandingan_id' => $kelas->id, 'round_number' => $round,
-                        'match_number' => $i + 1, 'next_match_id' => $nextRoundMatches[floor($i / 2)]->id ?? null,
+                        'kelas_pertandingan_id' => $kelas->id,
+                        'round_number' => $round,
+                        'match_number' => $i + 1,
+                        // Kunci di sini adalah memastikan $nextRoundMatches punya indeks yang benar
+                        'next_match_id' => $nextRoundMatches[floor($i / 2)]->id ?? null,
                     ]);
                     $matchesInThisRound[] = $match;
                 }
                 $nextRoundMatches = $matchesInThisRound;
             }
 
-            // =========================================================================
-            // [LOGIKA BARU] Penempatan BYE Terdistribusi Secara Strategis
-            // =========================================================================
-
+            // Ambil semua pertandingan di babak pertama
             $firstRoundMatches = collect($nextRoundMatches);
-            $byeCount = $bracketSize - $unitCount;
 
-            // Acak urutan unit yang akan ditempatkan untuk keadilan undian
-            shuffle($unitIds);
-
-            // 1. Pisahkan pertandingan Babak 1 menjadi dua grup: yang akan mendapat BYE dan yang akan penuh.
-            $byeMatches = collect();
-            $fullMatches = collect();
-            $nextMatchIdsWithBye = []; // Melacak next_match_id yang sudah dialokasikan untuk BYE
-            $byesToPlace = $byeCount;
-
+            // Tempatkan SEMUA unit ke dalam slot `unit1_id` terlebih dahulu
+            $unitIndex = 0;
             foreach ($firstRoundMatches as $match) {
-                // Jika kita masih harus menempatkan BYE DAN `next_match_id` dari pertandingan ini
-                // BELUM pernah kita gunakan untuk menempatkan BYE sebelumnya...
-                if ($byesToPlace > 0 && !in_array($match->next_match_id, $nextMatchIdsWithBye)) {
-                    // ...maka pertandingan ini kita pilih untuk menjadi host BYE.
-                    $byeMatches->push($match);
-                    $nextMatchIdsWithBye[] = $match->next_match_id; // Tandai `next_match_id` ini agar tidak dipilih lagi.
-                    $byesToPlace--;
-                } else {
-                    // Jika tidak, pertandingan ini akan menjadi pertandingan penuh (unit vs unit).
-                    $fullMatches->push($match);
+                if ($unitIndex < $unitCount) {
+                    $match->unit1_id = $shuffledUnitIds[$unitIndex++];
+                    $match->save();
                 }
             }
-
-            // 2. Lakukan penempatan unit ke dalam grup pertandingan yang sudah dipisahkan.
-            $unitIndex = 0;
-
-            // Tempatkan SATU unit ke setiap pertandingan BYE.
-            foreach ($byeMatches as $match) {
-                $match->update([
-                    'unit1_id' => $unitIds[$unitIndex++],
-                    'unit2_id' => null,
-                    'status'   => 'menunggu_peserta',
-                ]);
-            }
-
-            // Tempatkan DUA unit ke setiap pertandingan penuh.
-            foreach ($fullMatches as $match) {
-                $unit1 = $unitIds[$unitIndex++] ?? null;
-                $unit2 = $unitIds[$unitIndex++] ?? null;
-                $match->update([
-                    'unit1_id' => $unit1,
-                    'unit2_id' => $unit2,
-                    'status'   => 'siap_dimulai',
-                ]);
+            
+            // Sekarang, "promosikan" unit yang mendapat "bye" dan isi slot `unit2_id` untuk sisanya
+            $matchesToFillOpponent = $firstRoundMatches->slice($byeCount);
+            foreach ($matchesToFillOpponent as $match) {
+                if ($unitIndex < $unitCount) {
+                    $match->unit2_id = $shuffledUnitIds[$unitIndex++];
+                    $match->status = 'siap_dimulai';
+                    $match->save();
+                }
             }
         });
+
     } catch (Exception $e) {
         return redirect()->route('bracket.show', $kelas->id)->with('error', $e->getMessage());
     }
 
-    return redirect()->route('bracket.show', $kelas->id)->with('success', 'Bracket berhasil dibuat dan diundi secara adil!');
+    return redirect()->route('bracket.show', $kelas->id)->with('success', 'Unit peserta berhasil dikelompokkan dan bracket telah diundi!');
 }
     
     // Metode updateMatch(), advanceWinner(), dan retractPlayersFromNextMatch() telah dihapus.

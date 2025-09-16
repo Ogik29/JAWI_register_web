@@ -239,6 +239,20 @@ class adminController extends Controller
     {
         $fileName = 'peserta-disetujui-' . $event->slug . '.xlsx';
 
+        //  $approvedPlayers = Player::whereHas('contingent', function ($query) use ($event) {
+        //     $query->where('event_id', $event->id);
+        // })
+        //     ->where('status', 2)
+        //     ->with([
+        //         'contingent',
+        //         'kelasPertandingan.kelas.rentangUsia',
+        //         'kelasPertandingan.kategoriPertandingan',
+        //         'kelasPertandingan.jenisPertandingan'
+        //     ])
+        //     ->get();
+
+        // // return $approvedPlayers;
+
         return Excel::download(new ApprovedParticipantsExport($event), $fileName);
     }
 

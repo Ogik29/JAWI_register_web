@@ -52,4 +52,9 @@ class KelasPertandingan extends Model
         return $this->hasMany(Pertandingan::class, 'kelas_pertandingan_id')->orderBy('round_number')->orderBy('match_number');
     }
 
+    public function bracketPeserta()
+{
+    return $this->hasMany(BracketPeserta::class, 'kelas_pertandingan_id');
+}
+
 }

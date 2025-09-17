@@ -655,20 +655,45 @@
                                 class="group flex flex-col bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-red-500 hover:-translate-y-1">
                                     
                                     {{-- Konten Utama Kartu --}}
-                                    <div class="p-4 flex-grow">
-                                        <p class="font-bold text-gray-800 group-hover:text-red-700 transition-colors">
-                                            {{ $kelas->kelas->nama_kelas }}
-                                        </p>
-                                        <div class="flex items-center mt-2 text-sm text-gray-500">
-                                            {{-- Ikon untuk Gender --}}
-                                            @if($kelas->gender == 'Laki-laki')
-                                                <svg class="w-4 h-4 mr-1.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                                            @elseif($kelas->gender == 'Perempuan')
-                                                <svg class="w-4 h-4 mr-1.5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                                            @else
-                                                <svg class="w-4 h-4 mr-1.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.964A3 3 0 006 12v-1.5a3 3 0 013-3h.008v.008h-.008V12z" /></svg>
-                                            @endif
-                                            <span>{{ $kelas->gender }}</span>
+                                     <div class="p-4 flex-grow flex flex-col justify-between">
+                                        {{-- Bagian Atas: Judul Utama --}}
+                                        <div>
+                                            <p class="font-bold text-gray-800 group-hover:text-red-700 transition-colors">
+                                                {{ $kelas->kelas->nama_kelas ?? 'Nama Kelas' }}
+                                            </p>
+                                            <p class="text-xs text-gray-500 mt-1">
+                                                {{ $kelas->kategoriPertandingan->nama_kategori ?? 'Kategori Pertandingan' }}
+                                            </p>
+                                        </div>
+                                        
+                                        {{-- Bagian Bawah: Detail Tambahan --}}
+                                        <div class="mt-4 space-y-2 text-sm text-gray-600">
+                                            
+                                            {{-- Detail 1: Jenis Pertandingan --}}
+                                            <div class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                <span>{{ $kelas->jenisPertandingan->nama_jenis ?? 'Jenis' }}</span>
+                                            </div>
+                                            
+                                            {{-- Detail 2: Rentang Usia --}}
+                                            <div class="flex items-center">
+                                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                <span>{{ $kelas->kelas->rentangUsia->rentang_usia ?? 'Rentang Usia' }}</span>
+                                            </div>
+                                            
+                                            {{-- Detail 3: Gender --}}
+                                            <div class="flex items-center">
+                                                {{-- Ikon Gender --}}
+                                                @if($kelas->gender == 'Laki-laki')
+                                                    <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                                                @elseif($kelas->gender == 'Perempuan')
+                                                    <svg class="w-4 h-4 mr-2 text-pink-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                                                @else
+                                                    <svg class="w-4 h-4 mr-2 text-purple-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.964A3 3 0 006 12v-1.5a3 3 0 013-3h.008v.008h-.008V12z" /></svg>
+                                                @endif
+                                                <span>{{ $kelas->gender }}</span>
+                                            </div>
+                                
                                         </div>
                                     </div>
                                     

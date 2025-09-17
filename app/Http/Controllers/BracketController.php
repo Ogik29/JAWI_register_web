@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception; // Pastikan ini di-import
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\PertandinganExport;
 
 class BracketController extends Controller
 {
@@ -247,4 +249,15 @@ class BracketController extends Controller
 }
     
     // Metode updateMatch(), advanceWinner(), dan retractPlayersFromNextMatch() telah dihapus.
+
+    public function exportExcel(KelasPertandingan $kelas)
+    {
+        // Buat nama file yang deskriptif
+        $fileName = 'Jadwal Pertandingan - ' . 
+                    str_replace(' ', '_', $kelas->kelas->nama_kelas) . '_' . 
+                    $kelas->gender . '.xlsx';
+
+        // Panggil class export dan unduh file
+        return Excel::download(new PertandinganExport($kelas), $fileName);
+    }
 }

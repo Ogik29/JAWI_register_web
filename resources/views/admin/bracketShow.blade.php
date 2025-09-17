@@ -114,6 +114,11 @@
             <p>{{ $kelas->kategoriPertandingan->nama_kategori }} - {{ $kelas->jenisPertandingan->nama_jenis }} - {{ $kelas->kelas->rentangUsia->rentang_usia }}</p>
         </div>
         <div class="actions-container">
+
+             <a href="{{ route('bracket.exportExcel', $kelas) }}" class="btn btn-success" style="background-color: #1D6F42; color: white;">
+            <i class="bi bi-file-earmark-excel-fill me-2"></i> Export Excel
+        </a>
+
             <a href="{{ route('adminIndex') }}#bracket" class="btn btn-home">Kembali</a>
             <form action="{{ route('bracket.generate', $kelas) }}" method="POST" style="margin:0;">
                 @csrf

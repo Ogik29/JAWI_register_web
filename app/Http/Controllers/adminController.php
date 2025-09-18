@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Exports\ApprovedParticipantsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\KelasPertandingan;
+use Barryvdh\DomPDF\Facade\Pdf;
 // use App\Models\Event;
 // use Illuminate\Http\Request;
 
@@ -136,27 +137,26 @@ class adminController extends Controller
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
         $pendingPlayersCount = $playersForVerification->count();
 
-        // KODE BARU: Ambil data untuk navigasi Bracket
-        $managedEventIds = $admin->eventRoles->pluck('event_id');
-
-        // 1. Ambil ID dari Kategori "Prestasi". Asumsikan namanya konsisten.
-        // Jika tidak ada kategori Prestasi, id = 0 agar query tidak error.
         $kategoriPrestasiId = \App\Models\KategoriPertandingan::where('nama_kategori', 'Prestasi')->value('id') ?? 0;
 
-        // 2. Ambil semua kelas pertandingan yang:
-        //    - Termasuk dalam event yang dikelola admin
-        //    - Memiliki Kategori "Prestasi"
-        //    - Memiliki pemain terverifikasi (status 2) yang jumlahnya lebih dari 0
         $kelasUntukBracket = KelasPertandingan::with([
             'event',
-            'kelas' // relasi untuk mengambil nama kelas
+            'kelas.rentangUsia',
+            'kategoriPertandingan',
+            'jenisPertandingan'
         ])
             ->whereIn('event_id', $managedEventIds)
             ->where('kategori_pertandingan_id', $kategoriPrestasiId)
-            ->whereHas('players', function ($query) {
+            ->withCount(['players' => function ($query) {
                 $query->where('status', 2); // Status 2 = Terverifikasi
-            })
+            }])
+            ->having('players_count', '>', 0) // Pastikan hanya kelas dengan peserta yang diambil
             ->get();
+
+        // Tambahkan penanda `has_drawing` ke setiap kelas
+        $kelasUntukBracket->each(function ($kelas) {
+            $kelas->has_drawing = \App\Models\Pertandingan::where('kelas_pertandingan_id', $kelas->id)->exists();
+        });
         // ==========================================================
 
 
@@ -254,6 +254,48 @@ class adminController extends Controller
         // // return $approvedPlayers;
 
         return Excel::download(new ApprovedParticipantsExport($event), $fileName);
+    }
+
+    /**
+     * Print all verified player cards for a specific event.
+     *
+     * @param \App\Models\Event $event
+     * @return \Illuminate\Http\Response
+     */
+    public function printAllCards(Event $event)
+    {
+        // 1. Otorisasi admin
+        $this->authorizeAdminAction($event->id);
+
+        // 2. Ambil semua pemain yang terverifikasi untuk event ini
+        $approvedPlayers = Player::where('status', 2)
+            ->whereHas('contingent', function ($query) use ($event) {
+                $query->where('event_id', $event->id);
+            })
+            ->with([
+                'contingent.event',
+                'kelasPertandingan.kelas.rentangUsia'
+            ])
+            ->orderBy('contingent_id') // Urutkan berdasarkan kontingen
+            ->orderBy('name') // Lalu urutkan berdasarkan nama
+            ->get();
+
+        // Cek jika tidak ada peserta
+        if ($approvedPlayers->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada peserta terverifikasi untuk dicetak pada event ini.');
+        }
+
+        // 3. Kirim data ke view PDF baru
+        $pdf = Pdf::loadView('pdf.all_player_cards', [
+            'players' => $approvedPlayers,
+            'event' => $event,
+        ]);
+
+        // 4. Set ukuran kertas A4 (standar untuk multi-kartu)
+        $pdf->setPaper('a4', 'portrait');
+
+        // 5. Tampilkan PDF di browser
+        return $pdf->stream('semua-kartu-peserta-' . Str::slug($event->name) . '.pdf');
     }
 
     /**

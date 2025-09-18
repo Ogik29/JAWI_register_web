@@ -485,6 +485,15 @@
                     </svg>
                     Export ke Excel
                 </a>
+
+                <a href="{{ route('admin.events.print-all-cards', $event->id) }}" target="_blank"
+                   class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white font-semibold text-sm rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap">
+                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M5 2.5A2.5 2.5 0 002.5 5v5A2.5 2.5 0 005 12.5h10A2.5 2.5 0 0017.5 10V5A2.5 2.5 0 0015 2.5H5zM4 5a1 1 0 011-1h10a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" clip-rule="evenodd" />
+                        <path d="M2.5 13.5A.5.5 0 002 14v1.5a.5.5 0 00.5.5h15a.5.5 0 00.5-.5V14a.5.5 0 00-.5-.5h-15zM4 14.5a.5.5 0 00-.5.5v1h13v-1a.5.5 0 00-.5-.5H4z" />
+                    </svg>
+                    Cetak Semua Kartu
+                </a>
             </div>
         </div>
     </div>
@@ -652,13 +661,20 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
                             @foreach ($kelasGrup as $kelas)
                                 <a href="{{ route('bracket.show', $kelas->id) }}" 
-                                class="group flex flex-col bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-red-500 hover:-translate-y-1">
+                                class="relative group flex flex-col bg-white rounded-lg border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-lg hover:border-red-500 hover:-translate-y-1">
+                                {{-- TAMBAHAN 2: Penanda "Sudah Drawing" (Blok @if baru) --}}
+                                @if($kelas->has_drawing)
+                                    <div class="absolute top-2 right-2 px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded-full flex items-center gap-1" title="Bracket sudah dibuat">
+                                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                                        <span>Drawn</span>
+                                    </div>
+                                @endif
                                     
                                     {{-- Konten Utama Kartu --}}
                                      <div class="p-4 flex-grow flex flex-col justify-between">
                                         {{-- Bagian Atas: Judul Utama --}}
                                         <div>
-                                            <p class="font-bold text-gray-800 group-hover:text-red-700 transition-colors">
+                                            <p class="font-bold text-gray-800 group-hover:text-red-700 transition-colors pr-16">
                                                 {{ $kelas->kelas->nama_kelas ?? 'Nama Kelas' }}
                                             </p>
                                             <p class="text-xs text-gray-500 mt-1">

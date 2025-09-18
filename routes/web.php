@@ -125,14 +125,11 @@ Route::middleware('checkRole:1,2')->group(function () {
     // Aksi untuk update skor dan menentukan pemenang
     Route::post('/bracket/update-match/{pertandingan}', [BracketController::class, 'updateMatch'])->name('bracket.updateMatch');
     // PENTING: Tambahkan route ini untuk menangani update posisi pemain via AJAX
-<<<<<<< HEAD
 Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
 Route::get('/bracket/{kelas}/export', [BracketController::class, 'exportExcel'])->name('bracket.exportExcel');
-=======
-    Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
+ 
     // route print all cards
     Route::get('/admin/event/{event}/print-all-cards', [App\Http\Controllers\adminController::class, 'printAllCards'])->name('admin.events.print-all-cards');
->>>>>>> 110ba649daa78d88520c955be5946ef086727496
 });
 
 

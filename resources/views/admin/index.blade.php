@@ -416,11 +416,24 @@
 
             {{-- TAB APPROVED --}}
             <div id="approved" class="sub-section hidden">
+                {{-- BAGIAN KONTINGEN DISETUJUI --}}
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
-                    <div class="flex justify-between items-center mb-4">
+                    <div class="mb-4">
                         <h3 class="text-lg font-semibold text-gray-900">Daftar Kontingen Disetujui</h3>
-                        <div class="w-1/3">
-                            <input type="text" id="approvedContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari nama kontingen atau event...">
+
+                        <div class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <div class="w-full sm:w-80">
+                                <input type="text" id="approvedContingentSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari nama kontingen atau event...">
+                            </div>
+                            <div>
+                                <a href="{{ route('admin.export.approved-contingents') }}" 
+                                class="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold text-sm rounded-lg hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap">
+                                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9A2.25 2.25 0 0019.5 19.5V10.5a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    Export ke Excel
+                                </a>
+                            </div>
                         </div>
                     </div>
 

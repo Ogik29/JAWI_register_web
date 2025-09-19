@@ -116,6 +116,7 @@ Route::middleware('checkRole:1,2')->group(function () {
     // ROUTE BARU UNTUK EXPORT
     Route::get('/events/{event}/export-approved', [\App\Http\Controllers\adminController::class, 'exportApprovedParticipants'])
         ->name('admin.events.export-approved');
+    Route::get('/admin/export-approved-contingents', [App\Http\Controllers\adminController::class, 'exportApprovedContingents'])->name('admin.export.approved-contingents');
     // Menampilkan halaman bracket untuk kelas pertandingan tertentu
     Route::get('/bracket/{kelas}', [BracketController::class, 'show'])->name('bracket.show');
     // Aksi untuk meng-generate / mengundi (draw) bracket

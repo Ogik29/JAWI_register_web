@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Contingent;
 use App\Models\Event;
 use App\Models\Player;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
+use App\Models\Contingent;
 use Illuminate\Support\Str;
-use App\Exports\ApprovedParticipantsExport;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\KelasPertandingan;
+use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Validation\Rule;
+use App\Models\KelasPertandingan;
+use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Storage;
+use App\Exports\ApprovedContingentsExport;
+use App\Exports\ApprovedParticipantsExport;
 // use App\Models\Event;
 // use Illuminate\Http\Request;
 
@@ -296,6 +297,24 @@ class adminController extends Controller
 
         // 5. Tampilkan PDF di browser
         return $pdf->stream('semua-kartu-peserta-' . Str::slug($event->name) . '.pdf');
+    }
+
+    public function exportApprovedContingents()
+    {
+        // Otorisasi: Dapatkan event yang dikelola oleh admin saat ini
+        $admin = Auth::user();
+        $managedEventIds = $admin->eventRoles->pluck('event_id')->toArray();
+
+        // Cek jika admin tidak mengelola event apapun
+        if (empty($managedEventIds)) {
+            return redirect()->back()->with('error', 'Anda tidak mengelola event apapun untuk diekspor.');
+        }
+
+        // Siapkan nama file
+        $fileName = 'rekapitulasi-kontingen-disetujui.xlsx';
+
+        // Panggil class export yang baru dibuat dengan membawa ID event yang dikelola
+        return Excel::download(new ApprovedContingentsExport($managedEventIds), $fileName);
     }
 
     /**

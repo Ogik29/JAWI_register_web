@@ -157,68 +157,79 @@
         
         {{-- BAGIAN BRACKET UTAMA (KODE ASLI) --}}
         @if($totalRounds > 0)
-        <div class="bracket-wrapper">
-            <div class="bracket">
-                @for ($r = 1; $r <= $totalRounds; $r++)
-                    <div class="round">
-                        <div class="round-title">
-                             @if ($r == $totalRounds) Final
-                            @elseif ($r == $totalRounds - 1) Semi Final
-                            @elseif ($r == $totalRounds - 2 && $totalRounds > 2) Perempat Final
-                            @else Babak {{ $r }}
-                            @endif
-                        </div>
-                        @if(isset($rounds[$r]))
-                            @foreach ($rounds[$r] as $match)
-                                <div class="match-wrapper" data-match-id="{{ $match->id }}">
-                                    
-                                    <div class="player-slot @if($r == 1) draggable @else locked @endif" data-slot="1" data-unit-id="{{ $match->unit1_id }}">
-                                        @if($match->pemain_unit_1->isNotEmpty())
-                                            <div class="player-unit-wrapper @if($r == 1) is-draggable @endif" data-unit-id="{{ $match->unit1_id }}">
-                                                @foreach($match->pemain_unit_1 as $peserta)
-                                                    <div class="player-item">
-                                                        <span class="player-name">{{ $peserta->player->name }}</span>
-                                                        <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @elseif ($r > 1)
-                                            <div class="player-placeholder">Menunggu Pemenang</div>
-                                        @endif
-                                    </div>
+    <div class="bracket-wrapper">
+    <div class="bracket">
+        @for ($r = 1; $r <= $totalRounds; $r++)
+            @if(isset($rounds[$r]))
+                @php
+                    // Menggunakan sintaks PHP yang benar
+                    if ($r == $totalRounds) {
+                        $roundTitle = "Final";
+                    } else if ($r == $totalRounds - 1) {
+                        $roundTitle = "Semi Final";
+                    } else if ($r == $totalRounds - 2 && $totalRounds > 2) {
+                        $roundTitle = "Perempat Final";
+                    } else if ($r == $totalRounds - 3 && $totalRounds > 3) { // Perbaikan dari -4 menjadi -3
+                        $roundTitle = "Perdelapan Final";
+                    } else {
+                        $roundTitle = "Babak Penyisihan";
+                    }
+                @endphp
+                
+                <div class="round">
+                    <div class="round-title">{{ $roundTitle }}</div>
 
-                                    @php
-                                        $isByeSlotLocked = $r == 1 && $match->unit1_id && !$match->unit2_id;
-                                    @endphp
-
-                                    <div class="player-slot @if($r == 1 && !$isByeSlotLocked) draggable @else locked @endif @if($isByeSlotLocked) bye-locked @endif" data-slot="2" data-unit-id="{{ $match->unit2_id }}">
-                                        @if($match->pemain_unit_2->isNotEmpty())
-                                            <div class="player-unit-wrapper @if($r == 1) is-draggable @endif" data-unit-id="{{ $match->unit2_id }}">
-                                                @foreach($match->pemain_unit_2 as $peserta)
-                                                    <div class="player-item">
-                                                        <span class="player-name">{{ $peserta->player->name }}</span>
-                                                        <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        @elseif ($r > 1 || $isByeSlotLocked)
-                                            <div class="player-placeholder">{{ $r > 1 ? 'Menunggu Pemenang' : ($isByeSlotLocked ? 'BYE' : '') }}</div>
-                                        @endif
-                                    </div>
-
+                        @foreach ($rounds[$r] as $match)
+                            <div class="match-wrapper" data-match-id="{{ $match->id }}">
+                                
+                                <div class="player-slot @if($r == 1) draggable @else locked @endif" data-slot="1" data-unit-id="{{ $match->unit1_id }}">
+                                    @if($match->pemain_unit_1->isNotEmpty())
+                                        <div class="player-unit-wrapper @if($r == 1) is-draggable @endif" data-unit-id="{{ $match->unit1_id }}">
+                                            @foreach($match->pemain_unit_1 as $peserta)
+                                                <div class="player-item">
+                                                    <span class="player-name">{{ $peserta->player->name }}</span>
+                                                    <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @elseif ($r > 1)
+                                        <div class="player-placeholder">Menunggu Pemenang</div>
+                                    @endif
                                 </div>
-                            @endforeach
-                        @endif
+
+                                @php
+                                    $isByeSlotLocked = $r == 1 && $match->unit1_id && !$match->unit2_id;
+                                @endphp
+
+                                <div class="player-slot @if($r == 1 && !$isByeSlotLocked) draggable @else locked @endif @if($isByeSlotLocked) bye-locked @endif" data-slot="2" data-unit-id="{{ $match->unit2_id }}">
+                                    @if($match->pemain_unit_2->isNotEmpty())
+                                        <div class="player-unit-wrapper @if($r == 1) is-draggable @endif" data-unit-id="{{ $match->unit2_id }}">
+                                            @foreach($match->pemain_unit_2 as $peserta)
+                                                <div class="player-item">
+                                                    <span class="player-name">{{ $peserta->player->name }}</span>
+                                                    <span class="player-contingent">{{ $peserta->player->contingent->name }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @elseif ($r > 1 || $isByeSlotLocked)
+                                        <div class="player-placeholder">{{ $r > 1 ? 'Menunggu Pemenang' : ($isByeSlotLocked ? 'BYE' : '') }}</div>
+                                    @endif
+                                </div>
+
+                            </div>
+                        @endforeach
                     </div>
-                @endfor
-            </div>
+                @endif
+            @endfor
         </div>
-        @else
+    </div>
+    @else
         <div class="player-pool-container" style="text-align: center;">
             <h3>Bracket Belum Dibuat</h3>
             <p>Silakan tekan tombol "DRAW / UNDI ULANG" untuk membuat bagan pertandingan.</p>
         </div>
-        @endif
+    @endif
+
     </div>
     
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>

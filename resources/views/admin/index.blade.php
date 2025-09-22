@@ -341,7 +341,7 @@
 
                 <div class="bg-white rounded-xl shadow-sm border overflow-hidden mb-8 p-6">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet (Sudah Bayar)</h3>
                         <div class="w-1/3">
                             <input type="text" id="pendingPlayerSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari nama atlet, kelas, atau kontingen...">
                         </div>
@@ -413,6 +413,78 @@
                     
                 </div>
             </div>
+
+            <div class="bg-white rounded-xl shadow-sm border overflow-hidden p-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        {{-- Judul dan Search di kiri --}}
+                        <div class="w-full sm:w-auto">
+                            <h3 class="text-lg font-semibold text-gray-900">Verifikasi Atlet (Belum Bayar, namun Kontingen Disetujui)</h3>
+                            <div class="mt-2 w-full sm:w-80">
+                                <input type="text" id="pendingPlayerDataSearch" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:border-red-500 focus:ring-red-500" placeholder="Cari atlet, kelas, kontingen...">
+                            </div>
+                        </div>
+                        {{-- Tombol Export Baru di kanan --}}
+                        <div>
+                             <a href="{{ route('admin.events.export-pending-data', $event->id) }}" 
+                               class="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white font-semibold text-sm rounded-lg hover:bg-green-700 transition-colors shadow-sm whitespace-nowrap">
+                                    <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9A2.25 2.25 0 0019.5 19.5V10.5a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                Export ke Excel
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full" id="pendingPlayersDataTable">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Atlet</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Kontingen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Dokumen</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Status Pembayaran</th>
+                                    <th class="p-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                @forelse ($groupedPlayersForDataVerification as $registration)
+                                @php $firstPlayer = $registration['player_instances']->first(); @endphp
+                                <tr>
+                                    <td class="p-3">
+                                        <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
+                                        <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        <div>{{ $firstPlayer->contingent->name }}</div>
+                                    </td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        @foreach($registration['player_instances'] as $player)
+                                        <div class="text-xs text-blue-600">
+                                            {{ \Illuminate\Support\Str::limit($player->name, 15) }}:
+                                            @if($player->foto_ktp) <a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="hover:underline">KTP</a> | @endif
+                                            @if($player->foto_diri) <a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="hover:underline">Foto</a> | @endif
+                                            @if($player->foto_persetujuan_ortu) <a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="hover:underline">Izin</a> @endif
+                                        </div>
+                                        @endforeach
+                                    </td>
+                                    <td class="p-3 text-sm">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">Belum Buat Invoice</span>
+                                    </td>
+                                    <td class="p-3 align-top">
+                                        @foreach($registration['player_instances'] as $player)
+                                        <div class="flex items-center space-x-2 mb-1">
+                                            <button onclick="openVerificationModal('player', '{{ $player->id }}', '{{ $player->name }}', '{{ route('admin.verify.player', $player->id) }}')" class="bg-blue-600 text-white px-2 py-0.5 rounded text-xs hover:bg-blue-700 w-20 text-center">Verifikasi</button>
+                                            <button onclick='viewPlayerDetail(@json($player))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
+                                        </div>
+                                        @endforeach
+                                    </td>
+                                </tr>
+                                @empty
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
             {{-- TAB APPROVED --}}
             <div id="approved" class="sub-section hidden">
@@ -535,7 +607,11 @@
                     <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
                     <td class="p-3 text-sm text-gray-900">
                         <div class="text-gray-900 font-mono text-xs">
-                            Invoice{{ $firstPlayer->playerInvoice->id }}_{{ $firstPlayer->contingent->name }}_{{ number_format( $firstPlayer->playerInvoice->total_price) }}
+                            @if ($firstPlayer->playerInvoice)    
+                                Invoice{{ $firstPlayer->playerInvoice->id }}_{{ $firstPlayer->contingent->name }}_{{ number_format( $firstPlayer->playerInvoice->total_price) }}
+                            @else
+                                Belum-Bayar
+                            @endif
                         </div>
                     </td>
                     <td class="p-3">
@@ -843,6 +919,12 @@
             $('#pendingPlayersTable').DataTable(dtConfig);
             $('#approvedPlayersTable').DataTable(dtConfig);
             $('#rejectedPlayersTable').DataTable(dtConfig);
+
+            $('#pendingPlayersDataTable').DataTable(dtConfig);
+            // Menghubungkan search input baru ke tabelnya
+            $('#pendingPlayerDataSearch').on('keyup', function() { 
+                $('#pendingPlayersDataTable').DataTable().search(this.value).draw(); 
+            });
 
             $('#pendingContingentSearch').on('keyup', function() { $('#pendingContingentsTable').DataTable().search(this.value).draw(); });
             $('#dataVerificationContingentSearch').on('keyup', function() { $('#dataVerificationContingentsTable').DataTable().search(this.value).draw(); }); // BARU

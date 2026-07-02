@@ -9,6 +9,7 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\historyController;
 use App\Http\Controllers\SuperAdminController;
 use App\Http\Controllers\SuperAdmin\KelasController;
+use App\Http\Controllers\ImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -128,10 +129,14 @@ Route::middleware('checkRole:1,2')->group(function () {
     // PENTING: Tambahkan route ini untuk menangani update posisi pemain via AJAX
     Route::post('/bracket/update-position', [BracketController::class, 'updatePosition'])->name('bracket.updatePosition');
     Route::get('/bracket/{kelas}/export', [BracketController::class, 'exportExcel'])->name('bracket.exportExcel');
+    Route::get('/bracket/{kelas}/export-all', [BracketController::class, 'exportAll'])->name('bracket.exportAll');
 
     // route print all cards
     Route::get('/admin/event/{event}/print-all-cards', [App\Http\Controllers\adminController::class, 'printAllCards'])->name('admin.events.print-all-cards');
 });
+
+Route::get('/import-bracket', [ImportController::class, 'showForm'])->name('import.show');
+Route::post('/import-bracket', [ImportController::class, 'processImport'])->name('import.process');
 
 
 Route::get('/tanding-pdf', function () {

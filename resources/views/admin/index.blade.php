@@ -535,7 +535,11 @@
                     <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
                     <td class="p-3 text-sm text-gray-900">
                         <div class="text-gray-900 font-mono text-xs">
-                            Invoice{{ $firstPlayer->playerInvoice->id }}_{{ $firstPlayer->contingent->name }}_{{ number_format( $firstPlayer->playerInvoice->total_price) }}
+                           @if ($firstPlayer->playerInvoice)    
+                                Invoice{{ $firstPlayer->playerInvoice->id }}{{ $firstPlayer->contingent->name }}{{ number_format( $firstPlayer->playerInvoice->total_price) }}
+                            @else
+                                Invoice-kosong
+                            @endif
                         </div>
                     </td>
                     <td class="p-3">

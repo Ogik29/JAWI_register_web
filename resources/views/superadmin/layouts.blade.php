@@ -17,7 +17,7 @@
 
     {{-- data tables --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-
+<meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         :root {
             --aurora-bg: #f8f9fc;

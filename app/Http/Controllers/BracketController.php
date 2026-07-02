@@ -29,7 +29,8 @@ class BracketController extends Controller
 
         $pemain_by_unit_id = collect();
         if ($all_unit_ids_in_bracket->isNotEmpty()) {
-            $pemain_by_unit_id = BracketPeserta::whereIn('unit_id', $all_unit_ids_in_bracket)
+            $pemain_by_unit_id = BracketPeserta::where('kelas_pertandingan_id', $kelas->id)
+                ->whereIn('unit_id', $all_unit_ids_in_bracket)
                 ->with('player.contingent')->get()->groupBy('unit_id');
         }
 
@@ -40,13 +41,14 @@ class BracketController extends Controller
 
         $rounds = $pertandingan_list->groupBy('round_number');
 
-        // [DIPERBARUI] Ambil SEMUA unit yang ada di kelas ini, lalu kurangi dengan yang sudah ada di bracket
+        // Ambil SEMUA unit yang ada di kelas ini, lalu kurangi dengan yang sudah ada di bracket
         $all_unit_ids_in_class = BracketPeserta::where('kelas_pertandingan_id', $kelas->id)->pluck('unit_id')->unique();
         $unassigned_unit_ids = $all_unit_ids_in_class->diff($all_unit_ids_in_bracket);
 
         $unassigned_units = collect();
         if ($unassigned_unit_ids->isNotEmpty()) {
-            $unassigned_units = BracketPeserta::whereIn('unit_id', $unassigned_unit_ids)
+            $unassigned_units = BracketPeserta::where('kelas_pertandingan_id', $kelas->id)
+                ->whereIn('unit_id', $unassigned_unit_ids)
                 ->with('player.contingent')->get()->groupBy('unit_id');
         }
 
@@ -385,12 +387,10 @@ class BracketController extends Controller
 
     public function exportAll(KelasPertandingan $kelas)
     {
-        // Buat nama file yang deskriptif untuk export semua pertandingan
         $fileName = 'Semua Pertandingan - ' .
             str_replace(' ', '_', $kelas->kelas->nama_kelas) . '_' .
-            $kelas->gender . '.xlsx';
+            $kelas->gender . '.csv';
 
-        // Panggil class export all dan unduh file
-        return Excel::download(new PertandinganExportAll($kelas), $fileName);
+        return Excel::download(new PertandinganExportAll($kelas), $fileName, \Maatwebsite\Excel\Excel::CSV);
     }
 }

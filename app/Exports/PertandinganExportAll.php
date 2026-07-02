@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class PertandinganExportAll implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
     protected $kelas;
+    protected $partaiCounter = 0;
 
     public function __construct(KelasPertandingan $kelas)
     {
@@ -21,24 +22,27 @@ class PertandinganExportAll implements FromCollection, WithHeadings, WithMapping
     }
 
     /**
-     * Mengambil SEMUA data pertandingan termasuk yang kosong (tidak ada filter whereNotNull).
+     * Mengambil SEMUA data pertandingan termasuk yang kosong.
      */
     public function collection()
     {
-        // Ambil SEMUA pertandingan tanpa filter unit
+        // Reset counter setiap kali collection dipanggil
+        $this->partaiCounter = 0;
+
         return Pertandingan::where('kelas_pertandingan_id', $this->kelas->id)
-            ->with(['arena']) // Eager load arena
+            ->with(['arena'])
             ->orderBy('round_number')
             ->orderBy('match_number')
             ->get();
     }
 
     /**
-     * Mendefinisikan header untuk kolom-kolom tabel.
+     * Header kolom — ID ditambahkan sebelum Partai.
      */
     public function headings(): array
     {
         return [
+            'ID',
             'Partai',
             'Kategori',
             'Jenis Pertandingan',
@@ -53,33 +57,37 @@ class PertandinganExportAll implements FromCollection, WithHeadings, WithMapping
     }
 
     /**
-     * Memetakan setiap baris data pertandingan ke format Excel.
+     * Mapping tiap baris pertandingan.
      * @param Pertandingan $pertandingan
      */
     public function map($pertandingan): array
     {
+        // Increment nomor partai per kelas, mulai dari 1
+        $this->partaiCounter++;
+
         // Ambil data pemain menggunakan accessor
         $pemainUnit1 = $pertandingan->pemain_unit_1;
         $pemainUnit2 = $pertandingan->pemain_unit_2;
 
-        // Nama pemain Unit 1 (jika ada)
+        // Nama pemain Unit 1
         $namaUnit1 = $pemainUnit1->isNotEmpty()
             ? $pemainUnit1->map(fn($p) => $p->player->name)->implode(', ')
             : '-';
 
-        // Kontingen Unit 1 (jika ada)
+        // Kontingen Unit 1
         $kontingenUnit1 = $pemainUnit1->first()?->player?->contingent?->name ?? '-';
 
-        // Nama pemain Unit 2 (jika ada)
+        // Nama pemain Unit 2
         $namaUnit2 = $pemainUnit2->isNotEmpty()
             ? $pemainUnit2->map(fn($p) => $p->player->name)->implode(', ')
             : '-';
 
-        // Kontingen Unit 2 (jika ada)
+        // Kontingen Unit 2
         $kontingenUnit2 = $pemainUnit2->first()?->player?->contingent?->name ?? '-';
 
         return [
-            $pertandingan->id, // Partai = ID pertandingan
+            $pertandingan->id,          // ID = ID database asli
+            $this->partaiCounter,       // Partai = nomor urut per kelas (1, 2, 3, ...)
             $this->kelas->kategoriPertandingan->nama_kategori,
             $this->kelas->jenisPertandingan->nama_jenis,
             $this->kelas->kelas->nama_kelas,
@@ -93,11 +101,10 @@ class PertandinganExportAll implements FromCollection, WithHeadings, WithMapping
     }
 
     /**
-     * Menerapkan styling pada sheet Excel.
+     * Styling header baris pertama.
      */
     public function styles(Worksheet $sheet)
     {
-        // Beri style pada baris header utama (baris 1)
         return [
             1 => [
                 'font' => ['bold' => true, 'color' => ['argb' => 'FFFFFF']],

@@ -258,7 +258,7 @@
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
                                     <td class="p-3">
-                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->user->nama_lengkap }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $contingent->user?->nama_lengkap }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
                                     </td>
                                     <td class="p-3 text-sm text-blue-600">
@@ -313,7 +313,7 @@
                                 <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                             </td>
                             <td class="p-3">
-                                <div class="text-sm font-medium text-gray-900">{{ $contingent->user->nama_lengkap }}</div>
+                                <div class="text-sm font-medium text-gray-900">{{ $contingent->user?->nama_lengkap }}</div>
                                 <div class="text-sm text-gray-500">{{ $contingent->no_telp }}</div>
                             </td>
                             <td class="p-3 text-sm text-blue-900">
@@ -454,7 +454,7 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user?->nama_lengkap }}</td>
                                     <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
                                     <td class="p-3 space-x-2">
                                         <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
@@ -585,7 +585,7 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
+                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user?->nama_lengkap }}</td>
                                     <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
                                     {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
                                     <td class="p-3">

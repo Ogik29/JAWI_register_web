@@ -81,7 +81,7 @@ class PendingDataVerificationExport implements FromCollection, WithHeadings, Wit
             $playerNames,
             $playerBirthDates,
             $playerPhones,
-            $playerNiks,
+            "'" . $playerNiks . "'"
         ];
     }
 

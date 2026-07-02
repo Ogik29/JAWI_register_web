@@ -31,11 +31,6 @@ class EventController extends Controller
         return view('register.registEvent', compact('events'));
     }
 
-    // public function registEvent($slug){
-    //     $event = Event::where('slug', $slug)->firstOrFail();
-    //     return view('register.registEvent', compact('event'));
-    // }
-
     public function registKontingen($event_id)
     {
         return view('register.registKontingen', [
@@ -143,18 +138,15 @@ class EventController extends Controller
         $event = $contingent->event;
 
         // 2. Ambil semua data master yang dibutuhkan untuk filter di view
-        $kategoriPertandingan = KategoriPertandingan::all();
+        $kategoriPertandingan = KategoriPertandingan::where('id', 1)->get();
         $jenisPertandingan = JenisPertandingan::all();
 
-        // =================================================================
-        // PERBAIKAN 1: Mengambil data Rentang Usia yang dibutuhkan oleh view
-        // =================================================================
         $rentangUsia = DB::table('rentang_usia')->get();
 
-        // =================================================================
-        // PERBAIKAN 2: Mengambil data Kelas dengan JOIN agar lengkap
-        // Nama variabel diubah menjadi 'availableClasses' agar sesuai dengan view
-        // =================================================================
+        $rentangUsia = DB::table('rentang_usia')
+            ->whereIn('id', [2, 3, 4])
+            ->get();
+
         $availableClasses = DB::table('kelas_pertandingan')
             ->where('kelas_pertandingan.event_id', $event->id)
             ->join('kelas', 'kelas_pertandingan.kelas_id', '=', 'kelas.id')
@@ -274,7 +266,6 @@ class EventController extends Controller
 
     public function store_invoice(Request $request)
     {
-        // 1. Validasi input dari form
         $request->validate([
             'total_price'    => 'required|numeric',
             'foto_invoice'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // Max 5MB
@@ -283,18 +274,15 @@ class EventController extends Controller
             'pemain.*.price' => 'required|numeric',
         ]);
 
-        // 2. Panggil fungsi uploadImage untuk memproses dan menyimpan file
         // Fungsi ini akan mengembalikan path relatif file yang disimpan (cth: 'invoices/namafile.jpg')
         $dbPath = $this->uploadImage($request->file('foto_invoice'), 'invoices');
 
-        // 3. Simpan data ke Model PlayerInvoice
         $invoice = new PlayerInvoice();
         $invoice->foto_invoice = $dbPath; // Gunakan path yang dikembalikan dari fungsi upload
         $invoice->total_price = $request->total_price;
         $invoice->date = now();
-        $invoice->save(); // Menyimpan ke database
+        $invoice->save();
 
-        // 4. Loop dan simpan data ke Model TransactionDetail
         foreach ($request->pemain as $pemainData) {
             $detail = new TransactionDetail();
             $detail->player_id = $pemainData['player_id'];
@@ -304,22 +292,18 @@ class EventController extends Controller
             Player::find($pemainData['player_id'])->update(['status' => 1]);
         }
 
-        // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
         return redirect('/history')->with('status', 'Bukti transfer dan data invoice berhasil disimpan!');
     }
 
 
     public function show_invoice($contingent_id)
     {
-        // 1. Ambil kontingen dan relasinya yang dibutuhkan
         $contingent = Contingent::with('event')->findOrFail($contingent_id);
 
         if (auth()->user()->id !== $contingent->user_id) {
             return abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
-        // =================================================================
-        // PERBAIKAN KUNCI: Eager loading relasi bersarang dengan sintaks yang benar
         $unpaidPlayers = $contingent->players()
             ->where('status', 0) // Ganti '0' jika status "Belum Bayar" Anda berbeda
             ->with([
@@ -335,10 +319,8 @@ class EventController extends Controller
         $invoiceItems = [];
         $totalHarga = 0;
 
-        // Langkah A: Kelompokkan pemain (logika ini tidak diubah)
         $playersByClass = $unpaidPlayers->groupBy('kelas_pertandingan_id');
 
-        // Langkah B: Proses setiap grup (logika ini tidak diubah)
         foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {
             $firstPlayer = $playersInClass->first();
             if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {

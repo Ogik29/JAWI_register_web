@@ -156,11 +156,11 @@
             </li>
 
             <li class="nav-item">
-    <a class="nav-link {{ Request::is('superadmin/kelas*') ? 'active' : '' }}" href="{{ route('superadmin.kelas.index') }}">
-        <i class="bi bi-diagram-3-fill"></i> {{-- Contoh ikon yang relevan, sesuaikan jika perlu --}}
-        <span>Kelola Kelas</span>
-    </a>
-</li>
+                <a class="nav-link {{ Request::is('superadmin/kelas*') ? 'active' : '' }}" href="{{ route('superadmin.kelas.index') }}">
+                    <i class="bi bi-diagram-3-fill"></i> {{-- Contoh ikon yang relevan, sesuaikan jika perlu --}}
+                    <span>Kelola Kelas</span>
+                </a>
+            </li>
         </ul>
 
         {{-- Profil Pengguna --}}

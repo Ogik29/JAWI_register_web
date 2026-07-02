@@ -180,6 +180,7 @@
                     <div class="round-title">{{ $roundTitle }}</div>
 
                         @foreach ($rounds[$r] as $match)
+                            <small>{{ $match->id }}</small>
                             <div class="match-wrapper" data-match-id="{{ $match->id }}">
                                 
                                 <div class="player-slot @if($r == 1) draggable @else locked @endif" data-slot="1" data-unit-id="{{ $match->unit1_id }}">

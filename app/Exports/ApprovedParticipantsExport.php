@@ -4,17 +4,19 @@ namespace App\Exports;
 
 use App\Models\Event;
 use App\Models\Player;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use Carbon\Carbon;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat; // <-- 1. Import class ini
+use Maatwebsite\Excel\Concerns\WithColumnFormatting; // <-- 2. Import concern ini
 
-class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
+class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithColumnFormatting // <-- 3. Tambahkan WithColumnFormatting
 {
     protected $event;
     private $rowNumber = 0;
@@ -24,9 +26,6 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
         $this->event = $event;
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
     public function collection()
     {
         $approvedPlayers = Player::whereHas('contingent', function ($query) {
@@ -34,20 +33,15 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
         })
             ->where('status', 2)
             ->with([
-                'contingent',
+                'contingent.event', // Pastikan relasi event dimuat untuk event_name
                 'kelasPertandingan.kelas.rentangUsia',
                 'kelasPertandingan.kategoriPertandingan',
                 'kelasPertandingan.jenisPertandingan'
             ])
             ->get();
-
-        // Panggil fungsi grouping yang sudah diperbaiki
         return $this->groupPlayersByRegistration($approvedPlayers);
     }
 
-    /**
-     * Menentukan judul kolom di file Excel.
-     */
     public function headings(): array
     {
         return [
@@ -66,19 +60,11 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
         ];
     }
 
-    /**
-     * Memetakan data dari setiap item di collection ke baris Excel.
-     * (Tidak ada perubahan di sini, karena fungsinya sudah benar)
-     */
     public function map($registration): array
     {
         $this->rowNumber++;
-
-        // Ubah data pemain menjadi string yang dipisahkan baris baru
         $playerNames = $registration['players']->pluck('name')->implode("\n");
-        $playerBirthDates = $registration['players']->pluck('tgl_lahir')->map(function ($date) {
-            return Carbon::parse($date)->format('d F Y');
-        })->implode("\n");
+        $playerBirthDates = $registration['players']->pluck('tgl_lahir')->map(fn($d) => Carbon::parse($d)->format('d F Y'))->implode("\n");
         $playerNiks = $registration['players']->pluck('nik')->implode("\n");
         $playerPhones = $registration['players']->pluck('no_telp')->implode("\n");
 
@@ -94,25 +80,34 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
             $playerNames,
             $playerBirthDates,
             $playerPhones,
-            $playerNiks,
+            "'" . $playerNiks . "'"
         ];
     }
 
-    /**
-     * Menerapkan style ke worksheet.
-     * (Tidak ada perubahan di sini, karena fungsinya sudah benar)
-     */
     public function styles(Worksheet $sheet)
     {
         $sheet->getStyle('A1:L1')->getFont()->setBold(true);
         $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
-
-        $sheet->getStyle('I')->getAlignment()->setWrapText(true);
-        $sheet->getStyle('J')->getAlignment()->setWrapText(true);
-        $sheet->getStyle('K')->getAlignment()->setWrapText(true);
-        $sheet->getStyle('L')->getAlignment()->setWrapText(true);
-
+        $sheet->getStyle('I:L')->getAlignment()->setWrapText(true);
         $sheet->getStyle('A:L')->getAlignment()->setVertical(Alignment::VERTICAL_TOP);
+    }
+
+    /**
+     * Tentukan format untuk kolom tertentu.
+     *
+     * @return array
+     */
+    public function columnFormats(): array
+    {
+        return [
+            // Kolom L adalah kolom ke-12 (NIK)
+            // Format "@" memaksa Excel untuk memperlakukannya sebagai Teks.
+            'L' => NumberFormat::FORMAT_TEXT,
+
+            // Kolom K adalah kolom No. Telepon, juga bagus untuk dijadikan Teks
+            // untuk menjaga angka 0 di depan jika ada.
+            'K' => NumberFormat::FORMAT_TEXT,
+        ];
     }
 
 

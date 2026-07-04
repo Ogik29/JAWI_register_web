@@ -138,13 +138,11 @@ class EventController extends Controller
         $event = $contingent->event;
 
         // 2. Ambil semua data master yang dibutuhkan untuk filter di view
-        $kategoriPertandingan = KategoriPertandingan::where('id', 1)->get();
+        $kategoriPertandingan = KategoriPertandingan::orderBy('id')->get();
         $jenisPertandingan = JenisPertandingan::all();
 
-        $rentangUsia = DB::table('rentang_usia')->get();
-
         $rentangUsia = DB::table('rentang_usia')
-            ->whereIn('id', [2, 3, 4])
+            ->orderBy('id')
             ->get();
 
         $availableClasses = DB::table('kelas_pertandingan')

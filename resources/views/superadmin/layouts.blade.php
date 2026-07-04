@@ -18,6 +18,9 @@
     {{-- data tables --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/icon/logo-jawi2.png') }}">
+
+
     <style>
         :root {
             --aurora-bg: #f8f9fc;

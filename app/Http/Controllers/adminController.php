@@ -86,9 +86,9 @@ class adminController extends Controller
             'kelasPertandingan.jenisPertandingan'
         ];
 
-        $contingentsForVerification = Contingent::with(['user', 'event', 'transactions'])
+        $contingentsForVerification = Contingent::with(['user', 'event', 'transactions', 'players.kelasPertandingan.kelas.rentangUsia'])
             ->whereIn('event_id', $managedEventIds)->where('status', 0)->latest()->get();
-        $contingentsForDataVerification = Contingent::with(['user', 'event', 'transactions'])
+        $contingentsForDataVerification = Contingent::with(['user', 'event', 'transactions', 'players.kelasPertandingan.kelas.rentangUsia'])
             ->whereIn('event_id', $managedEventIds)->where('status', 3)->latest()->get();
 
         // ===============================================
@@ -138,12 +138,12 @@ class adminController extends Controller
         // AKHIR DARI BLOK LOGIKA YANG DIREVISI
         // ===============================================
 
-        $approvedContingents = Contingent::with(['user', 'event', 'players'])
+        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas.rentangUsia'])
             ->whereIn('event_id', $managedEventIds)->where('status', 1)->latest('updated_at')->get();
         $approvedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 2)->latest('updated_at')->get();
-        $rejectedContingents = Contingent::with(['user', 'event'])
+        $rejectedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas.rentangUsia'])
             ->whereIn('event_id', $managedEventIds)->where('status', 2)->latest('updated_at')->get();
         $rejectedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
@@ -230,16 +230,36 @@ class adminController extends Controller
      */
     public function verifyPlayer(Request $request, Player $player)
     {
-        $this->authorizeAdminAction($player->contingent->event_id);
         $request->validate([
             'action' => 'required|in:approve,reject',
             'catatan' => 'nullable|string|required_if:action,reject'
         ]);
 
-        $player->status = ($request->action == 'approve') ? 2 : 3;
-        $player->catatan = ($request->action == 'approve') ? null : $request->catatan;
-        $player->save();
-        return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet berhasil diproses.');
+        $playerIds = $request->input('player_ids');
+        if (is_string($playerIds)) {
+            $playerIds = array_filter(explode(',', $playerIds));
+        }
+        if (empty($playerIds) && $player && $player->id) {
+            $playerIds = [$player->id];
+        }
+
+        $players = Player::whereIn('id', $playerIds)->get();
+        if ($players->isEmpty()) {
+            return back()->with('error', 'Data atlet tidak ditemukan.');
+        }
+
+        $this->authorizeAdminAction($players->first()->contingent->event_id);
+
+        $status = ($request->action == 'approve') ? 2 : 3;
+        $catatan = ($request->action == 'approve') ? null : $request->catatan;
+
+        foreach ($players as $p) {
+            $p->status = $status;
+            $p->catatan = $catatan;
+            $p->save();
+        }
+
+        return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet/tim berhasil diproses.');
     }
 
 

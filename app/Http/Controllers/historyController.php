@@ -22,44 +22,87 @@ class historyController extends Controller
     public function index()
     {
         $userId = Auth::id();
-        $contingents = Contingent::with(['event', 'user', 'players.kelasPertandingan.kelas'])
+        $contingents = Contingent::with([
+            'event', 
+            'user', 
+            'players.kelasPertandingan.kelas.rentangUsia',
+            'players.kelasPertandingan.kategoriPertandingan',
+            'players.kelasPertandingan.jenisPertandingan',
+            'players.playerInvoice'
+        ])
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc')
             ->get();
 
         foreach ($contingents as $contingent) {
             $groupedPlayers = [];
-            $playersByClass = $contingent->players->groupBy('kelas_pertandingan_id');
+            
+            $playersByGroup = $contingent->players->groupBy(function ($player) {
+                if ($player->playerInvoice) {
+                    return 'inv-' . $player->playerInvoice->id;
+                }
+                return 'noinv-' . $player->kelas_pertandingan_id;
+            });
 
-            foreach ($playersByClass as $playersInClass) {
-                $firstPlayer = $playersInClass->first();
-                if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) continue;
+            foreach ($playersByGroup as $groupKey => $playersInGroup) {
+                $firstPlayer = $playersInGroup->first();
+                if (!$firstPlayer) continue;
 
-                $classDetails = $firstPlayer->kelasPertandingan;
-                $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
-                $jumlahPendaftaran = ceil($playersInClass->count() / $pemainPerPendaftaran);
-
-                for ($i = 0; $i < $jumlahPendaftaran; $i++) {
-                    $pemainUntukItemIni = $playersInClass->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
-                    if ($pemainUntukItemIni->isEmpty()) continue;
-
+                if (str_starts_with($groupKey, 'inv-')) {
+                    $invoice = $firstPlayer->playerInvoice;
+                    
                     $status = 2; // Default Terverifikasi
-                    if ($pemainUntukItemIni->contains('status', 3)) $status = 3;
-                    elseif ($pemainUntukItemIni->contains('status', 0)) $status = 0;
-                    elseif ($pemainUntukItemIni->contains('status', 1)) $status = 1;
+                    if ($playersInGroup->contains('status', 3)) $status = 3;
+                    elseif ($playersInGroup->contains('status', 0)) $status = 0;
+                    elseif ($playersInGroup->contains('status', 1)) $status = 1;
 
-                    // PERBAIKAN: Mengambil SEMUA pemain yang ditolak & punya catatan
-                    // dan menggunakan key 'rejected_players'
-                    $rejectedPlayersWithNotes = $pemainUntukItemIni->where('status', 3)->whereNotNull('catatan');
+                    $rejectedPlayersWithNotes = $playersInGroup->where('status', 3)->whereNotNull('catatan');
+
+                    $uniqueClasses = $playersInGroup->map(function ($p) {
+                        return $p->kelasPertandingan->kelas->nama_kelas ?? 'N/A';
+                    })->unique()->implode(', ');
+
+                    $uniqueGenders = $playersInGroup->map(function ($p) {
+                        return $p->gender;
+                    })->unique()->implode(', ');
 
                     $groupedPlayers[] = [
-                        'player_instances' => $pemainUntukItemIni,
-                        'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
-                        'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
-                        'gender' => $classDetails->gender,
+                        'player_instances' => $playersInGroup,
+                        'player_names' => $playersInGroup->pluck('name')->implode(', '),
+                        'nama_kelas' => $uniqueClasses,
+                        'gender' => $uniqueGenders,
                         'status' => $status,
-                        'rejected_players' => $rejectedPlayersWithNotes, // Menggunakan key yang benar
+                        'rejected_players' => $rejectedPlayersWithNotes,
+                        'invoice' => $invoice,
                     ];
+                } else {
+                    $classDetails = $firstPlayer->kelasPertandingan;
+                    if (!$classDetails || !$classDetails->kelas) continue;
+
+                    $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+                    $jumlahPendaftaran = ceil($playersInGroup->count() / $pemainPerPendaftaran);
+
+                    for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                        $pemainUntukItemIni = $playersInGroup->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+                        if ($pemainUntukItemIni->isEmpty()) continue;
+
+                        $status = 2; // Default Terverifikasi
+                        if ($pemainUntukItemIni->contains('status', 3)) $status = 3;
+                        elseif ($pemainUntukItemIni->contains('status', 0)) $status = 0;
+                        elseif ($pemainUntukItemIni->contains('status', 1)) $status = 1;
+
+                        $rejectedPlayersWithNotes = $pemainUntukItemIni->where('status', 3)->whereNotNull('catatan');
+
+                        $groupedPlayers[] = [
+                            'player_instances' => $pemainUntukItemIni,
+                            'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
+                            'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
+                            'gender' => $classDetails->gender,
+                            'status' => $status,
+                            'rejected_players' => $rejectedPlayersWithNotes,
+                            'invoice' => null,
+                        ];
+                    }
                 }
             }
             $contingent->displayPlayers = $groupedPlayers;
@@ -298,5 +341,157 @@ class historyController extends Controller
         // Tampilkan PDF di browser
         // Gunakan stream() untuk menampilkan, atau download() untuk mengunduh langsung
         return $pdf->stream('kartu-peserta-' . $player->name . '.pdf');
+    }
+
+    public function reuploadPlayerInvoice(Request $request, $invoice_id)
+    {
+        $request->validate([
+            'foto_invoice' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'players' => 'required|array',
+            'players.*.name' => 'required|string|max:255',
+            'players.*.nik' => 'required|string|size:16',
+            'players.*.gender' => 'required|string|in:Laki-laki,Perempuan',
+            'players.*.tgl_lahir' => 'required|date',
+            'players.*.foto_ktp' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'players.*.foto_diri' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'players.*.foto_persetujuan_ortu' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $invoice = \App\Models\PlayerInvoice::with('transactionDetails.player.contingent')->findOrFail($invoice_id);
+
+        $firstDetail = $invoice->transactionDetails->first();
+        if (!$firstDetail || !$firstDetail->player || !$firstDetail->player->contingent || $firstDetail->player->contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
+        // 1. Simpan foto bukti transfer baru jika diunggah
+        if ($request->hasFile('foto_invoice')) {
+            if ($invoice->foto_invoice) {
+                Storage::disk('public')->delete($invoice->foto_invoice);
+            }
+            $path = $request->file('foto_invoice')->store('invoices', 'public');
+            $invoice->foto_invoice = $path;
+            $invoice->save();
+        }
+
+        // 2. Update data diri untuk masing-masing atlet di dalam invoice ini
+        $playersInput = $request->input('players');
+        foreach ($invoice->transactionDetails as $detail) {
+            $player = $detail->player;
+            if (!$player || !isset($playersInput[$player->id])) {
+                continue;
+            }
+
+            $pData = $playersInput[$player->id];
+
+            $fotoKtpPath = $player->foto_ktp;
+            if ($request->hasFile("players.{$player->id}.foto_ktp")) {
+                if ($player->foto_ktp) Storage::disk('public')->delete($player->foto_ktp);
+                $fotoKtpPath = $request->file("players.{$player->id}.foto_ktp")->store('player_documents', 'public');
+            }
+
+            $fotoDiriPath = $player->foto_diri;
+            if ($request->hasFile("players.{$player->id}.foto_diri")) {
+                if ($player->foto_diri) Storage::disk('public')->delete($player->foto_diri);
+                $fotoDiriPath = $request->file("players.{$player->id}.foto_diri")->store('player_documents', 'public');
+            }
+
+            $fotoIzinPath = $player->foto_persetujuan_ortu;
+            if ($request->hasFile("players.{$player->id}.foto_persetujuan_ortu")) {
+                if ($player->foto_persetujuan_ortu) Storage::disk('public')->delete($player->foto_persetujuan_ortu);
+                $fotoIzinPath = $request->file("players.{$player->id}.foto_persetujuan_ortu")->store('player_documents', 'public');
+            }
+
+            $player->update([
+                'name' => $pData['name'],
+                'nik' => $pData['nik'],
+                'gender' => $pData['gender'],
+                'tgl_lahir' => $pData['tgl_lahir'],
+                'foto_ktp' => $fotoKtpPath,
+                'foto_diri' => $fotoDiriPath,
+                'foto_persetujuan_ortu' => $fotoIzinPath,
+                'status' => 1, // Reset kembali ke pending
+                'catatan' => null // Bersihkan catatan penolakan admin
+            ]);
+        }
+
+        // Kembalikan status kontingen ke pending data verification jika sebelumnya lunas agar divalidasi ulang
+        $contingent = $firstDetail->player->contingent;
+        if ($contingent->status == 2) {
+            $contingent->status = 0;
+            $contingent->save();
+        }
+
+        return redirect()->route('history')->with('status', 'Pembaruan data pendaftaran & bukti transfer berhasil disimpan! Menunggu verifikasi ulang oleh admin.');
+    }
+
+    public function updatePlayerGroup(Request $request)
+    {
+        $request->validate([
+            'players' => 'required|array',
+            'players.*.name' => 'required|string|max:255',
+            'players.*.nik' => 'required|string|size:16',
+            'players.*.gender' => 'required|string|in:Laki-laki,Perempuan',
+            'players.*.tgl_lahir' => 'required|date',
+            'players.*.foto_ktp' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'players.*.foto_diri' => 'nullable|file|mimes:jpg,jpeg,png|max:2048',
+            'players.*.foto_persetujuan_ortu' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+        ]);
+
+        $playersInput = $request->input('players');
+        $firstPlayerId = key($playersInput);
+        if (!$firstPlayerId) {
+            return back()->with('error', 'Tidak ada data atlet.');
+        }
+
+        $firstPlayer = Player::findOrFail($firstPlayerId);
+        if ($firstPlayer->contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
+        foreach ($playersInput as $playerId => $pData) {
+            $player = Player::findOrFail($playerId);
+            if ($player->contingent->user_id !== Auth::id()) {
+                continue;
+            }
+
+            $fotoKtpPath = $player->foto_ktp;
+            if ($request->hasFile("players.{$player->id}.foto_ktp")) {
+                if ($player->foto_ktp) Storage::disk('public')->delete($player->foto_ktp);
+                $fotoKtpPath = $request->file("players.{$player->id}.foto_ktp")->store('player_documents', 'public');
+            }
+
+            $fotoDiriPath = $player->foto_diri;
+            if ($request->hasFile("players.{$player->id}.foto_diri")) {
+                if ($player->foto_diri) Storage::disk('public')->delete($player->foto_diri);
+                $fotoDiriPath = $request->file("players.{$player->id}.foto_diri")->store('player_documents', 'public');
+            }
+
+            $fotoIzinPath = $player->foto_persetujuan_ortu;
+            if ($request->hasFile("players.{$player->id}.foto_persetujuan_ortu")) {
+                if ($player->foto_persetujuan_ortu) Storage::disk('public')->delete($player->foto_persetujuan_ortu);
+                $fotoIzinPath = $request->file("players.{$player->id}.foto_persetujuan_ortu")->store('player_documents', 'public');
+            }
+
+            $player->update([
+                'name' => $pData['name'],
+                'nik' => $pData['nik'],
+                'gender' => $pData['gender'],
+                'tgl_lahir' => $pData['tgl_lahir'],
+                'foto_ktp' => $fotoKtpPath,
+                'foto_diri' => $fotoDiriPath,
+                'foto_persetujuan_ortu' => $fotoIzinPath,
+                'status' => $player->status == 3 ? 1 : $player->status, // Reset ke pending jika ditolak
+                'catatan' => null
+            ]);
+        }
+
+        $contingent = $firstPlayer->contingent;
+        if ($contingent->status == 2) {
+            $contingent->status = 0;
+            $contingent->save();
+        }
+
+        return redirect()->route('history')->with('status', 'Data atlet berhasil diperbarui.');
     }
 }

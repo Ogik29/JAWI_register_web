@@ -321,7 +321,10 @@
                                         <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
                                     </td>
                                     <td class="p-3">
-                                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
+                                        @php
+                                            $isUnpaidContingent = ($contingent->event->harga_contingent > 0 && (!$contingent->transactions->first() || !$contingent->transactions->first()->foto_invoice));
+                                        @endphp
+                                        <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}', {{ $isUnpaidContingent ? 'true' : 'false' }})" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
                                         <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
                                     </td>
                                 </tr>
@@ -376,7 +379,10 @@
                                 <div class="text-sm font-medium text-gray-900">Rp {{ number_format($contingent->event->harga_contingent) }}</div>
                             </td>
                             <td class="p-3">
-                                <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
+                                @php
+                                    $isUnpaidContingent = ($contingent->event->harga_contingent > 0 && (!$contingent->transactions->first() || !$contingent->transactions->first()->foto_invoice));
+                                @endphp
+                                <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}', {{ $isUnpaidContingent ? 'true' : 'false' }})" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700">Verifikasi</button>
                                 <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-2">Detail</button>
                             </td>
                         </tr>
@@ -421,7 +427,20 @@
                                         <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-900">
-                                        <div>{{ $firstPlayer->contingent->name }}</div>
+                                        <div class="font-medium text-gray-900">{{ $firstPlayer->contingent->name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">
+                                            <span class="font-medium">Manajer:</span> {{ $firstPlayer->contingent->manajer_name }}
+                                        </div>
+                                        @if ($firstPlayer->contingent->no_telp)
+                                        <div class="text-xs text-gray-400">
+                                            <span>📞 {{ $firstPlayer->contingent->no_telp }}</span>
+                                        </div>
+                                        @endif
+                                        @if ($firstPlayer->contingent->email)
+                                        <div class="text-xs text-gray-400 truncate" style="max-width: 160px;">
+                                            <span>✉ {{ $firstPlayer->contingent->email }}</span>
+                                        </div>
+                                        @endif
                                     </td>
                                     <td class="p-3 text-sm text-gray-900">
                                         @foreach($registration['player_instances'] as $player)
@@ -510,7 +529,20 @@
                                         <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</div>
                                     </td>
                                     <td class="p-3 text-sm text-gray-900">
-                                        <div>{{ $firstPlayer->contingent->name }}</div>
+                                        <div class="font-medium text-gray-900">{{ $firstPlayer->contingent->name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">
+                                            <span class="font-medium">Manajer:</span> {{ $firstPlayer->contingent->manajer_name }}
+                                        </div>
+                                        @if ($firstPlayer->contingent->no_telp)
+                                        <div class="text-xs text-gray-400">
+                                            <span>📞 {{ $firstPlayer->contingent->no_telp }}</span>
+                                        </div>
+                                        @endif
+                                        @if ($firstPlayer->contingent->email)
+                                        <div class="text-xs text-gray-400 truncate" style="max-width: 160px;">
+                                            <span>✉ {{ $firstPlayer->contingent->email }}</span>
+                                        </div>
+                                        @endif
                                     </td>
                                     <td class="p-3 text-sm text-gray-900">
                                         @foreach($registration['player_instances'] as $player)
@@ -579,7 +611,16 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        <div class="font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user->nama_lengkap }}</div>
+                                        @if($contingent->no_telp)
+                                        <div class="text-xs text-gray-400">📞 {{ $contingent->no_telp }}</div>
+                                        @endif
+                                        @if($contingent->email)
+                                        <div class="text-xs text-gray-400 truncate" style="max-width:160px;">✉ {{ $contingent->email }}</div>
+                                        @endif
+                                    </td>
                                     <td class="p-3 text-sm text-gray-900">{{ $contingent->players->count() }} atlet</td>
                                     <td class="p-3 space-x-2">
                                         <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-sm font-medium">Detail</button>
@@ -661,7 +702,16 @@
                 <tr>
                     <td class="p-3 text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</td>
                     <td class="p-3 text-sm text-gray-900">{{ $registration['nama_kelas'] }}</td>
-                    <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
+                    <td class="p-3 text-sm text-gray-900">
+                        <div class="font-medium text-gray-900">{{ $firstPlayer->contingent->name }}</div>
+                        <div class="text-xs text-gray-500 mt-0.5"><span class="font-medium">Manajer:</span> {{ $firstPlayer->contingent->manajer_name }}</div>
+                        @if ($firstPlayer->contingent->no_telp)
+                        <div class="text-xs text-gray-400">📞 {{ $firstPlayer->contingent->no_telp }}</div>
+                        @endif
+                        @if ($firstPlayer->contingent->email)
+                        <div class="text-xs text-gray-400 truncate" style="max-width:160px;">✉ {{ $firstPlayer->contingent->email }}</div>
+                        @endif
+                    </td>
                     <td class="p-3 text-sm text-gray-900">
                         <div class="text-gray-900 font-mono text-xs">
                             @if ($firstPlayer->playerInvoice)    
@@ -711,13 +761,23 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user->nama_lengkap }}</td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        <div class="font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user->nama_lengkap }}</div>
+                                        @if($contingent->no_telp)
+                                        <div class="text-xs text-gray-400">📞 {{ $contingent->no_telp }}</div>
+                                        @endif
+                                        @if($contingent->email)
+                                        <div class="text-xs text-gray-400 truncate" style="max-width:160px;">✉ {{ $contingent->email }}</div>
+                                        @endif
+                                    </td>
                                     <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
-                                    {{-- PERUBAHAN DI SINI: Tombol detail ditambahkan --}}
                                     <td class="p-3">
                                         <div class="flex items-center space-x-2">
-                                            <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}')" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button>
-                                            {{-- TOMBOL BARU DITAMBAHKAN DI SINI --}}
+                                            @php
+                                                $isUnpaidContingent = ($contingent->event->harga_contingent > 0 && (!$contingent->transactions->first() || !$contingent->transactions->first()->foto_invoice));
+                                            @endphp
+                                            <button onclick="openVerificationModal('contingent', '{{ $contingent->id }}', '{{ $contingent->name }}', '{{ route('admin.verify.contingent', $contingent->id) }}', {{ $isUnpaidContingent ? 'true' : 'false' }})" class="bg-yellow-500 text-white px-3 py-1 rounded text-xs hover:bg-yellow-600">Verifikasi Ulang</button>
                                             <button onclick='viewContingentDetail(@json($contingent))' class="text-blue-600 hover:text-blue-800 text-xs font-medium">Detail</button>
                                         </div>
                                     </td>
@@ -758,7 +818,16 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $registration['player_names'] }}</div>
                                         <div class="text-sm text-gray-500">{{ $registration['nama_kelas'] }}</div>
                                     </td>
-                                    <td class="p-3 text-sm text-gray-900">{{ $firstPlayer->contingent->name }}</td>
+                                    <td class="p-3 text-sm text-gray-900">
+                                        <div class="font-medium text-gray-900">{{ $firstPlayer->contingent->name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5"><span class="font-medium">Manajer:</span> {{ $firstPlayer->contingent->manajer_name }}</div>
+                                        @if ($firstPlayer->contingent->no_telp)
+                                        <div class="text-xs text-gray-400">📞 {{ $firstPlayer->contingent->no_telp }}</div>
+                                        @endif
+                                        @if ($firstPlayer->contingent->email)
+                                        <div class="text-xs text-gray-400 truncate" style="max-width:160px;">✉ {{ $firstPlayer->contingent->email }}</div>
+                                        @endif
+                                    </td>
                                     <td class="p-3 text-sm text-gray-700 italic">"{{ $firstPlayer->catatan ?: 'Tidak ada catatan spesifik.' }}"</td>
                                     <td class="p-3">
                                         <div class="flex items-center space-x-2 mb-1">
@@ -914,6 +983,16 @@
                     <input type="hidden" name="player_ids" id="verificationPlayerIds" value="">
                     <div class="space-y-4">
                         <p>Anda akan memverifikasi <strong id="verificationItemName"></strong>.</p>
+                        
+                        {{-- Warning untuk Kontingen Belum Bayar --}}
+                        <div id="unpaidContingentWarning" class="hidden bg-yellow-50 border border-yellow-200 rounded-lg p-3 flex items-start space-x-2.5">
+                            <span class="text-yellow-500 font-bold text-base mt-0.5">⚠️</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-yellow-800">Perhatian: Kontingen Belum Dibayar!</h4>
+                                <p class="text-[11px] text-yellow-700 mt-0.5 leading-relaxed">Kontingen ini belum mengunggah bukti pembayaran pendaftaran kontingen untuk event ini.</p>
+                            </div>
+                        </div>
+
                         <div>
                             <label for="catatan" class="block text-sm font-medium text-gray-700">Catatan (opsional jika setuju, wajib jika tolak)</label>
                             <textarea name="catatan" id="catatan" class="w-full border border-gray-300 rounded-lg px-3 py-2 mt-1 focus:border-red-500 focus:ring-red-500" rows="3" placeholder="Tambahkan alasan penolakan..."></textarea>
@@ -1054,11 +1133,19 @@
             });
         }
 
-        function openVerificationModal(type, id, name, actionUrl) {
+        function openVerificationModal(type, id, name, actionUrl, isUnpaid = false) {
             document.getElementById('verificationModalTitle').textContent = `Verifikasi ${type}`;
             document.getElementById('verificationItemName').textContent = name;
             document.getElementById('verificationForm').action = actionUrl;
             document.getElementById('verificationPlayerIds').value = id || '';
+            
+            const warningEl = document.getElementById('unpaidContingentWarning');
+            if (isUnpaid) {
+                warningEl.classList.remove('hidden');
+            } else {
+                warningEl.classList.add('hidden');
+            }
+
             const catatan = document.getElementById('catatan');
             catatan.value = '';
             catatan.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
@@ -1142,11 +1229,16 @@
             detailModalContent.innerHTML = `
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><strong class="block text-gray-500">Event</strong> <p>${contingent.event.name}</p></div>
-                    <div><strong class="block text-gray-500">Nama Manajer</strong> <p>${contingent.user.nama_lengkap}</p></div>
-                    <div><strong class="block text-gray-500">Email</strong> <p>${contingent.user.email}</p></div>
-                    <div><strong class="block text-gray-500">No. Telepon</strong> <p>${contingent.user.no_telp}</p></div>
-                    <div><strong class="block text-gray-500">Pemilik Akun</strong> <p>${contingent.user.nama_lengkap}</p></div>
                     <div><strong class="block text-gray-500">Biaya Kontingen</strong> <p>${hargaKontingen}</p></div>
+                    <div class="md:col-span-2 bg-blue-50 rounded-lg p-3 border border-blue-100">
+                        <strong class="block text-gray-600 text-xs uppercase tracking-wide mb-2">Informasi Manajer Kontingen</strong>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <div><span class="text-gray-500 text-xs">Nama Manajer:</span><p class="font-semibold text-gray-800">${contingent.manajer_name || '-'}</p></div>
+                            <div><span class="text-gray-500 text-xs">No. Telepon:</span><p class="font-semibold text-gray-800">${contingent.no_telp || '-'}</p></div>
+                            <div><span class="text-gray-500 text-xs">Email Kontingen:</span><p class="font-semibold text-gray-800">${contingent.email || '-'}</p></div>
+                            <div><span class="text-gray-500 text-xs">Akun Pengguna:</span><p class="font-semibold text-gray-800">${contingent.user.nama_lengkap} (${contingent.user.email})</p></div>
+                        </div>
+                    </div>
                     
                     <!-- KONTEN BARU DITAMBAHKAN DI SINI -->
                     <div>
@@ -1175,7 +1267,7 @@
             if (!Array.isArray(players) || players.length === 0) return;
             const firstPlayer = players[0];
             const playerNames = players.map(p => p.name).join(', ');
-            detailModalTitle.textContent = isTeam ? ('Detail Tim: ' + playerNames) : ('Detail Atlet: ' + firstPlayer.name);
+            detailModalTitle.textContent = isTeam ? ('Detail Tim / Invoice: ' + playerNames) : ('Detail Atlet: ' + firstPlayer.name);
             
             const storageUrlPrefix = "/storage/";
             const formatCurrency = (number) => { if (number === null || typeof number === 'undefined') return 'N/A'; return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(number); };
@@ -1184,16 +1276,10 @@
                 return new Intl.NumberFormat('id-ID', { style: 'decimal', minimumFractionDigits: 0 }).format(number);
             };
 
-            const kategori = firstPlayer.kelas_pertandingan?.kategori_pertandingan?.nama_kategori || 'N/A';
-            const jenis = firstPlayer.kelas_pertandingan?.jenis_pertandingan?.nama_jenis || 'N/A';
-            const kelas = firstPlayer.kelas_pertandingan?.kelas?.nama_kelas || 'N/A';
-            const rentangUsia = firstPlayer.kelas_pertandingan?.kelas?.rentang_usia?.rentang_usia || 'N/A';
-            const hargaKelasHtml = firstPlayer.kelas_pertandingan ? `<span class="font-bold text-green-600">${formatCurrency(firstPlayer.kelas_pertandingan.harga)}</span>` : `<span class="text-gray-500 italic">N/A</span>`;
-
-            const invoiceName = firstPlayer.player_invoice ? `Invoice${firstPlayer.player_invoice.id}_${firstPlayer.contingent?.name || ''}_${formatCurrencyNoRP(firstPlayer.player_invoice.total_price)}` : 'Tidak Terikat Invoice';
-            const invoiceLinkHtml = firstPlayer.player_invoice?.foto_invoice ? `<a href="${storageUrlPrefix}${firstPlayer.player_invoice.foto_invoice}" target="_blank" class="text-blue-600 hover:underline">Lihat Bukti Bayar</a>` : `<span class="text-gray-500 italic">Belum ada invoice</span>`;
+            const invoiceLinkHtml = firstPlayer.player_invoice?.foto_invoice ? `<a href="${storageUrlPrefix}${firstPlayer.player_invoice.foto_invoice}" target="_blank" class="text-blue-600 hover:underline font-semibold">Lihat Bukti Bayar</a>` : `<span class="text-gray-500 italic">Belum ada invoice/pembayaran</span>`;
             const totalInvoiceHtml = firstPlayer.player_invoice ? `<span class="font-bold text-blue-600">${formatCurrency(firstPlayer.player_invoice.total_price)}</span>` : `<span class="text-gray-500 italic">N/A</span>`;
 
+            let lastClassId = null;
             let membersHtml = players.map((player, index) => {
                 let docLinks = [];
                 if (player.foto_ktp) docLinks.push(`<a href="${storageUrlPrefix}${player.foto_ktp}" target="_blank" class="px-2.5 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium hover:bg-blue-100">KTP</a>`);
@@ -1203,8 +1289,29 @@
 
                 const tglLahirFormatted = player.tgl_lahir ? new Date(player.tgl_lahir).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }) : '-';
 
+                const pKategori = player.kelas_pertandingan?.kategori_pertandingan?.nama_kategori || 'N/A';
+                const pJenis = player.kelas_pertandingan?.jenis_pertandingan?.nama_jenis || 'N/A';
+                const pKelas = player.kelas_pertandingan?.kelas?.nama_kelas || 'N/A';
+                const pRentangUsia = player.kelas_pertandingan?.kelas?.rentang_usia?.rentang_usia || 'N/A';
+                const pHarga = player.kelas_pertandingan ? formatCurrency(player.kelas_pertandingan.harga) : 'N/A';
+
+                // Tampilkan pembatas jika kelas tanding berbeda dengan atlet sebelumnya
+                let dividerHtml = '';
+                const currentClassId = player.kelas_pertandingan_id;
+                if (index > 0 && lastClassId !== currentClassId) {
+                    dividerHtml = `
+                        <div class="my-4 flex items-center">
+                            <div class="flex-grow border-t-2 border-dashed border-red-300"></div>
+                            <span class="mx-3 text-xs text-red-500 font-semibold uppercase tracking-wider bg-white px-2">Kelas Tanding</span>
+                            <div class="flex-grow border-t-2 border-dashed border-red-300"></div>
+                        </div>
+                    `;
+                }
+                lastClassId = currentClassId;
+
                 return `
-                    <div class="border rounded-lg p-3 bg-gray-50/50 mb-3">
+                    ${dividerHtml}
+                    <div class="border rounded-lg p-3 bg-gray-50/50 mb-3 border-gray-200">
                         <div class="flex items-center justify-between border-b pb-2 mb-2">
                             <span class="font-semibold text-gray-800 text-sm">${isTeam ? `Anggota ${index + 1}: ${player.name}` : player.name}</span>
                             <span class="text-xs px-2 py-0.5 bg-gray-200 text-gray-700 rounded">${player.gender || '-'}</span>
@@ -1215,6 +1322,18 @@
                             <div><span class="text-gray-500">Email:</span> <span>${player.email || '-'}</span></div>
                             <div><span class="text-gray-500">No. Telp:</span> <span>${player.no_telp || '-'}</span></div>
                         </div>
+                        
+                        <!-- Rincian Kelas & Kategori Pemain -->
+                        <div class="bg-yellow-50 p-2.5 rounded border border-yellow-100 my-2 text-xs">
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                <div><span class="text-gray-500 block">Kategori:</span> <span class="font-semibold text-gray-800">${pKategori}</span></div>
+                                <div><span class="text-gray-500 block">Jenis/Tipe:</span> <span class="font-semibold text-gray-800">${pJenis}</span></div>
+                                <div><span class="text-gray-500 block">Kelas:</span> <span class="font-semibold text-gray-800">${pKelas}</span></div>
+                                <div><span class="text-gray-500 block">Rentang Usia:</span> <span class="font-semibold text-gray-800">${pRentangUsia}</span></div>
+                                <div><span class="text-gray-500 block">Biaya Kelas:</span> <span class="font-semibold text-green-600">${pHarga}</span></div>
+                            </div>
+                        </div>
+
                         <div class="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200">
                             <span class="text-xs font-medium text-gray-500">Dokumen:</span>
                             ${docLinks.join(' ')}
@@ -1229,29 +1348,21 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                         <div><strong class="text-gray-600">Event:</strong> <p class="text-gray-900 font-medium">${firstPlayer.contingent?.event?.name || '-'}</p></div>
                         <div><strong class="text-gray-600">Kontingen:</strong> <p class="text-gray-900 font-medium">${firstPlayer.contingent?.name || '-'}</p></div>
+                        <div><strong class="text-gray-600">Manajer Kontingen:</strong> <p class="text-gray-900 font-medium">${firstPlayer.contingent?.manajer_name || '-'}</p></div>
+                        <div><strong class="text-gray-600">No. Telp Manajer:</strong> <p class="text-gray-900 font-medium">${firstPlayer.contingent?.no_telp || '-'}</p></div>
+                        <div class="md:col-span-2"><strong class="text-gray-600">Email Kontingen:</strong> <p class="text-gray-900 font-medium">${firstPlayer.contingent?.email || '-'}</p></div>
                     </div>
 
                     <div>
-                        <strong class="block text-gray-700 font-semibold mb-2 border-b pb-1">Detail Pertandingan</strong>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs bg-gray-50 p-3 rounded-lg">
-                            <div><span class="text-gray-500 block">Kategori:</span> <span class="font-semibold text-gray-800">${kategori}</span></div>
-                            <div><span class="text-gray-500 block">Jenis:</span> <span class="font-semibold text-gray-800">${jenis}</span></div>
-                            <div><span class="text-gray-500 block">Kelas:</span> <span class="font-semibold text-gray-800">${kelas}</span></div>
-                            <div><span class="text-gray-500 block">Rentang Usia:</span> <span class="font-semibold text-gray-800">${rentangUsia}</span></div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <strong class="block text-gray-700 font-semibold mb-2 border-b pb-1">${isTeam ? 'Anggota Tim' : 'Data Peserta'} (${players.length} Orang)</strong>
-                        <div class="max-h-60 overflow-y-auto pr-1">
+                        <strong class="block text-gray-700 font-semibold mb-2 border-b pb-1">Daftar Atlet &amp; Detail Kelas (${players.length} Orang)</strong>
+                        <div class="max-h-[28rem] overflow-y-auto pr-1">
                             ${membersHtml}
                         </div>
                     </div>
 
                     <div>
                         <strong class="block text-gray-700 font-semibold mb-2 border-b pb-1">Informasi Pembayaran</strong>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-gray-50 p-3 rounded-lg">
-                            <div><span class="text-gray-500 block">Harga Kelas:</span> ${hargaKelasHtml}</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg">
                             <div><span class="text-gray-500 block">Total Invoice:</span> ${totalInvoiceHtml}</div>
                             <div><span class="text-gray-500 block">Bukti Bayar:</span> ${invoiceLinkHtml}</div>
                         </div>

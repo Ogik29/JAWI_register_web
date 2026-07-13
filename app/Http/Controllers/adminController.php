@@ -31,34 +31,68 @@ class adminController extends Controller
     {
         $groupedRegistrations = [];
 
-        $playersByTeam = $players->groupBy(function ($player) {
-            return $player->contingent_id . '-' . $player->kelas_pertandingan_id;
+        // Kelompokkan atlet:
+        // Jika memiliki invoice, kelompokkan berdasarkan ID invoice (prefixed 'inv-').
+        // Jika tidak memiliki invoice, kelompokkan berdasarkan contingent & kelas (prefixed 'noinv-').
+        $playersByGroup = $players->groupBy(function ($player) {
+            if ($player->playerInvoice) {
+                return 'inv-' . $player->playerInvoice->id;
+            }
+            return 'noinv-' . $player->contingent_id . '-' . $player->kelas_pertandingan_id;
         });
 
-        foreach ($playersByTeam as $playersInTeam) {
-            $firstPlayer = $playersInTeam->first();
-            if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
+        foreach ($playersByGroup as $groupKey => $playersInGroup) {
+            $firstPlayer = $playersInGroup->first();
+            if (!$firstPlayer) {
                 continue;
             }
 
-            $classDetails = $firstPlayer->kelasPertandingan;
-            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
-            $jumlahPendaftaran = ceil($playersInTeam->count() / $pemainPerPendaftaran);
+            if (str_starts_with($groupKey, 'inv-')) {
+                // DIKELOMPOKKAN BERDASARKAN INVOICE
+                $invoice = $firstPlayer->playerInvoice;
+                
+                // Cari nama-nama kelas unik untuk seluruh atlet dalam invoice ini
+                $uniqueClasses = $playersInGroup->map(function ($p) {
+                    return $p->kelasPertandingan->kelas->nama_kelas ?? 'N/A';
+                })->unique()->implode(', ');
 
-            for ($i = 0; $i < $jumlahPendaftaran; $i++) {
-                $pemainUntukItemIni = $playersInTeam->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+                // Cari gender unik
+                $uniqueGenders = $playersInGroup->map(function ($p) {
+                    return $p->gender;
+                })->unique()->implode(', ');
 
-                if ($pemainUntukItemIni->isEmpty()) {
+                $groupedRegistrations[] = [
+                    'player_instances' => $playersInGroup,
+                    'player_names' => $playersInGroup->pluck('name')->implode(', '),
+                    'nama_kelas' => $uniqueClasses,
+                    'gender' => $uniqueGenders,
+                    'status' => $firstPlayer->status,
+                ];
+            } else {
+                // DIKELOMPOKKAN BERDASARKAN TIM/KELAS (Jika belum bayar / tidak ada invoice)
+                $classDetails = $firstPlayer->kelasPertandingan;
+                if (!$classDetails || !$classDetails->kelas) {
                     continue;
                 }
 
-                $groupedRegistrations[] = [
-                    'player_instances' => $pemainUntukItemIni,
-                    'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
-                    'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
-                    'gender' => $classDetails->gender,
-                    'status' => $firstPlayer->status,
-                ];
+                $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+                $jumlahPendaftaran = ceil($playersInGroup->count() / $pemainPerPendaftaran);
+
+                for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                    $pemainUntukItemIni = $playersInGroup->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+
+                    if ($pemainUntukItemIni->isEmpty()) {
+                        continue;
+                    }
+
+                    $groupedRegistrations[] = [
+                        'player_instances' => $pemainUntukItemIni,
+                        'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
+                        'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
+                        'gender' => $classDetails->gender,
+                        'status' => $firstPlayer->status,
+                    ];
+                }
             }
         }
         return $groupedRegistrations;

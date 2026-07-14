@@ -614,7 +614,7 @@
                                     </td>
                                     <td class="p-3 text-sm text-gray-900">
                                         <div class="font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user->nama_lengkap }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user?->nama_lengkap }}</div>
                                         @if($contingent->no_telp)
                                         <div class="text-xs text-gray-400">📞 {{ $contingent->no_telp }}</div>
                                         @endif
@@ -770,12 +770,9 @@
                                         <div class="text-sm font-medium text-gray-900">{{ $contingent->name }}</div>
                                         <div class="text-sm text-gray-500">{{ $contingent->event->name }}</div>
                                     </td>
-<<<<<<< HEAD
-                                    <td class="p-3 text-sm text-gray-900">{{ $contingent->user?->nama_lengkap }}</td>
-=======
                                     <td class="p-3 text-sm text-gray-900">
                                         <div class="font-medium text-gray-900">{{ $contingent->manajer_name }}</div>
-                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user->nama_lengkap }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">Akun: {{ $contingent->user?->nama_lengkap }}</div>
                                         @if($contingent->no_telp)
                                         <div class="text-xs text-gray-400">📞 {{ $contingent->no_telp }}</div>
                                         @endif
@@ -783,7 +780,6 @@
                                         <div class="text-xs text-gray-400 truncate" style="max-width:160px;">✉ {{ $contingent->email }}</div>
                                         @endif
                                     </td>
->>>>>>> 4e685253772b778335ae76487a07cdc811f1e59b
                                     <td class="p-3 text-sm text-gray-700 italic">"{{ $contingent->catatan ?: 'Tidak ada catatan' }}"</td>
                                     <td class="p-3">
                                         <div class="flex items-center space-x-2">

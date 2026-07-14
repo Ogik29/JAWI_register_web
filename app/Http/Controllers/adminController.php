@@ -193,13 +193,29 @@ class adminController extends Controller
         // Hitung total atlet pending dari kedua grup
         $pendingPlayersCount = $playersForPaymentVerification->count() + $playersForDataVerification->count();
 
-        $kategoriPrestasiId = \App\Models\KategoriPertandingan::where('nama_kategori', 'Prestasi')->value('id') ?? 0;
-        $kelasUntukBracket = KelasPertandingan::with(['event', 'kelas.rentangUsia', 'kategoriPertandingan', 'jenisPertandingan'])
-            ->whereIn('event_id', $managedEventIds)->where('kategori_pertandingan_id', $kategoriPrestasiId)
-            ->withCount(['players' => fn($query) => $query->where('status', 2)])
-            ->having('players_count', '>', 0)->get();
+        $kategoriPrestasiId  = \App\Models\KategoriPertandingan::where('nama_kategori', 'Prestasi')->value('id')  ?? 0;
+        $kategoriPemasalanId = \App\Models\KategoriPertandingan::where('nama_kategori', 'Pemasalan')->value('id') ?? 0;
 
-        $kelasUntukBracket->each(fn($kelas) => $kelas->has_drawing = \App\Models\Pertandingan::where('kelas_pertandingan_id', $kelas->id)->exists());
+        $bracketQuery = function ($kategoriId) use ($managedEventIds) {
+            $kelas = KelasPertandingan::with(['event', 'kelas.rentangUsia', 'kategoriPertandingan', 'jenisPertandingan'])
+                ->whereIn('event_id', $managedEventIds)
+                ->where('kategori_pertandingan_id', $kategoriId)
+                ->withCount(['players' => function ($query) {
+                    $query->where('status', 2);
+                }])
+                ->having('players_count', '>', 0)
+                ->get();
+
+            $kelas->each(function ($k) {
+                $k->has_drawing = \App\Models\Pertandingan::where('kelas_pertandingan_id', $k->id)->exists();
+            });
+
+            return $kelas;
+        };
+
+        $kelasUntukBracket          = $bracketQuery($kategoriPrestasiId);
+        $kelasUntukBracketPemasalan = $bracketQuery($kategoriPemasalanId);
+
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -216,7 +232,8 @@ class adminController extends Controller
             'groupedPlayersForDataVerification', // Ganti nama variabel lama
             'groupedApprovedPlayers',
             'groupedRejectedPlayers',
-            'kelasUntukBracket'
+            'kelasUntukBracket',
+            'kelasUntukBracketPemasalan'
         ));
     }
 

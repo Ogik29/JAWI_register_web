@@ -225,100 +225,181 @@ class BracketController extends Controller
                     throw new Exception('Jumlah unit/tim terverifikasi kurang dari 2.');
                 }
 
-                $totalRounds = ceil(log($unitCount, 2));
-                $bracketSize = pow(2, $totalRounds);
-                $byeCount = $bracketSize - $unitCount;
+                $isPemasalanTanding = ($kelas->kategoriPertandingan->nama_kategori === 'Pemasalan' && $kelas->jenisPertandingan->nama_jenis === 'Tanding');
 
-                $allMatches = [];
-                $nextRoundMatches = [];
-                for ($round = $totalRounds; $round >= 2; $round--) {
-                    $matchesInThisRound = [];
-                    $matchCountInThisRound = pow(2, $totalRounds - $round);
-                    for ($i = 0; $i < $matchCountInThisRound; $i++) {
+                if ($isPemasalanTanding) {
+                    // =========================================================================
+                    // LOGIKA BARU: Pool of 4 untuk Pemasalan Tanding
+                    // =========================================================================
+                    $poolCount = (int) ceil($unitCount / 4);
+                    $pools = array_fill(0, $poolCount, []);
+
+                    // Distribusi pemain secara merata ke dalam pool
+                    foreach ($unitIds as $index => $unitId) {
+                        $poolIndex = $index % $poolCount;
+                        $pools[$poolIndex][] = $unitId;
+                    }
+
+                    $round1MatchCounter = 1;
+                    $round2MatchCounter = 1;
+
+                    foreach ($pools as $poolIndex => $pool) {
+                        $poolSize = count($pool);
+
+                        if ($poolSize == 4) {
+                            $finalMatch = Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 2,
+                                'match_number' => $round2MatchCounter++,
+                                'status' => 'menunggu_peserta'
+                            ]);
+
+                            Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 1,
+                                'match_number' => $round1MatchCounter++,
+                                'unit1_id' => $pool[0],
+                                'unit2_id' => $pool[1],
+                                'next_match_id' => $finalMatch->id,
+                                'status' => 'siap_dimulai'
+                            ]);
+
+                            Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 1,
+                                'match_number' => $round1MatchCounter++,
+                                'unit1_id' => $pool[2],
+                                'unit2_id' => $pool[3],
+                                'next_match_id' => $finalMatch->id,
+                                'status' => 'siap_dimulai'
+                            ]);
+                        } elseif ($poolSize == 3) {
+                            $finalMatch = Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 2,
+                                'match_number' => $round2MatchCounter++,
+                                'unit2_id' => $pool[2], // Player 3 mendapat bye
+                                'status' => 'menunggu_peserta'
+                            ]);
+
+                            Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 1,
+                                'match_number' => $round1MatchCounter++,
+                                'unit1_id' => $pool[0],
+                                'unit2_id' => $pool[1],
+                                'next_match_id' => $finalMatch->id,
+                                'status' => 'siap_dimulai'
+                            ]);
+                        } elseif ($poolSize == 2) {
+                            Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 2, // Masuk round 2 agar setara dengan Final grup lain
+                                'match_number' => $round2MatchCounter++,
+                                'unit1_id' => $pool[0],
+                                'unit2_id' => $pool[1],
+                                'status' => 'siap_dimulai'
+                            ]);
+                        } elseif ($poolSize == 1) {
+                            Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => 2,
+                                'match_number' => $round2MatchCounter++,
+                                'unit1_id' => $pool[0],
+                                'status' => 'menunggu_peserta'
+                            ]);
+                        }
+                    }
+                } else {
+                    // =========================================================================
+                    // LOGIKA LAMA: SISTEM GUGUR TUNGGAL (PRESTASI)
+                    // =========================================================================
+                    $totalRounds = ceil(log($unitCount, 2));
+                    $bracketSize = pow(2, $totalRounds);
+                    $byeCount = $bracketSize - $unitCount;
+    
+                    $allMatches = [];
+                    $nextRoundMatches = [];
+                    for ($round = $totalRounds; $round >= 2; $round--) {
+                        $matchesInThisRound = [];
+                        $matchCountInThisRound = pow(2, $totalRounds - $round);
+                        for ($i = 0; $i < $matchCountInThisRound; $i++) {
+                            $match = Pertandingan::create([
+                                'kelas_pertandingan_id' => $kelas->id,
+                                'round_number' => $round,
+                                'match_number' => $i + 1,
+                                'next_match_id' => $nextRoundMatches[floor($i / 2)]->id ?? null,
+                            ]);
+                            $matchesInThisRound[] = $match;
+                        }
+                        $nextRoundMatches = $matchesInThisRound;
+                        $allMatches[$round] = collect($matchesInThisRound);
+                    }
+    
+                    $unitsWithBye = array_slice($unitIds, 0, $byeCount);
+                    $unitsInFirstRound = array_slice($unitIds, $byeCount);
+    
+                    $firstRoundMatches = [];
+                    $firstRoundMatchCount = count($unitsInFirstRound) / 2;
+                    for ($i = 0; $i < $firstRoundMatchCount; $i++) {
                         $match = Pertandingan::create([
                             'kelas_pertandingan_id' => $kelas->id,
-                            'round_number' => $round,
+                            'round_number' => 1,
                             'match_number' => $i + 1,
-                            'next_match_id' => $nextRoundMatches[floor($i / 2)]->id ?? null,
+                            'unit1_id' => $unitsInFirstRound[$i * 2],
+                            'unit2_id' => $unitsInFirstRound[($i * 2) + 1],
+                            'status' => 'siap_dimulai',
                         ]);
-                        $matchesInThisRound[] = $match;
+                        $firstRoundMatches[] = $match;
                     }
-                    $nextRoundMatches = $matchesInThisRound;
-                    $allMatches[$round] = collect($matchesInThisRound);
-                }
-
-                $unitsWithBye = array_slice($unitIds, 0, $byeCount);
-                $unitsInFirstRound = array_slice($unitIds, $byeCount);
-
-                $firstRoundMatches = [];
-                $firstRoundMatchCount = count($unitsInFirstRound) / 2;
-                for ($i = 0; $i < $firstRoundMatchCount; $i++) {
-                    $match = Pertandingan::create([
-                        'kelas_pertandingan_id' => $kelas->id,
-                        'round_number' => 1,
-                        'match_number' => $i + 1,
-                        'unit1_id' => $unitsInFirstRound[$i * 2],
-                        'unit2_id' => $unitsInFirstRound[($i * 2) + 1],
-                        'status' => 'siap_dimulai',
-                    ]);
-                    $firstRoundMatches[] = $match;
-                }
-                $allMatches[1] = collect($firstRoundMatches);
-
-                // ======================================================================================
-                // [BAGIAN YANG DIUBAH] LOGIKA PENGISIAN BABAK 2 DENGAN DISTRIBUSI "BYE" YANG MERATA
-                // ======================================================================================
-
-                $round2Matches = $allMatches[2] ?? collect();
-                $round2Slots = []; // Ini akan kita isi dengan cerdas
-
-                $matchesFromRound1 = $allMatches[1]->all(); // Pemenang dari babak 1
-                $byes = $unitsWithBye; // Unit yang lolos langsung
-
-                $totalFeederSlots = count($matchesFromRound1) + count($byes);
-                $matchesPtr = 0;
-                $byesPtr = 0;
-
-                // Algoritma untuk menyisipkan 'bye' secara merata
-                for ($i = 0; $i < $totalFeederSlots; $i++) {
-                    // Formula ini menentukan kapan harus menempatkan 'bye' agar tersebar
-                    // floor(($i + 1) * count($byes) / $totalFeederSlots) -> Berapa banyak 'bye' yang seharusnya sudah ditempatkan pada iterasi ini.
-                    // $byesPtr -> Berapa banyak 'bye' yang sudah ditempatkan.
-                    if ($byesPtr < count($byes) && floor(($i + 1) * count($byes) / $totalFeederSlots) > $byesPtr) {
-                        $round2Slots[] = $byes[$byesPtr];
-                        $byesPtr++;
-                    } else {
-                        if (isset($matchesFromRound1[$matchesPtr])) {
-                            $round2Slots[] = $matchesFromRound1[$matchesPtr];
-                            $matchesPtr++;
+                    $allMatches[1] = collect($firstRoundMatches);
+    
+                    $round2Matches = $allMatches[2] ?? collect();
+                    $round2Slots = []; 
+    
+                    $matchesFromRound1 = $allMatches[1]->all(); 
+                    $byes = $unitsWithBye; 
+    
+                    $totalFeederSlots = count($matchesFromRound1) + count($byes);
+                    $matchesPtr = 0;
+                    $byesPtr = 0;
+    
+                    for ($i = 0; $i < $totalFeederSlots; $i++) {
+                        if ($byesPtr < count($byes) && floor(($i + 1) * count($byes) / $totalFeederSlots) > $byesPtr) {
+                            $round2Slots[] = $byes[$byesPtr];
+                            $byesPtr++;
+                        } else {
+                            if (isset($matchesFromRound1[$matchesPtr])) {
+                                $round2Slots[] = $matchesFromRound1[$matchesPtr];
+                                $matchesPtr++;
+                            }
                         }
                     }
-                }
-
-                // Sekarang, isi Babak 2 dengan feeder slot yang sudah terdistribusi
-                foreach ($round2Matches as $index => $matchInRound2) {
-                    $slot1 = $round2Slots[$index * 2] ?? null;
-                    $slot2 = $round2Slots[($index * 2) + 1] ?? null;
-
-                    if ($slot1) {
-                        if ($slot1 instanceof Pertandingan) {
-                            $slot1->next_match_id = $matchInRound2->id;
-                            $slot1->save();
-                        } elseif (is_numeric($slot1)) {
-                            $matchInRound2->unit1_id = $slot1;
+    
+                    foreach ($round2Matches as $index => $matchInRound2) {
+                        $slot1 = $round2Slots[$index * 2] ?? null;
+                        $slot2 = $round2Slots[($index * 2) + 1] ?? null;
+    
+                        if ($slot1) {
+                            if ($slot1 instanceof Pertandingan) {
+                                $slot1->next_match_id = $matchInRound2->id;
+                                $slot1->save();
+                            } elseif (is_numeric($slot1)) {
+                                $matchInRound2->unit1_id = $slot1;
+                            }
                         }
-                    }
-
-                    if ($slot2) {
-                        if ($slot2 instanceof Pertandingan) {
-                            $slot2->next_match_id = $matchInRound2->id;
-                            $slot2->save();
-                        } elseif (is_numeric($slot2)) {
-                            $matchInRound2->unit2_id = $slot2;
+    
+                        if ($slot2) {
+                            if ($slot2 instanceof Pertandingan) {
+                                $slot2->next_match_id = $matchInRound2->id;
+                                $slot2->save();
+                            } elseif (is_numeric($slot2)) {
+                                $matchInRound2->unit2_id = $slot2;
+                            }
                         }
+    
+                        $matchInRound2->save();
                     }
-
-                    $matchInRound2->save();
                 }
 
                 $this->revalidateBracketConnections($kelas->id);

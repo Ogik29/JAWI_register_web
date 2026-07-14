@@ -31,11 +31,6 @@ class EventController extends Controller
         return view('register.registEvent', compact('events'));
     }
 
-    // public function registEvent($slug){
-    //     $event = Event::where('slug', $slug)->firstOrFail();
-    //     return view('register.registEvent', compact('event'));
-    // }
-
     public function registKontingen($event_id)
     {
         return view('register.registKontingen', [
@@ -48,8 +43,8 @@ class EventController extends Controller
         $event = Event::findOrFail($event_id);
 
         $request->merge([
-            // 'namaManajer' => Auth::user()->nama_lengkap,
-            // 'noTelepon'   => Auth::user()->no_telp,
+            'namaManajer' => Auth::user()->nama_lengkap,
+            'noTelepon'   => Auth::user()->no_telp,
             'email'       => Auth::user()->email,
         ]);
 
@@ -60,17 +55,17 @@ class EventController extends Controller
                 'max:255',
                 Rule::unique('contingent', 'name')->where('event_id', $event_id),
             ],
-            // 'namaManajer'   => 'required|string|max:255',
-            // 'noTelepon'     => 'required|string|max:15',
+            'namaManajer'   => 'required|string|max:255',
+            'noTelepon'     => 'required|string|max:15',
             'email'         => 'required|email|max:255',
             'user_id'       => 'required|integer|exists:users,id',
             'event_id'      => 'required|integer|exists:events,id',
-            'surat_rekomendasi' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
+            'surat_rekomendasi' => ($event->surat_rekom == 'wajib' ? 'required' : 'nullable') . '|file|mimes:jpg,jpeg,png,pdf|max:2048',
         ];
 
         $messages = [
             'namaKontingen.unique' => 'Nama kontingen ini sudah terdaftar di event ini. Silakan gunakan nama lain.',
-            // 'surat_rekomendasi.required' => 'Surat rekomendasi wajib diunggah.',
+            'surat_rekomendasi.required' => 'Surat rekomendasi wajib diunggah.',
         ];
 
         if ($event->harga_contingent > 0) {
@@ -96,9 +91,9 @@ class EventController extends Controller
 
         $contingent = Contingent::create([
             'name'                => $data['namaKontingen'],
-            // 'manajer_name'        => $data['namaManajer'],
+            'manajer_name'        => $data['namaManajer'],
             'email'               => $data['email'],
-            // 'no_telp'             => $data['noTelepon'],
+            'no_telp'             => $data['noTelepon'],
             'user_id'             => $data['user_id'],
             'event_id'            => $data['event_id'],
             'surat_rekomendasi'   => $rekomendasiPath, // Simpan path file ke database
@@ -143,18 +138,13 @@ class EventController extends Controller
         $event = $contingent->event;
 
         // 2. Ambil semua data master yang dibutuhkan untuk filter di view
-        $kategoriPertandingan = KategoriPertandingan::all();
+        $kategoriPertandingan = KategoriPertandingan::orderBy('id')->get();
         $jenisPertandingan = JenisPertandingan::all();
 
-        // =================================================================
-        // PERBAIKAN 1: Mengambil data Rentang Usia yang dibutuhkan oleh view
-        // =================================================================
-        $rentangUsia = DB::table('rentang_usia')->get();
+        $rentangUsia = DB::table('rentang_usia')
+            ->orderBy('id')
+            ->get();
 
-        // =================================================================
-        // PERBAIKAN 2: Mengambil data Kelas dengan JOIN agar lengkap
-        // Nama variabel diubah menjadi 'availableClasses' agar sesuai dengan view
-        // =================================================================
         $availableClasses = DB::table('kelas_pertandingan')
             ->where('kelas_pertandingan.event_id', $event->id)
             ->join('kelas', 'kelas_pertandingan.kelas_id', '=', 'kelas.id')
@@ -274,7 +264,6 @@ class EventController extends Controller
 
     public function store_invoice(Request $request)
     {
-        // 1. Validasi input dari form
         $request->validate([
             'total_price'    => 'required|numeric',
             'foto_invoice'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120', // Max 5MB
@@ -283,18 +272,15 @@ class EventController extends Controller
             'pemain.*.price' => 'required|numeric',
         ]);
 
-        // 2. Panggil fungsi uploadImage untuk memproses dan menyimpan file
         // Fungsi ini akan mengembalikan path relatif file yang disimpan (cth: 'invoices/namafile.jpg')
         $dbPath = $this->uploadImage($request->file('foto_invoice'), 'invoices');
 
-        // 3. Simpan data ke Model PlayerInvoice
         $invoice = new PlayerInvoice();
         $invoice->foto_invoice = $dbPath; // Gunakan path yang dikembalikan dari fungsi upload
         $invoice->total_price = $request->total_price;
         $invoice->date = now();
-        $invoice->save(); // Menyimpan ke database
+        $invoice->save();
 
-        // 4. Loop dan simpan data ke Model TransactionDetail
         foreach ($request->pemain as $pemainData) {
             $detail = new TransactionDetail();
             $detail->player_id = $pemainData['player_id'];
@@ -304,22 +290,18 @@ class EventController extends Controller
             Player::find($pemainData['player_id'])->update(['status' => 1]);
         }
 
-        // 5. Kembalikan ke halaman sebelumnya dengan pesan sukses
         return redirect('/history')->with('status', 'Bukti transfer dan data invoice berhasil disimpan!');
     }
 
 
     public function show_invoice($contingent_id)
     {
-        // 1. Ambil kontingen dan relasinya yang dibutuhkan
         $contingent = Contingent::with('event')->findOrFail($contingent_id);
 
         if (auth()->user()->id !== $contingent->user_id) {
             return abort(403, 'Anda tidak memiliki akses ke halaman ini.');
         }
 
-        // =================================================================
-        // PERBAIKAN KUNCI: Eager loading relasi bersarang dengan sintaks yang benar
         $unpaidPlayers = $contingent->players()
             ->where('status', 0) // Ganti '0' jika status "Belum Bayar" Anda berbeda
             ->with([
@@ -335,10 +317,8 @@ class EventController extends Controller
         $invoiceItems = [];
         $totalHarga = 0;
 
-        // Langkah A: Kelompokkan pemain (logika ini tidak diubah)
         $playersByClass = $unpaidPlayers->groupBy('kelas_pertandingan_id');
 
-        // Langkah B: Proses setiap grup (logika ini tidak diubah)
         foreach ($playersByClass as $kelasPertandinganId => $playersInClass) {
             $firstPlayer = $playersInClass->first();
             if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
@@ -433,6 +413,93 @@ class EventController extends Controller
         return redirect()->route('history')->with('success', 'Bukti transfer pendaftaran kontingen berhasil dikirim!');
     }
 
+    public function historyInvoices($contingent_id)
+    {
+        $contingent = Contingent::with('event')->findOrFail($contingent_id);
+
+        if (Auth::user()->id !== $contingent->user_id) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
+        // Ambil data invoice atlet
+        $playerInvoices = PlayerInvoice::whereHas('transactionDetails.player', function ($query) use ($contingent_id) {
+            $query->where('contingent_id', $contingent_id);
+        })->with([
+            'transactionDetails.player.kelasPertandingan.kelas.rentangUsia',
+            'transactionDetails.player.kelasPertandingan.kategoriPertandingan',
+            'transactionDetails.player.kelasPertandingan.jenisPertandingan'
+        ])->latest()->get();
+
+        // Ambil data transaksi/invoice pendaftaran kontingen
+        $contingentTransaction = Transaction::where('contingent_id', $contingent_id)
+            ->whereNotNull('foto_invoice')
+            ->first();
+
+        return view('invoice.historyInvoices', compact('contingent', 'playerInvoices', 'contingentTransaction'));
+    }
+
+    public function detailPlayerInvoice($invoice_id)
+    {
+        $invoice = PlayerInvoice::with([
+            'transactionDetails.player.kelasPertandingan.kelas.rentangUsia',
+            'transactionDetails.player.kelasPertandingan.kategoriPertandingan',
+            'transactionDetails.player.kelasPertandingan.jenisPertandingan',
+            'transactionDetails.player.contingent.event'
+        ])->findOrFail($invoice_id);
+
+        $firstDetail = $invoice->transactionDetails->first();
+        if (!$firstDetail || !$firstDetail->player) {
+            abort(404, 'Data pemain tidak ditemukan pada invoice ini.');
+        }
+
+        $contingent = $firstDetail->player->contingent;
+
+        if ($contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        // Grouping data pemain yang sudah dibayar (sama seperti logika show_invoice)
+        $detailsByClass = $invoice->transactionDetails->groupBy(function($detail) {
+            return $detail->player->kelas_pertandingan_id ?? 0;
+        });
+
+        $invoiceItems = [];
+
+        foreach ($detailsByClass as $kelasPertandinganId => $detailsInClass) {
+            $firstClassDetail = $detailsInClass->first();
+            if (!$firstClassDetail || !$firstClassDetail->player || !$firstClassDetail->player->kelasPertandingan || !$firstClassDetail->player->kelasPertandingan->kelas) {
+                continue;
+            }
+
+            $classDetails = $firstClassDetail->player->kelasPertandingan;
+            $hargaPerPendaftaran = $firstClassDetail->price ?: $classDetails->harga;
+            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+
+            $jumlahPemainTotal = $detailsInClass->count();
+            $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran);
+
+            for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                $offset = $i * $pemainPerPendaftaran;
+                $detailsUntukItemIni = $detailsInClass->slice($offset, $pemainPerPendaftaran);
+
+                if ($detailsUntukItemIni->isEmpty()) continue;
+
+                $invoiceItems[] = [
+                    'nama_kelas'        => $classDetails->kelas->nama_kelas,
+                    'gender'            => $classDetails->gender,
+                    'rentang_usia'      => $classDetails->kelas->rentangUsia->rentang_usia ?? 'N/A',
+                    'kategori'          => $classDetails->kategoriPertandingan->nama_kategori ?? 'N/A',
+                    'jenis'             => $classDetails->jenisPertandingan->nama_jenis ?? 'N/A',
+                    'harga_per_pendaftaran' => $hargaPerPendaftaran,
+                    'nama_pemain'       => $detailsUntukItemIni->map(function($d) { return $d->player->name ?? 'N/A'; })->all(),
+                    'jumlah_pemain'     => $detailsUntukItemIni->count(),
+                ];
+            }
+        }
+
+        return view('invoice.playerInvoiceDetail', compact('invoice', 'contingent', 'invoiceItems'));
+    }
+
     // data peserta part
     public function dataPeserta()
     {
@@ -465,5 +532,21 @@ class EventController extends Controller
             'kelasPertandingan',
             'events' // Kirim data events ke view
         ));
+    }
+
+    public function detailContingentInvoice($contingent_id)
+    {
+        $contingent = Contingent::with(['event', 'user', 'transactions'])->findOrFail($contingent_id);
+
+        if ($contingent->user_id !== Auth::id()) {
+            abort(403, 'Akses tidak diizinkan.');
+        }
+
+        $transaction = $contingent->transactions->first();
+        if (!$transaction) {
+            abort(404, 'Transaksi pendaftaran kontingen tidak ditemukan.');
+        }
+
+        return view('invoice.contingentInvoiceDetail', compact('contingent', 'transaction'));
     }
 }

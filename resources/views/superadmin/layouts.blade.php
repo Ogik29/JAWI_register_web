@@ -17,7 +17,8 @@
 
     {{-- data tables --}}
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-<meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('assets/img/icon/logo-jawi2.png') }}">
     <style>
         :root {
             --aurora-bg: #f8f9fc;
@@ -156,11 +157,11 @@
             </li>
 
             <li class="nav-item">
-    <a class="nav-link {{ Request::is('superadmin/kelas*') ? 'active' : '' }}" href="{{ route('superadmin.kelas.index') }}">
-        <i class="bi bi-diagram-3-fill"></i> {{-- Contoh ikon yang relevan, sesuaikan jika perlu --}}
-        <span>Kelola Kelas</span>
-    </a>
-</li>
+                <a class="nav-link {{ Request::is('superadmin/kelas*') ? 'active' : '' }}" href="{{ route('superadmin.kelas.index') }}">
+                    <i class="bi bi-diagram-3-fill"></i> {{-- Contoh ikon yang relevan, sesuaikan jika perlu --}}
+                    <span>Kelola Kelas</span>
+                </a>
+            </li>
         </ul>
 
         {{-- Profil Pengguna --}}

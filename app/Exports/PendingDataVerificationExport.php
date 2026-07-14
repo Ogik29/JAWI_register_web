@@ -2,48 +2,43 @@
 
 namespace App\Exports;
 
-use App\Models\Event;
 use App\Models\Player;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat; // <-- 1. Import class ini
-use Maatwebsite\Excel\Concerns\WithColumnFormatting; // <-- 2. Import concern ini
+use Carbon\Carbon;
 
-class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithColumnFormatting // <-- 3. Tambahkan WithColumnFormatting
+class PendingDataVerificationExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
-    protected $event;
+    protected $players;
     private $rowNumber = 0;
 
-    public function __construct(Event $event)
+    // Konstruktor menerima Collection pemain yang sudah difilter dari Controller
+    public function __construct(Collection $players)
     {
-        $this->event = $event;
+        $this->players = $players;
     }
 
+    /**
+     * Langsung menggunakan collection yang diberikan dari Controller.
+     */
     public function collection()
     {
-        $approvedPlayers = Player::whereHas('contingent', function ($query) {
-            $query->where('event_id', $this->event->id);
-        })
-            ->where('status', 2)
-            ->with([
-                'contingent.event', // Pastikan relasi event dimuat untuk event_name
-                'kelasPertandingan.kelas.rentangUsia',
-                'kelasPertandingan.kategoriPertandingan',
-                'kelasPertandingan.jenisPertandingan'
-            ])
-            ->get();
-        return $this->groupPlayersByRegistration($approvedPlayers);
+        // Panggil fungsi grouping untuk memproses data
+        return $this->groupPlayersByRegistration($this->players);
     }
 
+    /**
+     * Menentukan judul kolom di file Excel.
+     */
     public function headings(): array
     {
+        // Formatnya sama persis dengan yang approved
         return [
             'No',
             'Event',
@@ -60,11 +55,17 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
         ];
     }
 
+    /**
+     * Memetakan data dari setiap item di collection ke baris Excel.
+     */
     public function map($registration): array
     {
         $this->rowNumber++;
+
         $playerNames = $registration['players']->pluck('name')->implode("\n");
-        $playerBirthDates = $registration['players']->pluck('tgl_lahir')->map(fn($d) => Carbon::parse($d)->format('d F Y'))->implode("\n");
+        $playerBirthDates = $registration['players']->pluck('tgl_lahir')->map(function ($date) {
+            return Carbon::parse($date)->format('d F Y');
+        })->implode("\n");
         $playerNiks = $registration['players']->pluck('nik')->implode("\n");
         $playerPhones = $registration['players']->pluck('no_telp')->implode("\n");
 
@@ -84,6 +85,9 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
         ];
     }
 
+    /**
+     * Menerapkan style ke worksheet.
+     */
     public function styles(Worksheet $sheet)
     {
         $sheet->getStyle('A1:L1')->getFont()->setBold(true);
@@ -93,42 +97,16 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
     }
 
     /**
-     * Tentukan format untuk kolom tertentu.
-     *
-     * @return array
-     */
-    public function columnFormats(): array
-    {
-        return [
-            // Kolom L adalah kolom ke-12 (NIK)
-            // Format "@" memaksa Excel untuk memperlakukannya sebagai Teks.
-            'L' => NumberFormat::FORMAT_TEXT,
-
-            // Kolom K adalah kolom No. Telepon, juga bagus untuk dijadikan Teks
-            // untuk menjaga angka 0 di depan jika ada.
-            'K' => NumberFormat::FORMAT_TEXT,
-        ];
-    }
-
-
-    /**
-     * Fungsi helper untuk mengelompokkan pemain.
-     * <<< INI ADALAH BAGIAN YANG DIPERBAIKI >>>
+     * Fungsi helper untuk mengelompokkan pemain, sama persis seperti di ApprovedParticipantsExport.
      */
     private function groupPlayersByRegistration(Collection $players): Collection
     {
         $registrations = [];
-
-        // LANGKAH 1: Kelompokkan pemain berdasarkan contingent_id MEREKA.
         $playersByContingent = $players->groupBy('contingent_id');
 
-        // Lakukan iterasi untuk setiap kontingen
         foreach ($playersByContingent as $contingentId => $playersInContingent) {
-
-            // LANGKAH 2: Di dalam setiap kontingen, kelompokkan lagi berdasarkan kelas pertandingan.
             $playersByClass = $playersInContingent->groupBy('kelas_pertandingan_id');
 
-            // Lakukan iterasi untuk setiap kelas di dalam kontingen tersebut
             foreach ($playersByClass as $kelasPertandinganId => $playersInGroup) {
                 $firstPlayer = $playersInGroup->first();
                 if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
@@ -136,12 +114,8 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
                 }
 
                 $classDetails = $firstPlayer->kelasPertandingan;
-                // Sekarang semua $playersInGroup dijamin dari kontingen yang sama.
-                // Logika grouping asli Anda sekarang aman untuk digunakan.
                 $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
-                $jumlahPemainTotal = $playersInGroup->count();
-                $jumlahPendaftaran = ceil($jumlahPemainTotal / $pemainPerPendaftaran);
-
+                $jumlahPendaftaran = ceil($playersInGroup->count() / $pemainPerPendaftaran);
                 $allPlayers = $playersInGroup->values()->all();
 
                 for ($i = 0; $i < $jumlahPendaftaran; $i++) {
@@ -149,11 +123,14 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
                     $pemainUntukItemIni = array_slice($allPlayers, $offset, $pemainPerPendaftaran);
                     if (empty($pemainUntukItemIni)) continue;
 
-                    // Karena $firstPlayer diambil dari grup yang sudah benar,
-                    // maka contingent->name juga pasti benar.
+                    // Kita perlu pastikan data relasi event ada
+                    $eventName = $firstPlayer->contingent && $firstPlayer->contingent->event
+                        ? $firstPlayer->contingent->event->name
+                        : 'Nama Event Tidak Tersedia';
+
                     $registrations[] = [
-                        'event_name'        => $this->event->name,
-                        'contingent_name'   => $firstPlayer->contingent->name, // Ini sekarang sudah pasti benar
+                        'event_name'        => $eventName,
+                        'contingent_name'   => $firstPlayer->contingent->name,
                         'kategori_name'     => $classDetails->kategoriPertandingan->nama_kategori,
                         'jenis_name'        => $classDetails->jenisPertandingan->nama_jenis,
                         'rentang_usia_name' => $classDetails->kelas->rentangUsia->rentang_usia,
@@ -164,7 +141,6 @@ class ApprovedParticipantsExport implements FromCollection, WithHeadings, WithMa
                 }
             }
         }
-
         return new Collection($registrations);
     }
 }

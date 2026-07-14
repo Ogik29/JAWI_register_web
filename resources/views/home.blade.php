@@ -103,10 +103,7 @@
 
             {{-- PERUBAHAN: Menggunakan align-items-center untuk menyejajarkan vertikal --}}
             <div class="row align-items-center mb-5" style="min-height: 80vh;">
-                {{-- PERUBAHAN: Mengatur kolom agar full width di mobile (col-12), dan terbagi di layar besar (col-lg-7).
-                             Teks diatur center di mobile (text-center) dan rata kiri di layar besar (text-lg-start). --}}
                 <div class="col-lg-7 col-12 text-center text-lg-start">
-                    {{-- PERUBAHAN: Menggunakan kelas display-1/display-2 yang responsif, bukan font-size 100px --}}
                     <h1 class="display-2 fw-bold text-light m-0">JAWARA</h1>
                     <h1 class="display-2 fw-bold m-0" style="color: #dc2626;">INDONESIA</h1>
                     

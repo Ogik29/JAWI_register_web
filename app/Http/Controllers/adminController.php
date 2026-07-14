@@ -15,6 +15,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\ApprovedContingentsExport;
 use App\Exports\ApprovedParticipantsExport;
+use App\Exports\PendingDataVerificationExport;
 // use App\Models\Event;
 // use Illuminate\Http\Request;
 
@@ -30,34 +31,68 @@ class adminController extends Controller
     {
         $groupedRegistrations = [];
 
-        $playersByTeam = $players->groupBy(function ($player) {
-            return $player->contingent_id . '-' . $player->kelas_pertandingan_id;
+        // Kelompokkan atlet:
+        // Jika memiliki invoice, kelompokkan berdasarkan ID invoice (prefixed 'inv-').
+        // Jika tidak memiliki invoice, kelompokkan berdasarkan contingent & kelas (prefixed 'noinv-').
+        $playersByGroup = $players->groupBy(function ($player) {
+            if ($player->playerInvoice) {
+                return 'inv-' . $player->playerInvoice->id;
+            }
+            return 'noinv-' . $player->contingent_id . '-' . $player->kelas_pertandingan_id;
         });
 
-        foreach ($playersByTeam as $playersInTeam) {
-            $firstPlayer = $playersInTeam->first();
-            if (!$firstPlayer || !$firstPlayer->kelasPertandingan || !$firstPlayer->kelasPertandingan->kelas) {
+        foreach ($playersByGroup as $groupKey => $playersInGroup) {
+            $firstPlayer = $playersInGroup->first();
+            if (!$firstPlayer) {
                 continue;
             }
 
-            $classDetails = $firstPlayer->kelasPertandingan;
-            $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
-            $jumlahPendaftaran = ceil($playersInTeam->count() / $pemainPerPendaftaran);
+            if (str_starts_with($groupKey, 'inv-')) {
+                // DIKELOMPOKKAN BERDASARKAN INVOICE
+                $invoice = $firstPlayer->playerInvoice;
+                
+                // Cari nama-nama kelas unik untuk seluruh atlet dalam invoice ini
+                $uniqueClasses = $playersInGroup->map(function ($p) {
+                    return $p->kelasPertandingan->kelas->nama_kelas ?? 'N/A';
+                })->unique()->implode(', ');
 
-            for ($i = 0; $i < $jumlahPendaftaran; $i++) {
-                $pemainUntukItemIni = $playersInTeam->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+                // Cari gender unik
+                $uniqueGenders = $playersInGroup->map(function ($p) {
+                    return $p->gender;
+                })->unique()->implode(', ');
 
-                if ($pemainUntukItemIni->isEmpty()) {
+                $groupedRegistrations[] = [
+                    'player_instances' => $playersInGroup,
+                    'player_names' => $playersInGroup->pluck('name')->implode(', '),
+                    'nama_kelas' => $uniqueClasses,
+                    'gender' => $uniqueGenders,
+                    'status' => $firstPlayer->status,
+                ];
+            } else {
+                // DIKELOMPOKKAN BERDASARKAN TIM/KELAS (Jika belum bayar / tidak ada invoice)
+                $classDetails = $firstPlayer->kelasPertandingan;
+                if (!$classDetails || !$classDetails->kelas) {
                     continue;
                 }
 
-                $groupedRegistrations[] = [
-                    'player_instances' => $pemainUntukItemIni,
-                    'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
-                    'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
-                    'gender' => $classDetails->gender,
-                    'status' => $firstPlayer->status,
-                ];
+                $pemainPerPendaftaran = $classDetails->kelas->jumlah_pemain ?: 1;
+                $jumlahPendaftaran = ceil($playersInGroup->count() / $pemainPerPendaftaran);
+
+                for ($i = 0; $i < $jumlahPendaftaran; $i++) {
+                    $pemainUntukItemIni = $playersInGroup->slice($i * $pemainPerPendaftaran, $pemainPerPendaftaran);
+
+                    if ($pemainUntukItemIni->isEmpty()) {
+                        continue;
+                    }
+
+                    $groupedRegistrations[] = [
+                        'player_instances' => $pemainUntukItemIni,
+                        'player_names' => $pemainUntukItemIni->pluck('name')->implode(', '),
+                        'nama_kelas' => $classDetails->kelas->nama_kelas ?? 'N/A',
+                        'gender' => $classDetails->gender,
+                        'status' => $firstPlayer->status,
+                    ];
+                }
             }
         }
         return $groupedRegistrations;
@@ -85,81 +120,86 @@ class adminController extends Controller
             'kelasPertandingan.jenisPertandingan'
         ];
 
-        // Status 0 = Menunggu Verifikasi Pembayaran
-        $contingentsForVerification = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 0)
-            ->latest()
-            ->get();
+        $contingentsForVerification = Contingent::with(['user', 'event', 'transactions', 'players.kelasPertandingan.kelas.rentangUsia'])
+            ->whereIn('event_id', $managedEventIds)->where('status', 0)->latest()->get();
+        $contingentsForDataVerification = Contingent::with(['user', 'event', 'transactions', 'players.kelasPertandingan.kelas.rentangUsia'])
+            ->whereIn('event_id', $managedEventIds)->where('status', 3)->latest()->get();
 
-        // BARU: Status 3 = Menunggu Verifikasi Data
-        $contingentsForDataVerification = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 3)
-            ->latest()
-            ->get();
+        // ===============================================
+        // AWAL DARI BLOK LOGIKA YANG DIREVISI TOTAL
+        // ===============================================
 
-        $playersForVerification = Player::with($playerRelations)
+        // GRUP 1: Atlet yang menunggu verifikasi PEMBAYARAN.
+        // Syarat:
+        // - Punya invoice.
+        // - Bukti bayar SUDAH diunggah.
+        // - Status pemain masih menunggu verifikasi (status=1).
+        $playersForPaymentVerification = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
             ->where('status', 1)
+            ->whereHas('playerInvoice', function ($query) {
+                $query->whereNotNull('foto_invoice'); // Kuncinya di sini: bukti bayar sudah ada
+            })
             ->latest()
             ->get();
 
-        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 1)
-            ->latest('updated_at')
+        // GRUP 2: Atlet yang menunggu verifikasi DATA (karena kontingen lunas atau event gratis).
+        // Syarat:
+        // - Kontingennya sudah lunas (status 1).
+        // - ATAU Event-nya gratis untuk atlet (harga kelas = 0).
+        // - Status pemain masih menunggu verifikasi (status=1).
+        $playersForDataVerification = Player::with($playerRelations)
+            ->where('status', 0)
+            ->whereHas('contingent', function ($query) use ($managedEventIds) {
+                $query->whereIn('event_id', $managedEventIds)
+                    ->where('status', 1); // <-- Kontingen sudah disetujui
+            })
+            // Juga ikutkan pemain yang bukti bayarnya belum diunggah atau belum punya invoice
+            ->where(function ($query) {
+                $query->whereDoesntHave('playerInvoice') // Belum punya invoice SAMA SEKALI
+                    ->orWhereHas('playerInvoice', function ($subQuery) {
+                        $subQuery->whereNull('foto_invoice'); // Sudah punya invoice, TAPI bukti bayar KOSONG
+                    });
+            })
+            ->latest()
             ->get();
 
+        // Lakukan pengelompokan untuk kedua grup
+        $groupedPlayersForVerification = $this->groupPlayers($playersForPaymentVerification);
+        $groupedPlayersForDataVerification = $this->groupPlayers($playersForDataVerification);
+
+        // ===============================================
+        // AKHIR DARI BLOK LOGIKA YANG DIREVISI
+        // ===============================================
+
+        $approvedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas.rentangUsia'])
+            ->whereIn('event_id', $managedEventIds)->where('status', 1)->latest('updated_at')->get();
         $approvedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 2)
-            ->latest('updated_at')
-            ->get();
-
-        $rejectedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas', 'transactions'])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('status', 2)
-            ->latest('updated_at')
-            ->get();
-
+            ->where('status', 2)->latest('updated_at')->get();
+        $rejectedContingents = Contingent::with(['user', 'event', 'players.kelasPertandingan.kelas.rentangUsia'])
+            ->whereIn('event_id', $managedEventIds)->where('status', 2)->latest('updated_at')->get();
         $rejectedPlayers = Player::with($playerRelations)
             ->whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))
-            ->where('status', 3)
-            ->latest('updated_at')
-            ->get();
+            ->where('status', 3)->latest('updated_at')->get();
 
-        $groupedPlayersForVerification = $this->groupPlayers($playersForVerification);
         $groupedApprovedPlayers = $this->groupPlayers($approvedPlayers);
         $groupedRejectedPlayers = $this->groupPlayers($rejectedPlayers);
 
         $totalPlayers = Player::whereHas('contingent', fn($q) => $q->whereIn('event_id', $managedEventIds))->count();
         $pendingContingentsCount = $contingentsForVerification->count() + $contingentsForDataVerification->count();
         $totalContingents = Contingent::whereIn('event_id', $managedEventIds)->count();
-        $pendingPlayersCount = $playersForVerification->count();
+
+        // Hitung total atlet pending dari kedua grup
+        $pendingPlayersCount = $playersForPaymentVerification->count() + $playersForDataVerification->count();
 
         $kategoriPrestasiId = \App\Models\KategoriPertandingan::where('nama_kategori', 'Prestasi')->value('id') ?? 0;
+        $kelasUntukBracket = KelasPertandingan::with(['event', 'kelas.rentangUsia', 'kategoriPertandingan', 'jenisPertandingan'])
+            ->whereIn('event_id', $managedEventIds)->where('kategori_pertandingan_id', $kategoriPrestasiId)
+            ->withCount(['players' => fn($query) => $query->where('status', 2)])
+            ->having('players_count', '>', 0)->get();
 
-        $kelasUntukBracket = KelasPertandingan::with([
-            'event',
-            'kelas.rentangUsia',
-            'kategoriPertandingan',
-            'jenisPertandingan'
-        ])
-            ->whereIn('event_id', $managedEventIds)
-            ->where('kategori_pertandingan_id', $kategoriPrestasiId)
-            ->withCount(['players' => function ($query) {
-                $query->where('status', 2); // Status 2 = Terverifikasi
-            }])
-            ->having('players_count', '>', 0) // Pastikan hanya kelas dengan peserta yang diambil
-            ->get();
-
-        // Tambahkan penanda `has_drawing` ke setiap kelas
-        $kelasUntukBracket->each(function ($kelas) {
-            $kelas->has_drawing = \App\Models\Pertandingan::where('kelas_pertandingan_id', $kelas->id)->exists();
-        });
-        // ==========================================================
-
+        $kelasUntukBracket->each(fn($kelas) => $kelas->has_drawing = \App\Models\Pertandingan::where('kelas_pertandingan_id', $kelas->id)->exists());
 
         return view('admin.index', compact(
             'totalPlayers',
@@ -173,9 +213,10 @@ class adminController extends Controller
             'pendingPlayersCount',
             'rejectedContingents',
             'groupedPlayersForVerification',
+            'groupedPlayersForDataVerification', // Ganti nama variabel lama
             'groupedApprovedPlayers',
             'groupedRejectedPlayers',
-            'kelasUntukBracket' // <-- TAMBAHKAN VARIABEL BARU INI
+            'kelasUntukBracket'
         ));
     }
 
@@ -223,16 +264,36 @@ class adminController extends Controller
      */
     public function verifyPlayer(Request $request, Player $player)
     {
-        $this->authorizeAdminAction($player->contingent->event_id);
         $request->validate([
             'action' => 'required|in:approve,reject',
             'catatan' => 'nullable|string|required_if:action,reject'
         ]);
 
-        $player->status = ($request->action == 'approve') ? 2 : 3;
-        $player->catatan = ($request->action == 'approve') ? null : $request->catatan;
-        $player->save();
-        return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet berhasil diproses.');
+        $playerIds = $request->input('player_ids');
+        if (is_string($playerIds)) {
+            $playerIds = array_filter(explode(',', $playerIds));
+        }
+        if (empty($playerIds) && $player && $player->id) {
+            $playerIds = [$player->id];
+        }
+
+        $players = Player::whereIn('id', $playerIds)->get();
+        if ($players->isEmpty()) {
+            return back()->with('error', 'Data atlet tidak ditemukan.');
+        }
+
+        $this->authorizeAdminAction($players->first()->contingent->event_id);
+
+        $status = ($request->action == 'approve') ? 2 : 3;
+        $catatan = ($request->action == 'approve') ? null : $request->catatan;
+
+        foreach ($players as $p) {
+            $p->status = $status;
+            $p->catatan = $catatan;
+            $p->save();
+        }
+
+        return redirect()->route('adminIndex')->with('status', 'Verifikasi atlet/tim berhasil diproses.');
     }
 
 
@@ -315,6 +376,38 @@ class adminController extends Controller
 
         // Panggil class export yang baru dibuat dengan membawa ID event yang dikelola
         return Excel::download(new ApprovedContingentsExport($managedEventIds), $fileName);
+    }
+
+    public function exportPendingDataVerificationParticipants(Event $event)
+    {
+        // Otorisasi admin
+        $this->authorizeAdminAction($event->id);
+
+        // Siapkan nama file
+        $fileName = 'peserta-pending-verifikasi-data-' . $event->slug . '.xlsx';
+
+        // Logika query ini sama persis dengan yang ada di metode index() untuk mengambil data pending
+        $pendingPlayers = Player::with([
+            'contingent.event',
+            'kelasPertandingan.kelas.rentangUsia',
+            'kelasPertandingan.kategoriPertandingan',
+            'kelasPertandingan.jenisPertandingan'
+        ])
+            ->where('status', 0)
+            ->whereHas('contingent', function ($query) use ($event) {
+                $query->where('event_id', $event->id)
+                    ->where('status', 1); // Kontingen sudah lunas
+            })
+            ->where(function ($query) {
+                $query->whereDoesntHave('playerInvoice') // Belum punya invoice SAMA SEKALI
+                    ->orWhereHas('playerInvoice', function ($subQuery) {
+                        $subQuery->whereNull('foto_invoice'); // Sudah punya invoice, TAPI bukti bayar KOSONG
+                    });
+            })
+            ->get();
+
+        // Panggil class export yang baru kita buat
+        return Excel::download(new PendingDataVerificationExport($pendingPlayers), $fileName);
     }
 
     /**

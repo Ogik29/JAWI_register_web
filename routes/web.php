@@ -61,6 +61,11 @@ Route::middleware('checkRole:1,3')->group(function () {
     Route::post('/invoice', [EventController::class, 'store_invoice'])->name('invoice.store');
     Route::get('/invoiceContingent/{contingent_id}', [EventController::class, 'show_invoice_contingent'])->name('invoiceContingent.show');
     Route::post('/invoice/contingent/store', [EventController::class, 'store_invoice_contingent'])->name('invoice.contingent.store');
+    Route::get('/history/contingent/{contingent_id}/invoices', [EventController::class, 'historyInvoices'])->name('contingent.invoices');
+    Route::get('/history/invoice/{invoice_id}/detail', [EventController::class, 'detailPlayerInvoice'])->name('invoice.player.detail');
+    Route::get('/history/contingent-invoice/{contingent_id}/detail', [EventController::class, 'detailContingentInvoice'])->name('invoice.contingent.detail');
+    Route::post('/history/invoice/{invoice_id}/reupload', [historyController::class, 'reuploadPlayerInvoice'])->name('invoice.player.reupload');
+    Route::post('/history/player-group/update', [historyController::class, 'updatePlayerGroup'])->name('player.group.update');
 });
 
 
@@ -118,6 +123,7 @@ Route::middleware('checkRole:1,2')->group(function () {
     Route::get('/events/{event}/export-approved', [\App\Http\Controllers\adminController::class, 'exportApprovedParticipants'])
         ->name('admin.events.export-approved');
     Route::get('/admin/export-approved-contingents', [App\Http\Controllers\adminController::class, 'exportApprovedContingents'])->name('admin.export.approved-contingents');
+    Route::get('/admin/event/{event}/export-pending-data-verification', [App\Http\Controllers\adminController::class, 'exportPendingDataVerificationParticipants'])->name('admin.events.export-pending-data');
     // Menampilkan halaman bracket untuk kelas pertandingan tertentu
     Route::get('/bracket/{kelas}', [BracketController::class, 'show'])->name('bracket.show');
     // Aksi untuk meng-generate / mengundi (draw) bracket

@@ -73,14 +73,15 @@ class AuthController extends Controller
             'negara' => $request->negara,
             'no_telp' => $request->no_telp,
             'role_id' => 3,
-            'status' => 0, // <-- Status awal adalah 0
+            'status' => 1, // <-- Status awal langsung aktif (1) tanpa verifikasi email
         ]);
 
         // 2. Kirim notifikasi kustom kita ke user yang baru dibuat
-        $user->notify(new VerifyEmailWithStatus());
+        // $user->notify(new VerifyEmailWithStatus()); // Dinonaktifkan agar tidak memerlukan verifikasi email
 
         // Ganti redirect ke halaman login atau halaman pemberitahuan
-        return redirect('/registMain')->with('status', 'Registrasi berhasil! Link verifikasi telah dikirim ke email Anda. (Jika pesan verifikasi email tidak muncul, coba cek pada folder spam anda)');
+        // return redirect('/registMain')->with('status', 'Registrasi berhasil! Akun Anda telah aktif, silakan login.');
+        return redirect('/')->with('status', 'Akun Anda sudah terverifikasi. Silahkan login.');
     }
 
     /**

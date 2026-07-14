@@ -109,7 +109,7 @@
                                             // Ambil transaksi pertama untuk kontingen ini
                                             $transaction = $contingent->transactions->first();
                                         @endphp
-                                        @if ($contingent->status == 3 && $contingent->event->harga_contingent > 0 && !$transaction->foto_invoice)
+                                        @if (($contingent->status == 0 || $contingent->status == 3) && $contingent->event->harga_contingent > 0 && (!$transaction || !$transaction->foto_invoice))
                                             <a href="{{ route('invoiceContingent.show', $contingent->id) }}" class="btn btn-info">Invoice Kontingen</a>
                                         @endif
 
@@ -176,14 +176,35 @@
                                         </div>
                                     </div>
                                     <div class="table-responsive">
-                                        <table class="table table-striped table-bordered table-hover">
-                                            <thead class="table-dark"><tr><th>#</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Aksi</th></tr></thead>
+                                        <table class="table table-striped table-bordered table-hover align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Nama</th>
+                                                    <th>Kelas</th>
+                                                    <th>Invoice</th>
+                                                    <th>Status</th>
+                                                    <th>Aksi</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>
                                                 @forelse ($contingent->displayPlayers as $registration)
+                                                    @php
+                                                        $playersInRegistration = $registration['player_instances'];
+                                                        $canBeModified = in_array($registration['status'], [0, 1, 3]);
+                                                        $invoice = $registration['invoice'];
+                                                    @endphp
                                                     <tr>
                                                         <th>{{ $loop->iteration }}</th>
                                                         <td>{{ $registration['player_names'] }}</td>
                                                         <td>{{ $registration['nama_kelas'] }} ({{ $registration['gender'] }})</td>
+                                                        <td>
+                                                            @if ($invoice)
+                                                                <span class="font-monospace text-xs fw-bold text-dark">#INV-{{ $invoice->id }}</span>
+                                                            @else
+                                                                <span class="text-muted small italic">N/A</span>
+                                                            @endif
+                                                        </td>
                                                         <td>
                                                             @if ($registration['status'] == 1) <span class="badge bg-warning text-dark">Pending</span>
                                                             @elseif ($registration['status'] == 2) <span class="badge bg-success">Terverifikasi</span>
@@ -191,78 +212,341 @@
                                                             @else <span class="badge bg-danger text-light">Ditolak</span>
                                                             @endif
                                                             
-                                                            {{-- ========================================================== --}}
-                                                            {{-- PERBAIKAN: Loop untuk setiap catatan pemain yang ditolak --}}
-                                                            {{-- ========================================================== --}}
                                                             @if ($registration['rejected_players']->isNotEmpty())
-                                                                @foreach($registration['rejected_players'] as $rejectedPlayer)
-                                                                    <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $rejectedPlayer->id }}" title="Lihat catatan untuk {{ $rejectedPlayer->name }}">
-                                                                        <i class="bi bi-info-circle-fill text-danger"></i>
+                                                                @php
+                                                                    $firstRejectedPlayer = $registration['rejected_players']->first();
+                                                                @endphp
+                                                                @if ($firstRejectedPlayer)
+                                                                    <button class="btn btn-link btn-sm p-0 ms-1" data-bs-toggle="modal" data-bs-target="#notePlayerModal-{{ $firstRejectedPlayer->id }}" title="Lihat catatan penolakan">
+                                                                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 1.1rem;"></i>
                                                                     </button>
-                                                                @endforeach
+                                                                @endif
                                                             @endif
                                                         </td>
 
-                                                        <td class="align-middle">
-                                                            @php
-                                                                $playersInRegistration = $registration['player_instances'];
-                                                                $canBeModified = in_array($registration['status'], [0, 1, 3]);
-                                                            @endphp
-
-                                                            {{-- Gunakan flex-column untuk menumpuk aksi individu dan aksi tim --}}
+                                                        <td>
                                                             <div class="d-flex flex-column gap-2">
+                                                                 @php
+                                                                     $verifiedPlayers = $playersInRegistration->where('status', 2);
+                                                                 @endphp
 
-                                                                @foreach ($playersInRegistration as $player)
-                                                                    <div class="d-flex align-items-center gap-2">
-                                                                        @if ($canBeModified)
-                                                                            {{-- Tombol EDIT INDIVIDU untuk setiap pemain --}}
-                                                                            <a href="{{ route('player.edit', $player->id) }}" class="btn btn-success btn-sm" title="Edit {{ $player->name }}"><i class="bi bi-pencil-square"></i></a>
-                                                                        @endif
-                                                                        
-                                                                        @if ($player->status == 2)
-                                                                            {{-- Tombol CETAK KARTU INDIVIDU untuk setiap pemain --}}
-                                                                            <a href="{{ route('player.print.card', $player->id) }}" target="_blank" class="btn btn-info btn-sm" title="Cetak Kartu {{ $player->name }}"><i class="bi bi-printer"></i></a>
-                                                                        @endif
+                                                                 @if ($verifiedPlayers->count() == 1)
+                                                                     @php $p = $verifiedPlayers->first(); @endphp
+                                                                     <div class="mb-1">
+                                                                         <a href="{{ route('player.print.card', $p->id) }}" target="_blank" class="btn btn-info btn-sm text-white text-decoration-none" title="Cetak Kartu {{ $p->name }}">
+                                                                             <i class="bi bi-printer"></i> Cetak Kartu
+                                                                         </a>
+                                                                     </div>
+                                                                 @elseif ($verifiedPlayers->count() > 1)
+                                                                     <div class="mb-1">
+                                                                         <div class="dropdown">
+                                                                             <button class="btn btn-info btn-sm dropdown-toggle text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-boundary="viewport">
+                                                                                 <i class="bi bi-printer"></i> Cetak Kartu ({{ $verifiedPlayers->count() }})
+                                                                             </button>
+                                                                             <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                                                                 <li class="dropdown-header text-xs text-uppercase fw-bold text-muted">Pilih Peserta</li>
+                                                                                 @foreach ($verifiedPlayers as $p)
+                                                                                     <li>
+                                                                                         <a class="dropdown-item small py-1" href="{{ route('player.print.card', $p->id) }}" target="_blank">
+                                                                                             <i class="bi bi-person-fill me-1"></i> {{ $p->name }}
+                                                                                         </a>
+                                                                                     </li>
+                                                                                 @endforeach
+                                                                             </ul>
+                                                                         </div>
+                                                                     </div>
+                                                                 @endif
 
-                                                                        {{-- Tampilkan nama pemain untuk kejelasan --}}
-                                                                        <span class="text-muted small" style="white-space: nowrap;">{{ $player->name }}</span>
-                                                                    </div>
-                                                                @endforeach
-
-                                                                @if ($playersInRegistration->count() > 1 && $canBeModified)
-                                                                    <hr class="my-1">
-                                                                    {{-- Form HAPUS TIM tetap sama, berlaku untuk seluruh grup --}}
-                                                                    <form action="{{ route('registration.destroy') }}" method="POST" onsubmit="return confirm('Anda akan menghapus SELURUH tim: {{ $registration['player_names'] }}. Yakin?');">
-                                                                        @csrf
-                                                                        @method('DELETE')
-                                                                        @foreach ($playersInRegistration as $player)
-                                                                            <input type="hidden" name="player_ids[]" value="{{ $player->id }}">
-                                                                        @endforeach
-                                                                        <button type="submit" class="btn btn-danger btn-sm w-100" title="Hapus Pendaftaran Tim">
-                                                                            <i class="bi bi-trash"></i> Hapus Seluruh Tim
+                                                                @if ($canBeModified)
+                                                                    @if ($invoice)
+                                                                        {{-- HANYA ADA 1 TOMBOL EDIT PER INVOICE --}}
+                                                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editPlayerInvoiceModal-{{ $invoice->id }}">
+                                                                            <i class="bi bi-pencil-square"></i> Edit
                                                                         </button>
-                                                                    </form>
-
-                                                                @elseif($playersInRegistration->count() == 1 && $canBeModified)
-                                                                    {{-- Jika pemainnya tunggal, tampilkan tombol hapus individu --}}
-                                                                    @php $player = $playersInRegistration->first(); @endphp
-                                                                    <form action="{{ route('player.destroy', $player->id) }}" method="POST" onsubmit="return confirm('Yakin ingin hapus peserta {{ $player->name }}?');">
-                                                                            @csrf
-                                                                            @method('DELETE')
-                                                                            <button type="submit" class="btn btn-danger btn-sm" title="Hapus {{ $player->name }}"><i class="bi bi-trash"></i></button>
-                                                                    </form>
+                                                                    @else
+                                                                        {{-- HANYA ADA 1 TOMBOL EDIT PER GRUP TIM TANPA INVOICE --}}
+                                                                        @php
+                                                                            $groupUniqueId = $contingent->id . '-' . $loop->index;
+                                                                        @endphp
+                                                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editPlayerGroupModal-{{ $groupUniqueId }}">
+                                                                            <i class="bi bi-pencil-square"></i> Edit
+                                                                        </button>
+                                                                    @endif
                                                                 @endif
                                                             </div>
+
+                                                            {{-- Modal Edit Invoice Peserta --}}
+                                                            @if ($invoice)
+                                                                <div class="modal fade" id="editPlayerInvoiceModal-{{ $invoice->id }}" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+                                                                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                                                        <div class="modal-content border-0 shadow-lg text-start">
+                                                                            <div class="modal-header bg-dark text-white">
+                                                                                <h5 class="modal-title fw-bold"><i class="bi bi-receipt"></i> Edit Pembayaran &amp; Data Atlet #INV-{{ $invoice->id }}</h5>
+                                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                            </div>
+                                                                            <form action="{{ route('invoice.player.reupload', $invoice->id) }}" method="POST" enctype="multipart/form-data">
+                                                                                @csrf
+                                                                                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                                                                    {{-- Bagian 1: Upload Bukti Transfer --}}
+                                                                                    <div class="bg-light p-3 rounded border mb-4">
+                                                                                        <h6 class="fw-bold text-dark mb-2"><i class="bi bi-credit-card-2-front"></i> Bukti Transfer Invoice</h6>
+                                                                                        <p class="text-muted small">Perbarui bukti transfer jika sebelumnya salah atau ditolak oleh admin.</p>
+                                                                                        <div class="mb-3">
+                                                                                            @if ($invoice->foto_invoice)
+                                                                                                <div class="mb-2">
+                                                                                                    <a href="{{ Storage::url($invoice->foto_invoice) }}" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="bi bi-eye"></i> Lihat Bukti Bayar Saat Ini</a>
+                                                                                                </div>
+                                                                                            @endif
+                                                                                            <label for="foto_invoice_player-{{ $invoice->id }}" class="form-label fw-bold text-dark">Upload Bukti Transfer Baru</label>
+                                                                                            <input type="file" class="form-control" name="foto_invoice" id="foto_invoice_player-{{ $invoice->id }}">
+                                                                                            <small class="text-muted form-text d-block mt-1">Format: JPG, JPEG, PNG, PDF. Maksimal 5MB.</small>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {{-- Bagian 2: Edit Data Atlet --}}
+                                                                                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill"></i> Data Diri Atlet</h6>
+                                                                                    <p class="text-muted small mb-3">Sesuaikan kolom-kolom di bawah jika terdapat kesalahan pada data diri atlet (seperti Nama, NIK, foto KTP, dll.):</p>
+                                                                                    
+                                                                                    @php
+                                                                                        $lastClassId = null;
+                                                                                    @endphp
+                                                                                    @foreach ($playersInRegistration as $player)
+                                                                                        @php
+                                                                                            $currentClassId = $player->kelas_pertandingan_id;
+                                                                                            $showDivider = ($loop->index > 0 && $lastClassId !== $currentClassId);
+                                                                                            $lastClassId = $currentClassId;
+                                                                                        @endphp
+                                                                                        @if ($showDivider)
+                                                                                            <div class="my-4 d-flex align-items-center">
+                                                                                                <div class="flex-grow-1 border-top border-2 border-dashed border-danger"></div>
+                                                                                                <span class="mx-3 text-xs text-danger fw-bold text-uppercase bg-white px-2" style="font-size: 11px; letter-spacing: 0.5px;">Kelas Tanding</span>
+                                                                                                <div class="flex-grow-1 border-top border-2 border-dashed border-danger"></div>
+                                                                                            </div>
+                                                                                        @endif
+                                                                                        <div class="border rounded p-3 mb-3 bg-white shadow-sm">
+                                                                                            <div class="border-b pb-2 mb-2 d-flex justify-content-between align-items-center">
+                                                                                                <span class="fw-bold text-primary">{{ $player->name }}</span>
+                                                                                                <span class="badge bg-secondary">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</span>
+                                                                                            </div>
+                                                                                            
+                                                                                            <!-- Rincian Kelas & Kategori Pemain -->
+                                                                                            <div class="bg-light p-2 rounded border mb-3" style="font-size: 11px;">
+                                                                                                <div class="row g-2 text-center text-md-start">
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Kategori:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kategoriPertandingan->nama_kategori ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Jenis/Tipe:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->jenisPertandingan->nama_jenis ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Kelas:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Rentang Usia:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kelas->rentangUsia->rentang_usia ?? 'N/A' }}</span></div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            
+                                                                                            <div class="row g-3">
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Nama Atlet</label>
+                                                                                                    <input type="text" class="form-control form-control-sm" name="players[{{ $player->id }}][name]" value="{{ $player->name }}" required>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">NIK (16 Digit)</label>
+                                                                                                    <input type="text" class="form-control form-control-sm font-monospace" name="players[{{ $player->id }}][nik]" value="{{ $player->nik }}" minlength="16" maxlength="16" required>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Jenis Kelamin</label>
+                                                                                                    <select class="form-select form-select-sm" name="players[{{ $player->id }}][gender]" required>
+                                                                                                        <option value="Laki-laki" {{ $player->gender == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                                                                                        <option value="Perempuan" {{ $player->gender == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                                                                                    </select>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Tanggal Lahir</label>
+                                                                                                    <input type="date" class="form-control form-control-sm" name="players[{{ $player->id }}][tgl_lahir]" value="{{ $player->tgl_lahir }}" required>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div class="row g-2 mt-2 pt-2 border-top">
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Foto KTP / KIA</label>
+                                                                                                    @if ($player->foto_ktp)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-image"></i> Lihat KTP</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_ktp]">
+                                                                                                </div>
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Foto Diri</label>
+                                                                                                    @if ($player->foto_diri)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-image"></i> Lihat Foto Diri</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_diri]">
+                                                                                                </div>
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Izin Ortu (Opsional)</label>
+                                                                                                    @if ($player->foto_persetujuan_ortu)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-file-earmark-pdf"></i> Lihat Izin</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_persetujuan_ortu]">
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    @endforeach
+                                                                                </div>
+                                                                                <div class="modal-footer bg-light">
+                                                                                    <button type="button" class="btn btn-secondary text-dark" data-bs-dismiss="modal">Batal</button>
+                                                                                    <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-circle"></i> Simpan &amp; Kirim Pembaruan</button>
+                                                                                </div>
+                                                                            </form>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
+
+                                                            {{-- Modal Edit Group Atlet Tanpa Invoice --}}
+                                                            @if (!$invoice)
+                                                                @php
+                                                                    $groupUniqueId = $contingent->id . '-' . $loop->index;
+                                                                @endphp
+                                                                <div class="modal fade" id="editPlayerGroupModal-{{ $groupUniqueId }}" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+                                                                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                                                        <div class="modal-content border-0 shadow-lg text-start">
+                                                                            <div class="modal-header bg-dark text-white">
+                                                                                <h5 class="modal-title fw-bold"><i class="bi bi-people-fill"></i> Edit Data Atlet - {{ $registration['nama_kelas'] }}</h5>
+                                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                                            </div>
+                                                                            <form action="{{ route('player.group.update') }}" method="POST" enctype="multipart/form-data">
+                                                                                @csrf
+                                                                                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                                                                                    
+                                                                                    <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill"></i> Data Diri Atlet</h6>
+                                                                                    <p class="text-muted small mb-3">Sesuaikan kolom-kolom di bawah jika terdapat kesalahan pada data diri atlet (seperti Nama, NIK, foto KTP, dll.):</p>
+                                                                                    
+                                                                                    @php
+                                                                                        $lastClassId = null;
+                                                                                    @endphp
+                                                                                    @foreach ($playersInRegistration as $player)
+                                                                                        @php
+                                                                                            $currentClassId = $player->kelas_pertandingan_id;
+                                                                                            $showDivider = ($loop->index > 0 && $lastClassId !== $currentClassId);
+                                                                                            $lastClassId = $currentClassId;
+                                                                                        @endphp
+                                                                                        @if ($showDivider)
+                                                                                            <div class="my-4 d-flex align-items-center">
+                                                                                                <div class="flex-grow-1 border-top border-2 border-dashed border-danger"></div>
+                                                                                                <span class="mx-3 text-xs text-danger fw-bold text-uppercase bg-white px-2" style="font-size: 11px; letter-spacing: 0.5px;">Kelas Tanding Berbeda</span>
+                                                                                                <div class="flex-grow-1 border-top border-2 border-dashed border-danger"></div>
+                                                                                            </div>
+                                                                                        @endif
+                                                                                        <div class="border rounded p-3 mb-3 bg-white shadow-sm">
+                                                                                            <div class="border-b pb-2 mb-2 d-flex justify-content-between align-items-center">
+                                                                                                <span class="fw-bold text-primary">{{ $player->name }}</span>
+                                                                                                <span class="badge bg-secondary">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</span>
+                                                                                            </div>
+                                                                                            
+                                                                                            <!-- Rincian Kelas & Kategori Pemain -->
+                                                                                            <div class="bg-light p-2 rounded border mb-3" style="font-size: 11px;">
+                                                                                                <div class="row g-2 text-center text-md-start">
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Kategori:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kategoriPertandingan->nama_kategori ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Jenis/Tipe:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->jenisPertandingan->nama_jenis ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Kelas:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kelas->nama_kelas ?? 'N/A' }}</span></div>
+                                                                                                    <div class="col-6 col-md-3"><span class="text-muted d-block">Rentang Usia:</span> <span class="fw-bold text-dark">{{ $player->kelasPertandingan->kelas->rentangUsia->rentang_usia ?? 'N/A' }}</span></div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            
+                                                                                            <div class="row g-3">
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Nama Atlet</label>
+                                                                                                    <input type="text" class="form-control form-control-sm" name="players[{{ $player->id }}][name]" value="{{ $player->name }}" required>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">NIK (16 Digit)</label>
+                                                                                                    <input type="text" class="form-control form-control-sm font-monospace" name="players[{{ $player->id }}][nik]" value="{{ $player->nik }}" minlength="16" maxlength="16" required>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Jenis Kelamin</label>
+                                                                                                    <select class="form-select form-select-sm" name="players[{{ $player->id }}][gender]" required>
+                                                                                                        <option value="Laki-laki" {{ $player->gender == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                                                                                                        <option value="Perempuan" {{ $player->gender == 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
+                                                                                                    </select>
+                                                                                                </div>
+                                                                                                <div class="col-md-6">
+                                                                                                    <label class="form-label text-xs fw-bold">Tanggal Lahir</label>
+                                                                                                    <input type="date" class="form-control form-control-sm" name="players[{{ $player->id }}][tgl_lahir]" value="{{ $player->tgl_lahir }}" required>
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div class="row g-2 mt-2 pt-2 border-top">
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Foto KTP / KIA</label>
+                                                                                                    @if ($player->foto_ktp)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_ktp) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-image"></i> Lihat KTP</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_ktp]">
+                                                                                                </div>
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Foto Diri</label>
+                                                                                                    @if ($player->foto_diri)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_diri) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-image"></i> Lihat Foto Diri</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_diri]">
+                                                                                                </div>
+                                                                                                <div class="col-md-4">
+                                                                                                    <label class="form-label text-xs fw-bold">Izin Ortu (Opsional)</label>
+                                                                                                    @if ($player->foto_persetujuan_ortu)
+                                                                                                        <div class="mb-1"><a href="{{ Storage::url($player->foto_persetujuan_ortu) }}" target="_blank" class="text-xs text-blue-600"><i class="bi bi-file-earmark-pdf"></i> Lihat Izin</a></div>
+                                                                                                    @endif
+                                                                                                    <input type="file" class="form-control form-control-sm" name="players[{{ $player->id }}][foto_persetujuan_ortu]">
+                                                                                                </div>
+                                                                                            </div>
+
+                                                                                            <div class="mt-2 text-end">
+                                                                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="if(confirm('Hapus peserta {{ $player->name }}?')) { document.getElementById('delete-player-form-{{ $player->id }}').submit(); }">
+                                                                                                    <i class="bi bi-trash"></i> Hapus Peserta Ini
+                                                                                                </button>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    @endforeach
+                                                                                </div>
+                                                                                <div class="modal-footer bg-light">
+                                                                                    @if ($playersInRegistration->count() > 1)
+                                                                                        <button type="button" class="btn btn-danger me-auto" onclick="if(confirm('Hapus seluruh tim?')) { document.getElementById('delete-team-form-{{ $groupUniqueId }}').submit(); }">
+                                                                                            <i class="bi bi-trash"></i> Hapus Seluruh Tim
+                                                                                        </button>
+                                                                                    @endif
+                                                                                    <button type="button" class="btn btn-secondary text-dark" data-bs-dismiss="modal">Batal</button>
+                                                                                    <button type="submit" class="btn btn-success fw-bold"><i class="bi bi-check-circle"></i> Simpan &amp; Kirim Pembaruan</button>
+                                                                                </div>
+                                                                            </form>
+                                                                            
+                                                                            {{-- Forms hapus tersembunyi --}}
+                                                                            @foreach ($playersInRegistration as $player)
+                                                                                <form id="delete-player-form-{{ $player->id }}" action="{{ route('player.destroy', $player->id) }}" method="POST" style="display: none;">
+                                                                                    @csrf
+                                                                                    @method('DELETE')
+                                                                                </form>
+                                                                            @endforeach
+
+                                                                            @if ($playersInRegistration->count() > 1)
+                                                                                <form id="delete-team-form-{{ $groupUniqueId }}" action="{{ route('registration.destroy') }}" method="POST" style="display: none;">
+                                                                                    @csrf
+                                                                                    @method('DELETE')
+                                                                                    @foreach ($playersInRegistration as $player)
+                                                                                        <input type="hidden" name="player_ids[]" value="{{ $player->id }}">
+                                                                                    @endforeach
+                                                                                </form>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            @endif
                                                         </td>
                                                     </tr>
                                                 @empty
-                                                    <tr><td colspan="5" class="text-center">Belum ada peserta.</td></tr>
+                                                    <tr><td colspan="6" class="text-center">Belum ada peserta.</td></tr>
                                                 @endforelse
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
-                                <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button></div>
+                                <div class="modal-footer">
+                                     <a href="{{ route('contingent.invoices', $contingent->id) }}" class="btn btn-warning me-auto"><i class="bi bi-receipt"></i> Riwayat Invoice</a>
+                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                                 </div>
                             </div>
                         </div>
                     </div>
